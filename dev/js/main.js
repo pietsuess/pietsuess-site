@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const gradient = document.querySelector('.bg-gradient');
+    const nameEl = document.querySelector('.landing-name-source');
     const vh = window.innerHeight;
 
     // Virtual scroll accumulator (page doesn't actually scroll)
@@ -51,6 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // -- Gradient morph --
       if (gradient) {
         gradient.style.backgroundPosition = `${progress * 100}% ${50 + progress * 30}%`;
+      }
+
+      // -- Name slowly stretches wider --
+      if (nameEl) {
+        const stretch = 100 + progress * 60; // 100% → 160% letter-spacing
+        nameEl.style.letterSpacing = `${-0.03 + progress * 0.25}em`;
       }
 
       // -- Letter animation --
