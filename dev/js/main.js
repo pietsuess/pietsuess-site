@@ -7,7 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   /* -------------------------------------------------------
-     0. PORTFOLIO KINETIC TYPOGRAPHY — splash page scroll
+     0. PORTFOLIO KINETIC TYPOGRAPHY — splash page wheel-driven
      ------------------------------------------------------- */
   (function() {
     if (!document.body.classList.contains('splash-page')) return;
@@ -25,85 +25,82 @@ document.addEventListener('DOMContentLoaded', () => {
       span.className = 'portfolio-letter';
       span.textContent = text[i];
       label.appendChild(span);
-      // Each letter gets unique motion parameters
-      const seed = (i * 137.508) % 360; // golden angle spread
+
       letters.push({
         el: span,
         index: i,
-        falls: (i % 3 !== 0),           // every 3rd letter stays up
-        fallSpeed: 0.8 + Math.random() * 1.4,  // how fast it drops
-        rotateSpeed: 15 + Math.random() * 35,   // degrees per scroll unit
+        falls: (i % 3 !== 0),
+        fallSpeed: 0.6 + Math.random() * 1.2,
+        rotateMax: 40 + Math.random() * 140,
         rotateDir: (i % 2 === 0) ? 1 : -1,
-        driftX: (Math.random() - 0.5) * 80,     // lateral drift
-        swingFreq: 2 + Math.random() * 3,       // oscillation frequency
-        seed: seed
+        driftX: (Math.random() - 0.5) * 120,
+        swingFreq: 2 + Math.random() * 4
       });
     }
 
-    // Gradient element for scroll-driven color shift
     const gradient = document.querySelector('.bg-gradient');
+    const vh = window.innerHeight;
 
-    // Hero content for fade-out
-    const hero = document.querySelector('.landing-hero');
+    // Virtual scroll accumulator (page doesn't actually scroll)
+    let virtualScroll = 0;
+    const MAX_SCROLL = 1200;
 
     function updatePortfolio() {
-      const scrollY = window.scrollY;
-      const vh = window.innerHeight;
-      const progress = Math.min(scrollY / (vh * 1.5), 1); // 0→1 over 1.5 screens
+      const progress = Math.min(Math.max(virtualScroll / MAX_SCROLL, 0), 1);
 
-      // -- Gradient morph: shift background position with scroll --
+      // -- Gradient morph --
       if (gradient) {
-        // Override the CSS animation with scroll-driven position
-        const baseShift = (Date.now() / 200) % 360; // keep subtle auto-motion
-        const scrollShift = progress * 100;
-        gradient.style.backgroundPosition = `${scrollShift + Math.sin(baseShift * 0.01) * 10}% ${50 + progress * 30}%`;
-      }
-
-      // -- Hero fade out --
-      if (hero) {
-        const heroFade = Math.max(0, 1 - progress * 2.5);
-        hero.style.opacity = heroFade;
+        gradient.style.backgroundPosition = `${progress * 100}% ${50 + progress * 30}%`;
       }
 
       // -- Letter animation --
       for (const L of letters) {
-        if (progress <= 0) {
+        if (progress <= 0.01) {
           L.el.style.transform = 'none';
           L.el.style.opacity = '';
           continue;
         }
 
         if (L.falls) {
-          // FALLING letters: drop down, twist, drift sideways
-          const fallProgress = Math.min(1, progress * L.fallSpeed);
-          const eased = fallProgress * fallProgress; // ease-in (accelerate)
-          const dropY = eased * vh * 1.2;
-          const rotation = fallProgress * L.rotateSpeed * L.rotateDir;
-          const driftX = L.driftX * fallProgress;
-          const swing = Math.sin(fallProgress * L.swingFreq * Math.PI) * 20 * (1 - fallProgress);
-          const opacity = Math.max(0, 1 - fallProgress * 0.8);
+          // FALLING letters: tumble down, twist, drift
+          const p = Math.min(1, progress * L.fallSpeed);
+          const eased = p * p;
+          const dropY = eased * vh * 0.9;
+          const rotation = p * L.rotateMax * L.rotateDir;
+          const driftX = L.driftX * p;
+          const swing = Math.sin(p * L.swingFreq * Math.PI) * 30 * (1 - p);
 
           L.el.style.transform = `translateY(${dropY}px) translateX(${driftX + swing}px) rotate(${rotation}deg)`;
-          L.el.style.opacity = opacity;
+          L.el.style.opacity = Math.max(0, 1 - p * 0.9);
         } else {
-          // STAYING letters: rotate in place, maybe grow slightly
-          const stayProgress = Math.min(1, progress * 1.2);
-          const rotation = stayProgress * L.rotateSpeed * L.rotateDir * 0.5;
-          const scale = 1 + stayProgress * 0.15;
-          const opacity = Math.max(0.05, 1 - stayProgress * 0.3);
+          // STAYING letters: rotate and grow in place
+          const p = Math.min(1, progress * 1.3);
+          const rotation = p * L.rotateMax * L.rotateDir * 0.4;
+          const scale = 1 + p * 0.3;
 
           L.el.style.transform = `rotate(${rotation}deg) scale(${scale})`;
-          L.el.style.opacity = opacity;
+          L.el.style.opacity = Math.max(0.03, 1 - p * 0.5);
         }
       }
     }
 
-    let ticking = false;
-    window.addEventListener('scroll', () => {
-      if (!ticking) {
-        requestAnimationFrame(() => { updatePortfolio(); ticking = false; });
-        ticking = true;
-      }
+    // Use wheel event as input — page stays locked
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      virtualScroll = Math.max(0, virtualScroll + e.deltaY);
+      requestAnimationFrame(updatePortfolio);
+    }, { passive: false });
+
+    // Touch support for mobile
+    let touchStartY = 0;
+    window.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      const dy = touchStartY - e.touches[0].clientY;
+      touchStartY = e.touches[0].clientY;
+      virtualScroll = Math.max(0, virtualScroll + dy);
+      requestAnimationFrame(updatePortfolio);
     }, { passive: true });
 
     updatePortfolio();
@@ -113,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
      1. NAME SLICE SYSTEM — hero name splits on scroll
      ------------------------------------------------------- */
   (function() {
+    if (document.body.classList.contains('splash-page')) return; // name stays fixed on splash
     const NUM_SLICES = 12;
     const wrapper = document.getElementById('heroNameWrapper');
     if (!wrapper) return;

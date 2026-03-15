@@ -524,10 +524,13 @@ button {
   display: none;
 }
 
+.splash-page .ghost-name {
+  display: none;
+}
+
 .splash-page .bg-zone-label {
   top: calc(-0.15em + 15px);
   line-height: 0.85;
-  /* Letters are individually animated by JS — hide the original text */
   color: transparent;
 }
 
