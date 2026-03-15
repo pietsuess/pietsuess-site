@@ -42,12 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameEl = document.querySelector('.landing-name-source');
     const vh = window.innerHeight;
 
-    // Virtual scroll accumulator (page doesn't actually scroll)
+    // Virtual scroll — starts at midpoint, either direction drives animation
     let virtualScroll = 0;
     const MAX_SCROLL = 1200;
+    const MIDPOINT = 0; // conceptual center
 
     function updatePortfolio() {
-      const progress = Math.min(Math.max(virtualScroll / MAX_SCROLL, 0), 1);
+      const progress = Math.min(Math.abs(virtualScroll) / MAX_SCROLL, 1);
 
       // -- Gradient morph --
       if (gradient) {
@@ -88,20 +89,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Use wheel event as input — any direction drives animation forward
+    // Wheel drives scroll position — scroll down or up from zero, reverse to return
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
-      virtualScroll = Math.max(0, virtualScroll + Math.abs(e.deltaY));
+      virtualScroll += e.deltaY;
       requestAnimationFrame(updatePortfolio);
     }, { passive: false });
 
-    // Touch support for mobile — any swipe direction drives forward
+    // Touch support for mobile
     let touchStartY = 0;
     window.addEventListener('touchstart', (e) => {
       touchStartY = e.touches[0].clientY;
     }, { passive: true });
     window.addEventListener('touchmove', (e) => {
-      const dy = Math.abs(touchStartY - e.touches[0].clientY);
+      const dy = touchStartY - e.touches[0].clientY;
       touchStartY = e.touches[0].clientY;
       virtualScroll = Math.max(0, virtualScroll + dy);
       requestAnimationFrame(updatePortfolio);
