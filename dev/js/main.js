@@ -44,27 +44,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Virtual scroll — starts at midpoint, either direction drives animation
     let virtualScroll = 0;
-    const MAX_SCROLL = 1200;
-    const MIDPOINT = 0; // conceptual center
-
-    // Dead zone: scroll within this range does nothing (feels like a rest position)
-    const DEAD_ZONE = 300;
+    const HALF_CYCLE = 1200; // scroll units for one half (forward)
+    const FULL_CYCLE = HALF_CYCLE * 2; // full ping-pong loop
+    const DEAD_ZONE = 50;
 
     function updatePortfolio() {
       const absScroll = Math.abs(virtualScroll);
-      // Nothing happens inside the dead zone
-      const raw = Math.max(0, absScroll - DEAD_ZONE) / MAX_SCROLL;
-      // Cubic ease-in: very gentle start, accelerates into full effect
-      const progress = Math.min(raw * raw * raw * 8, 1);
+      // Remove dead zone
+      const active = Math.max(0, absScroll - DEAD_ZONE);
+      // Ping-pong: wrap into a cycle, reverse on second half
+      const inCycle = active % FULL_CYCLE;
+      const raw = inCycle <= HALF_CYCLE
+        ? inCycle / HALF_CYCLE
+        : 1 - (inCycle - HALF_CYCLE) / HALF_CYCLE;
+      // Ease in-out: smooth at both ends
+      const progress = raw < 0.5
+        ? 4 * raw * raw * raw
+        : 1 - Math.pow(-2 * raw + 2, 3) / 2;
 
       // -- Gradient morph --
       if (gradient) {
         gradient.style.backgroundPosition = `${progress * 100}% ${50 + progress * 30}%`;
       }
 
-      // -- Name slowly stretches wider --
+      // -- Name stretches to full screen width --
       if (nameEl) {
-        nameEl.style.letterSpacing = `${-0.03 + progress * 0.25}em`;
+        nameEl.style.letterSpacing = `${-0.03 + progress * 0.6}em`;
       }
 
       // -- Letter animation --
