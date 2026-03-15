@@ -44,9 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Virtual scroll — starts at midpoint, either direction drives animation
     let virtualScroll = 0;
-    const HALF_CYCLE = 1200; // scroll units for one half (forward)
+    const HALF_CYCLE = 2000; // scroll units for one half (forward)
     const FULL_CYCLE = HALF_CYCLE * 2; // full ping-pong loop
-    const DEAD_ZONE = 50;
+    const DEAD_ZONE = 25;
 
     function updatePortfolio() {
       const absScroll = Math.abs(virtualScroll);
