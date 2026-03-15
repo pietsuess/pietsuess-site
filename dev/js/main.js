@@ -88,20 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Use wheel event as input — page stays locked
+    // Use wheel event as input — any direction drives animation forward
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
-      virtualScroll = Math.max(0, virtualScroll + e.deltaY);
+      virtualScroll = Math.max(0, virtualScroll + Math.abs(e.deltaY));
       requestAnimationFrame(updatePortfolio);
     }, { passive: false });
 
-    // Touch support for mobile
+    // Touch support for mobile — any swipe direction drives forward
     let touchStartY = 0;
     window.addEventListener('touchstart', (e) => {
       touchStartY = e.touches[0].clientY;
     }, { passive: true });
     window.addEventListener('touchmove', (e) => {
-      const dy = touchStartY - e.touches[0].clientY;
+      const dy = Math.abs(touchStartY - e.touches[0].clientY);
       touchStartY = e.touches[0].clientY;
       virtualScroll = Math.max(0, virtualScroll + dy);
       requestAnimationFrame(updatePortfolio);
