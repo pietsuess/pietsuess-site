@@ -527,6 +527,16 @@ button {
 .splash-page .bg-zone-label {
   top: calc(-0.15em + 15px);
   line-height: 0.85;
+  /* Letters are individually animated by JS — hide the original text */
+  color: transparent;
+}
+
+/* Individual portfolio letters for scroll animation */
+.portfolio-letter {
+  display: inline-block;
+  color: rgba(254,249,240,0.1);
+  will-change: transform, opacity;
+  transition: none;
 }
 
 .splash-page .arcade-link {

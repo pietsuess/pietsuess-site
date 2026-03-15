@@ -7,6 +7,109 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   /* -------------------------------------------------------
+     0. PORTFOLIO KINETIC TYPOGRAPHY — splash page scroll
+     ------------------------------------------------------- */
+  (function() {
+    if (!document.body.classList.contains('splash-page')) return;
+
+    const label = document.getElementById('bgZoneLabel');
+    if (!label) return;
+
+    // Split "PORTFOLIO" into individual spans
+    const text = label.textContent.trim();
+    label.textContent = '';
+    const letters = [];
+
+    for (let i = 0; i < text.length; i++) {
+      const span = document.createElement('span');
+      span.className = 'portfolio-letter';
+      span.textContent = text[i];
+      label.appendChild(span);
+      // Each letter gets unique motion parameters
+      const seed = (i * 137.508) % 360; // golden angle spread
+      letters.push({
+        el: span,
+        index: i,
+        falls: (i % 3 !== 0),           // every 3rd letter stays up
+        fallSpeed: 0.8 + Math.random() * 1.4,  // how fast it drops
+        rotateSpeed: 15 + Math.random() * 35,   // degrees per scroll unit
+        rotateDir: (i % 2 === 0) ? 1 : -1,
+        driftX: (Math.random() - 0.5) * 80,     // lateral drift
+        swingFreq: 2 + Math.random() * 3,       // oscillation frequency
+        seed: seed
+      });
+    }
+
+    // Gradient element for scroll-driven color shift
+    const gradient = document.querySelector('.bg-gradient');
+
+    // Hero content for fade-out
+    const hero = document.querySelector('.landing-hero');
+
+    function updatePortfolio() {
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight;
+      const progress = Math.min(scrollY / (vh * 1.5), 1); // 0→1 over 1.5 screens
+
+      // -- Gradient morph: shift background position with scroll --
+      if (gradient) {
+        // Override the CSS animation with scroll-driven position
+        const baseShift = (Date.now() / 200) % 360; // keep subtle auto-motion
+        const scrollShift = progress * 100;
+        gradient.style.backgroundPosition = `${scrollShift + Math.sin(baseShift * 0.01) * 10}% ${50 + progress * 30}%`;
+      }
+
+      // -- Hero fade out --
+      if (hero) {
+        const heroFade = Math.max(0, 1 - progress * 2.5);
+        hero.style.opacity = heroFade;
+      }
+
+      // -- Letter animation --
+      for (const L of letters) {
+        if (progress <= 0) {
+          L.el.style.transform = 'none';
+          L.el.style.opacity = '';
+          continue;
+        }
+
+        if (L.falls) {
+          // FALLING letters: drop down, twist, drift sideways
+          const fallProgress = Math.min(1, progress * L.fallSpeed);
+          const eased = fallProgress * fallProgress; // ease-in (accelerate)
+          const dropY = eased * vh * 1.2;
+          const rotation = fallProgress * L.rotateSpeed * L.rotateDir;
+          const driftX = L.driftX * fallProgress;
+          const swing = Math.sin(fallProgress * L.swingFreq * Math.PI) * 20 * (1 - fallProgress);
+          const opacity = Math.max(0, 1 - fallProgress * 0.8);
+
+          L.el.style.transform = `translateY(${dropY}px) translateX(${driftX + swing}px) rotate(${rotation}deg)`;
+          L.el.style.opacity = opacity;
+        } else {
+          // STAYING letters: rotate in place, maybe grow slightly
+          const stayProgress = Math.min(1, progress * 1.2);
+          const rotation = stayProgress * L.rotateSpeed * L.rotateDir * 0.5;
+          const scale = 1 + stayProgress * 0.15;
+          const opacity = Math.max(0.05, 1 - stayProgress * 0.3);
+
+          L.el.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+          L.el.style.opacity = opacity;
+        }
+      }
+    }
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => { updatePortfolio(); ticking = false; });
+        ticking = true;
+      }
+    }, { passive: true });
+
+    updatePortfolio();
+  })();
+
+  /* -------------------------------------------------------
      1. NAME SLICE SYSTEM — hero name splits on scroll
      ------------------------------------------------------- */
   (function() {
