@@ -55,31 +55,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // -- Letter animation --
       for (const L of letters) {
-        if (progress <= 0.01) {
+        if (progress <= 0.005) {
           L.el.style.transform = 'none';
-          L.el.style.opacity = '';
           continue;
         }
 
         if (L.falls) {
-          // FALLING letters: tumble down, twist, drift
+          // FALLING letters: big physical drop, wild tumble, lateral drift
           const p = Math.min(1, progress * L.fallSpeed);
-          const eased = p * p;
-          const dropY = eased * vh * 0.9;
+          const eased = p * p; // accelerating fall
+          const dropY = eased * vh * 1.5;
           const rotation = p * L.rotateMax * L.rotateDir;
-          const driftX = L.driftX * p;
-          const swing = Math.sin(p * L.swingFreq * Math.PI) * 30 * (1 - p);
+          const driftX = L.driftX * eased;
+          const swing = Math.sin(p * L.swingFreq * Math.PI) * 50;
 
           L.el.style.transform = `translateY(${dropY}px) translateX(${driftX + swing}px) rotate(${rotation}deg)`;
-          L.el.style.opacity = Math.max(0, 1 - p * 0.9);
         } else {
-          // STAYING letters: rotate and grow in place
+          // STAYING letters: spin in place, scale up
           const p = Math.min(1, progress * 1.3);
-          const rotation = p * L.rotateMax * L.rotateDir * 0.4;
-          const scale = 1 + p * 0.3;
+          const rotation = p * L.rotateMax * L.rotateDir * 0.6;
+          const scale = 1 + p * 0.5;
 
           L.el.style.transform = `rotate(${rotation}deg) scale(${scale})`;
-          L.el.style.opacity = Math.max(0.03, 1 - p * 0.5);
         }
       }
     }
