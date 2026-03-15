@@ -69,7 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // -- Name stretches to full screen width --
       if (nameEl) {
-        nameEl.style.letterSpacing = `${-0.03 + progress * 0.6}em`;
+        const nameWidth = nameEl.offsetWidth;
+        const screenWidth = window.innerWidth;
+        const maxScale = (screenWidth * 0.95) / nameWidth; // 95% of screen
+        const scale = 1 + progress * (maxScale - 1);
+        nameEl.style.transform = `scaleX(${scale})`;
       }
 
       // -- Letter animation --
