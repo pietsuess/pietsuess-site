@@ -47,8 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_SCROLL = 1200;
     const MIDPOINT = 0; // conceptual center
 
+    // Dead zone: scroll within this range does nothing (feels like a rest position)
+    const DEAD_ZONE = 300;
+
     function updatePortfolio() {
-      const progress = Math.min(Math.abs(virtualScroll) / MAX_SCROLL, 1);
+      const absScroll = Math.abs(virtualScroll);
+      // Nothing happens inside the dead zone
+      const raw = Math.max(0, absScroll - DEAD_ZONE) / MAX_SCROLL;
+      // Cubic ease-in: very gentle start, accelerates into full effect
+      const progress = Math.min(raw * raw * raw * 8, 1);
 
       // -- Gradient morph --
       if (gradient) {
@@ -57,13 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // -- Name slowly stretches wider --
       if (nameEl) {
-        const stretch = 100 + progress * 60; // 100% → 160% letter-spacing
         nameEl.style.letterSpacing = `${-0.03 + progress * 0.25}em`;
       }
 
       // -- Letter animation --
       for (const L of letters) {
-        if (progress <= 0.005) {
+        if (progress <= 0.001) {
           L.el.style.transform = 'none';
           continue;
         }
@@ -71,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (L.falls) {
           // FALLING letters: big physical drop, wild tumble, lateral drift
           const p = Math.min(1, progress * L.fallSpeed);
-          const eased = p * p; // accelerating fall
+          const eased = p * p;
           const dropY = eased * vh * 1.5;
           const rotation = p * L.rotateMax * L.rotateDir;
           const driftX = L.driftX * eased;
