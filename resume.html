@@ -158,20 +158,33 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 120px 0 80px;
+    padding: 40px 0 80px;
   }
 
-  /* Background RESUMÉ — removed */
   .bg-resume-label {
-    display: none;
+    position: fixed;
+    top: 2%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Urbanist', sans-serif;
+    font-weight: 800;
+    font-size: clamp(8rem, 18vw, 16rem);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(254,249,240,0.1);
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
   }
 
   .hero-name-wrapper {
     position: relative;
-    margin-bottom: 32px;
+    margin-bottom: 12px;
+    margin-top: -30px;
     opacity: 0;
     transform: translateY(40px);
     animation: heroIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+    z-index: 1;
   }
 
   .hero-name {
@@ -754,7 +767,6 @@
     }
     .scroll-hint { display: none; }
     .ghost-name, .ghost-cascade { display: none; }
-    .bg-resume-label { display: none; }
 
     /* Sections */
     section { padding: 40px 0; }
@@ -804,22 +816,11 @@
   @media print {
     @page { size: letter; margin: 0.3in; }
 
-    *, *::before, *::after {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-
     html { font-size: 9.5px; }
-    body { background: #1a0e2e; }
+    body { background: #fff !important; color: #111 !important; }
 
-    .bg-gradient {
-      position: fixed;
-      animation: none;
-      background: linear-gradient(135deg, #1a0e2e 0%, #4a1942 35%, #b8475a 65%, #f4c542 100%);
-      background-size: 100% 100%;
-    }
-
-    .bg-gradient::after, .print-bar, .scroll-hint,
+    .bg-gradient, .bg-gradient::after, .bg-resume-label,
+    .print-bar, .scroll-hint,
     .name-slice, .ghost-name, .ghost-cascade { display: none !important; }
 
     .container { padding: 0 20px; max-width: none; }
@@ -830,7 +831,6 @@
       padding: 16px 0 10px;
     }
 
-    .bg-resume-label { display: none !important; }
 
     .hero-name-wrapper {
       opacity: 1 !important;
@@ -842,6 +842,29 @@
     .hero-name {
       font-size: 2.8rem;
       visibility: visible !important;
+      background: linear-gradient(135deg, #2a1a3e, #7a2848, #e8735a) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    .section-label { color: #b8860b !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .section-title { color: #2a1a3e !important; }
+    .summary-text, .exp-details li, .exp-company,
+    .collab-desc, .skill-text, .edu-desc { color: #333 !important; }
+    .exp-role, .collab-name, .skill-label, .edu-name { color: #2a1a3e !important; }
+    .exp-date { color: #7a2848 !important; background: rgba(122,40,72,0.08) !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .hero-title { color: #4a1942 !important; }
+    .hero-years { color: #e8735a !important; background: rgba(232,115,90,0.1) !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+    .exp-card, .collab-card, .skill-block, .digital-highlight {
+      background: rgba(42,26,62,0.03) !important;
+      border: 1px solid rgba(42,26,62,0.12) !important;
+      backdrop-filter: none !important;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
     }
 
     .hero-title-row {
@@ -960,28 +983,17 @@
       <div class="hero-title">Creative Director &amp; Post-Production&nbsp;Veteran</div>
       <div class="hero-years">30+ Years</div>
     </div>
-    <div class="hero-contact">
-      <span>Salt Spring Island, BC</span>
-      <span class="sep">/</span>
-      
-      <span class="sep">/</span>
-      <a href="mailto:psuess@gmail.com">psuess@gmail.com</a>
-      <span class="sep">/</span>
-      <a href="https://pietsuess.com">pietsuess.com</a>
-      <span class="sep">/</span>
-      <a href="https://linkedin.com/in/piet-suess">LinkedIn</a>
-    </div>
   </div>
 
   <!-- SUMMARY -->
   <section class="summary-section">
     <div class="section-label">About</div>
-    <div class="section-title">I've been making things<br>since I was&nbsp;fourteen.</div>
+    <div class="section-title">I've always been a creative&nbsp;director.</div>
     <p class="summary-text">
-      When I was 14, I started spending every day and night in a basement with two VCRs. Tape-to-tape editing &mdash; linear and destructive &mdash; learning to feel where a cut should&nbsp;land. That drive just kept building &mdash; into <strong>directing, editing, photography, animation, and brand&nbsp;design</strong>. New York, Los Angeles, internationally &mdash; 30+ years of mastering every discipline the work asked&nbsp;for.
+      I started making films at 14 and have never stopped. New York, Los Angeles, internationally &mdash; 30+ years leading creative teams and setting the vision<br>for work that&nbsp;lasts.
     </p>
     <p class="summary-text" style="margin-top: 16px;">
-      I stay until it's right. The people I work with become partners, not clients &mdash; and most of them come back. Collaborations that started as projects turned into friendships, and those friendships keep producing work &mdash; over years, over&nbsp;decades. The craft and the people go hand in hand. You can't sacrifice&nbsp;either.
+      The people I work with become partners, not clients &mdash; and most of them come back. Collaborations that started as projects turned into friendships, and those friendships keep producing work &mdash; over years, over&nbsp;decades.
     </p>
   </section>
 
@@ -995,11 +1007,10 @@
         <span class="exp-role">Creative Director &amp;&nbsp;Consultant</span>
         <span class="exp-date">2024 &ndash; Present</span>
       </div>
-      <div class="exp-company">Independent Practice &mdash; Salt Spring&nbsp;Island</div>
+      <div class="exp-company">Independent&nbsp;Practice</div>
       <ul class="exp-details">
-        <li>Brand design, creative direction, and consultation &mdash; the same work, on my own&nbsp;terms</li>
-        <li>On-call creative director for K'naan &mdash; a partnership that started over a decade ago, still actively consulted for creative direction on every&nbsp;project</li>
-        <li>The new AI tools put me right back in the basement, staying up all night, building everything I can&nbsp;imagine</li>
+        <li>Creative direction, brand strategy, and consultation for select&nbsp;clients</li>
+        <li>Integrating AI tools into established creative workflows &mdash; same standards, expanded&nbsp;capability</li>
       </ul>
     </div>
 
@@ -1010,9 +1021,9 @@
       </div>
       <div class="exp-company">"Between the Mountain and the Sky" &mdash; Jeremy Power&nbsp;Regimbal</div>
       <ul class="exp-details">
-        <li>Cut all social content, built graphics and promos for the film's Oscar-qualifying campaign &mdash; Instagram, Facebook, and&nbsp;beyond</li>
+        <li>Led all social content and campaign creative for the film's Oscar-qualifying run &mdash; Instagram, Facebook, and&nbsp;beyond</li>
         <li>Endorsement videos featuring Edward Norton, Benedict Cumberbatch, and Ricki&nbsp;Lake</li>
-        <li>Also recut a short film for Jeremy following the&nbsp;campaign</li>
+        <li>Continued the collaboration with a short film following the&nbsp;campaign</li>
       </ul>
     </div>
 
@@ -1023,7 +1034,7 @@
       </div>
       <div class="exp-company">Maximum Effort &mdash; Ryan&nbsp;Reynolds</div>
       <ul class="exp-details">
-        <li>Campaigns for Aviation Gin, Mint Mobile, Wrexham FC, Betty Booze, Bolt, Dave&nbsp;&amp;&nbsp;Buster's, and&nbsp;Fubo</li>
+        <li>Campaigns for Ryan's brands and a rotating roster of outside clients &mdash; always fast, always&nbsp;polished</li>
         <li>Everything had Ryan's name on it, so everything had to be right. The pace was relentless and the bar was&nbsp;taste</li>
         <li>A team that genuinely loved the work &mdash; you could feel it in every&nbsp;cut</li>
       </ul>
@@ -1036,8 +1047,8 @@
       </div>
       <div class="exp-company">"Between the Mountain and the Sky" &mdash; IMDB&nbsp;9.0</div>
       <ul class="exp-details">
-        <li>Close to 5 years shaping a thousand hours of raw footage into a finished&nbsp;film</li>
-        <li>Travelled to Nepal, lived at the children's home for a month. The film was better because I was&nbsp;there</li>
+        <li>Led the editorial vision across nearly 5 years &mdash; shaping a thousand hours of raw footage into a&nbsp;film</li>
+
       </ul>
     </div>
 
@@ -1048,7 +1059,8 @@
       </div>
       <div class="exp-company">DAIS&nbsp;Creative</div>
       <ul class="exp-details">
-        <li>Ran the post side of the house &mdash; the work, the people, the&nbsp;output</li>
+        <li>Oversaw all post-production &mdash; managing editors, colourists, and delivery across concurrent&nbsp;projects</li>
+        <li>Training, building systems, on-set show running, and quality assurance across every&nbsp;stage</li>
       </ul>
     </div>
 
@@ -1059,11 +1071,10 @@
       </div>
       <div class="exp-company">Freelance &mdash; Ben Affleck, K'naan, Naomi Klein, Sol&nbsp;Guy</div>
       <ul class="exp-details">
-        <li>Directed and edited "Ben Affleck on the Meaning of Life" and NGO films for Eastern Congo Initiative and&nbsp;USAID</li>
-        <li>A decade with K'naan &mdash; travelling as his editor across Africa, Europe, the Middle East. That partnership never ended; I'm still his on-call creative director, consulted on every&nbsp;project</li>
+        <li>Developed and directed multiple projects with Ben Affleck &mdash; including films for his Eastern Congo Initiative and&nbsp;USAID</li>
+        <li>A decade with K'naan &mdash; filming, editing, posting tour content and video content across the globe, a constant outflow of work before YouTube even&nbsp;existed</li>
         <li>Worked alongside Naomi Klein and Sol Guy on activist and documentary&nbsp;projects</li>
-        <li>80+ credits &mdash; narrative, documentary, music video, branded content, commercial,&nbsp;corporate</li>
-        <li>Published photography in People&nbsp;Magazine</li>
+        <li>80+ credits &mdash; narrative, documentary, music video, branded content, and&nbsp;commercial</li>
       </ul>
     </div>
 
@@ -1072,11 +1083,10 @@
         <span class="exp-role">Creative Director &amp; Brand&nbsp;Designer</span>
         <span class="exp-date">2015 &ndash; Present</span>
       </div>
-      <div class="exp-company">Salt Spring Collective&nbsp;Media</div>
+      <div class="exp-company">Contract &amp;&nbsp;Consultation</div>
       <ul class="exp-details">
-        <li>Built a collective of 6&ndash;10 rotating artisans, designers, and media people &mdash; I find the right talent for each project and we make the thing&nbsp;together</li>
-        <li>Brand systems for Van Solo, Convergence Festival, Hayan Collection, Chasm Audio, Gaia Foods, Bettermoo(d), and more &mdash; logos, typography, packaging, the whole&nbsp;world</li>
-        <li>Every project starts the same way: house calls, studio visits, long conversations. I need to understand who you are before I can show you what you look&nbsp;like</li>
+        <li>Brand systems for Van Solo, Convergence Festival, Hayan Collection, Chasm Audio, Gaia Foods, Bettermoo(d), and more &mdash; logos, typography, packaging, full brand&nbsp;worlds</li>
+        <li>Creative direction from discovery through delivery &mdash; setting the vision and guiding every element to&nbsp;completion</li>
       </ul>
     </div>
   </section>
@@ -1097,19 +1107,19 @@
       </div>
       <div class="collab-card">
         <div class="collab-name">K'naan</div>
-        <div class="collab-desc">A decade together &mdash; touring editor, documentarian, and still his on-call creative&nbsp;director</div>
+        <div class="collab-desc">A decade together &mdash; touring editor and&nbsp;documentarian</div>
       </div>
       <div class="collab-card">
         <div class="collab-name">Naomi&nbsp;Klein</div>
-        <div class="collab-desc">Activist and documentary work with Sol&nbsp;Guy</div>
+        <div class="collab-desc">Activist and documentary&nbsp;work</div>
       </div>
       <div class="collab-card">
-        <div class="collab-name">People&nbsp;Magazine</div>
-        <div class="collab-desc">Published&nbsp;photography</div>
+        <div class="collab-name">Sol&nbsp;Guy</div>
+        <div class="collab-desc">Fifteen years of ongoing&nbsp;collaborations</div>
       </div>
       <div class="collab-card">
-        <div class="collab-name">Deloitte &amp;&nbsp;Autodesk</div>
-        <div class="collab-desc">Branded content and commercial&nbsp;work</div>
+        <div class="collab-name">Joaquin&nbsp;Phoenix</div>
+        <div class="collab-desc">Documentary project,&nbsp;2005</div>
       </div>
     </div>
   </section>
@@ -1122,29 +1132,29 @@
     <div class="skills-row">
       <div class="skill-block">
         <div class="skill-label">Editing &amp; Post &mdash; 30&nbsp;Years</div>
-        <div class="skill-text">Two VCRs at 14. DaVinci Resolve, Premiere, Avid, After Effects now. The tools changed but the obsession with where a cut lands never&nbsp;did.</div>
+        <div class="skill-text">DaVinci Resolve, Premiere, Avid, After Effects. From overseeing editorial departments to hands-on finishing &mdash; the instinct for where a cut lands never&nbsp;changes.</div>
       </div>
       <div class="skill-block">
         <div class="skill-label">Photography &mdash; 32&nbsp;Years</div>
-        <div class="skill-text">Started with an old Rolleiflex 35mm with a broken light meter. B&amp;W darkroom printing, Photoshop since v2.0. Published in People&nbsp;Magazine.</div>
+        <div class="skill-text">From darkroom printing to digital &mdash; Photoshop since v2.0. Published in People&nbsp;Magazine.</div>
       </div>
       <div class="skill-block">
         <div class="skill-label">Brand &amp; Graphic&nbsp;Design</div>
-        <div class="skill-text">10+ brand systems &mdash; logos, wordmarks, typography, packaging. I need to understand who you are before I can show you what you look&nbsp;like.</div>
+        <div class="skill-text">10+ brand systems &mdash; logos, wordmarks, typography, packaging. Setting the visual language and directing teams through to final&nbsp;delivery.</div>
       </div>
     </div>
     <div class="skills-row">
       <div class="skill-block">
         <div class="skill-label">Animation &amp; Motion</div>
-        <div class="skill-text">Since Saturday morning cartoons, I've been moved by animation's ability to take us anywhere. After Effects, Blender, from VHS effects to&nbsp;now.</div>
+        <div class="skill-text">After Effects, Blender, motion graphics &mdash; directing animation from concept through&nbsp;delivery.</div>
       </div>
       <div class="skill-block">
         <div class="skill-label">Creative&nbsp;Direction</div>
-        <div class="skill-text">I build the framework so a team can make the thing together. The vision, the standard, and the space for everyone to do their best&nbsp;work.</div>
+        <div class="skill-text">Setting the vision, establishing the standard, and leading teams to do their best&nbsp;work.</div>
       </div>
       <div class="skill-block">
         <div class="skill-label">AI &amp; Emerging&nbsp;Tools</div>
-        <div class="skill-text">The new AI tools put me right back in the basement, staying up all night, building everything I can imagine. Same obsession, new&nbsp;medium.</div>
+        <div class="skill-text">Integrating AI into professional creative workflows &mdash; expanding what a team can deliver without compromising the&nbsp;standard.</div>
       </div>
     </div>
   </section>
@@ -1153,7 +1163,7 @@
   <!-- TOOLS -->
   <section>
     <div class="section-label">Tools</div>
-    <div class="section-title">What's in the&nbsp;kit.</div>
+    <div class="section-title">Core&nbsp;tools.</div>
 
     <div class="skills-row">
       <div class="skill-block">
@@ -1190,7 +1200,7 @@
       <div class="edu-item">
         <div class="edu-year">1994</div>
         <div class="edu-name">Self-taught</div>
-        <div class="edu-desc">Two VCRs in a basement. And never&nbsp;stopped</div>
+        <div class="edu-desc">Making films since&nbsp;1995</div>
       </div>
     </div>
   </section>
@@ -1225,8 +1235,8 @@
     slice.innerHTML = innerHTML;
 
     // Each slice shows only its horizontal band
-    const top = (i / NUM_SLICES) * 100;
-    const bottom = ((NUM_SLICES - i - 1) / NUM_SLICES) * 100;
+    const top = Math.max(0, (i / NUM_SLICES) * 100 - 1);
+    const bottom = Math.max(0, ((NUM_SLICES - i - 1) / NUM_SLICES) * 100 - 1);
     slice.style.clipPath = `inset(${top}% 0 ${bottom}% 0)`;
 
     wrapper.appendChild(slice);
