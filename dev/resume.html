@@ -161,9 +161,20 @@
     padding: 120px 0 80px;
   }
 
-  /* Background RESUMÉ — removed */
   .bg-resume-label {
-    display: none;
+    position: fixed;
+    top: 2%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Urbanist', sans-serif;
+    font-weight: 800;
+    font-size: clamp(8rem, 18vw, 16rem);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(254,249,240,0.1);
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
   }
 
   .hero-name-wrapper {
@@ -754,7 +765,6 @@
     }
     .scroll-hint { display: none; }
     .ghost-name, .ghost-cascade { display: none; }
-    .bg-resume-label { display: none; }
 
     /* Sections */
     section { padding: 40px 0; }
@@ -830,7 +840,6 @@
       padding: 16px 0 10px;
     }
 
-    .bg-resume-label { display: none !important; }
 
     .hero-name-wrapper {
       opacity: 1 !important;
