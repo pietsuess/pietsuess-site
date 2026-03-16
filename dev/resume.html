@@ -157,8 +157,8 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    padding: 80px 0 80px;
+    justify-content: center;
+    padding: 120px 0 80px;
   }
 
   .bg-resume-label {
@@ -815,22 +815,11 @@
   @media print {
     @page { size: letter; margin: 0.3in; }
 
-    *, *::before, *::after {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-
     html { font-size: 9.5px; }
-    body { background: #1a0e2e; }
+    body { background: #fff !important; color: #111 !important; }
 
-    .bg-gradient {
-      position: fixed;
-      animation: none;
-      background: linear-gradient(135deg, #1a0e2e 0%, #4a1942 35%, #b8475a 65%, #f4c542 100%);
-      background-size: 100% 100%;
-    }
-
-    .bg-gradient::after, .print-bar, .scroll-hint,
+    .bg-gradient, .bg-gradient::after, .bg-resume-label,
+    .print-bar, .scroll-hint,
     .name-slice, .ghost-name, .ghost-cascade { display: none !important; }
 
     .container { padding: 0 20px; max-width: none; }
@@ -852,6 +841,26 @@
     .hero-name {
       font-size: 2.8rem;
       visibility: visible !important;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: #111 !important;
+      background-clip: unset !important;
+      color: #111 !important;
+    }
+
+    .section-label { color: #666 !important; }
+    .section-title { color: #111 !important; }
+    .summary-text, .exp-details li, .exp-company,
+    .collab-desc, .skill-text, .edu-desc { color: #333 !important; }
+    .exp-role, .collab-name, .skill-label, .edu-name { color: #111 !important; }
+    .exp-date { color: #555 !important; background: #eee !important; }
+    .hero-title { color: #444 !important; }
+    .hero-years { color: #666 !important; background: rgba(0,0,0,0.08) !important; }
+
+    .exp-card, .collab-card, .skill-block, .digital-highlight {
+      background: rgba(0,0,0,0.03) !important;
+      border: 1px solid #ddd !important;
+      backdrop-filter: none !important;
     }
 
     .hero-title-row {
