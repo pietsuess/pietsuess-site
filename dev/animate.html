@@ -108,7 +108,7 @@
 
     <!-- 4. Animated ECI — Ben Affleck -->
     <div class="anim-item fade-in">
-      <video src="videos/AnimatedECI.mp4#t=12" autoplay muted playsinline data-loop-start="12"></video>
+      <video src="videos/AnimatedECI.mp4" autoplay muted loop playsinline></video>
     </div>
 
     <!-- 5. Maximum Effort — Dumpster Moon -->
@@ -147,7 +147,7 @@
     </div>
 
     <!-- Chasm Concert Sound -->
-    <div class="anim-item fade-in" data-name="Chasm" style="grid-column:11/15; grid-row:2/12;">
+    <div class="anim-item fade-in" data-name="Chasm" style="grid-column:7/11; grid-row:37/47;">
       <video src="videos/Chasm_ConcertSound.mp4" autoplay muted loop playsinline></video>
     </div>
 
@@ -177,12 +177,12 @@
     </div>
 
     <!-- Unveil -->
-    <div class="anim-item fade-in" data-name="Unveil" style="grid-column:10/18; grid-row:21/25;">
+    <div class="anim-item fade-in" data-name="Unveil" style="grid-column:10/18; grid-row:20/24;">
       <canvas id="unveilCanvas" style="width:100%;height:100%;display:block;"></canvas>
     </div>
 
     <!-- Line VHS -->
-    <div class="anim-item fade-in" data-name="Line VHS" style="grid-column:14/19; grid-row:27/36;">
+    <div class="anim-item fade-in" data-name="Line VHS" style="grid-column:14/19; grid-row:25/34;">
       <img src="images/Line_VHS_2.gif" alt="Line VHS">
     </div>
 
@@ -197,17 +197,17 @@
     </div>
 
     <!-- Blooming -->
-    <div class="anim-item fade-in" data-name="Blooming" style="grid-column:2/9; grid-row:46/53;">
+    <div class="anim-item fade-in" data-name="Blooming" style="grid-column:2/9; grid-row:48/55;">
       <video src="videos/Blooming.mp4" autoplay muted loop playsinline></video>
     </div>
 
     <!-- Godot Game -->
-    <div class="anim-item fade-in" data-name="Godot Game" style="grid-column:11/18; grid-row:38/48;">
+    <div class="anim-item fade-in" data-name="Godot Game" style="grid-column:12/19; grid-row:37/47;">
       <video src="videos/GodotGame.mp4" autoplay muted loop playsinline></video>
     </div>
 
     <!-- Forest Heart Bottle -->
-    <div class="anim-item fade-in" data-name="Forest Heart" style="grid-column:3/8; grid-row:37/45;">
+    <div class="anim-item fade-in" data-name="Forest Heart" style="grid-column:1/6; grid-row:37/45;">
       <img src="images/ForestHeart_Bottle_Loop_1.gif" alt="Forest Heart Bottle Loop">
     </div>
 
@@ -217,17 +217,17 @@
     </div>
 
     <!-- Squiggles Logo Bounce -->
-    <div class="anim-item fade-in" data-name="Squiggles Bounce" style="grid-column:1/6; grid-row:54/62;">
+    <div class="anim-item fade-in" data-name="Squiggles Bounce" style="grid-column:3/9; grid-row:56/67;">
       <img src="images/Squiggles_Logo_Bounce.gif" alt="Squiggles Logo Bounce">
     </div>
 
     <!-- Trophy Tour Opener — K'naan -->
-    <div class="anim-item fade-in" data-name="Trophy Tour" style="grid-column:8/17; grid-row:56/64;">
+    <div class="anim-item fade-in" data-name="Trophy Tour" style="grid-column:11/19; grid-row:56/63;">
       <video src="videos/TrophyTour_OpenerTitle.mp4" autoplay muted loop playsinline></video>
     </div>
 
     <!-- Chasm 3D Logo -->
-    <div class="anim-item fade-in" data-name="Chasm 3D" style="grid-column:3/10; grid-row:65/78;">
+    <div class="anim-item fade-in" data-name="Chasm 3D" style="grid-column:11/15; grid-row:1/11;">
       <video src="videos/Chasm_3DLogo.mp4" autoplay muted loop playsinline></video>
     </div>
 
@@ -266,9 +266,23 @@
 
   const canvas = document.getElementById('unveilCanvas');
   const ctx = canvas.getContext('2d');
+  const container = canvas.parentElement;
+
+  let hovering = false;
+  let mouseProgress = 0;
+  let frozenProgress = 0;
+  let blendFactor = 0;
+  const blendSpeed = 0.08;
+
+  container.addEventListener('mouseenter', () => { hovering = true; });
+  container.addEventListener('mouseleave', () => { hovering = false; });
+  container.addEventListener('mousemove', (e) => {
+    const rect = container.getBoundingClientRect();
+    mouseProgress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  });
 
   function resize() {
-    const rect = canvas.parentElement.getBoundingClientRect();
+    const rect = container.getBoundingClientRect();
     canvas.width = rect.width * window.devicePixelRatio;
     canvas.height = rect.height * window.devicePixelRatio;
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
@@ -278,9 +292,39 @@
 
   function ltrOffset(d) { return (d.x - minX) / logoW; }
 
+  function dotRadius(t, offset, maxR, minR) {
+    const growDur = 3.5, dotGrow = 1.0;
+    const shrinkDelay = 2.2, shrinkDur = 3.5, dotShrink = 1.0;
+    const loopLen = shrinkDelay + shrinkDur;
+    const lt = t % loopLen;
+
+    const growDelayT = offset * (growDur - dotGrow);
+    const growProgress = Math.max(0, Math.min(1, (lt - growDelayT) / dotGrow));
+    const growEased = 1 - Math.pow(1 - growProgress, 3);
+
+    const shrinkStart = shrinkDelay + offset * (shrinkDur - dotShrink);
+    const shrinkProgress = Math.max(0, Math.min(1, (lt - shrinkStart) / dotShrink));
+    const shrinkEased = Math.pow(shrinkProgress, 3);
+
+    return minR + (maxR - minR) * growEased - (maxR - minR) * shrinkEased;
+  }
+
+  function mouseRadius(offset, maxR, minR) {
+    const dist = Math.abs(offset - mouseProgress);
+    const maxDist = Math.max(mouseProgress, 1 - mouseProgress);
+    const normDist = maxDist > 0 ? dist / maxDist : 0;
+    const falloff = 1 - normDist;
+    const eased = falloff * falloff * (3 - 2 * falloff);
+    const minMouseSize = 10;
+    const maxMouseSize = 65;
+    const size = minMouseSize + (maxMouseSize - minMouseSize) * eased;
+    const sizeR = (size / 2) * (maxR / (50 / 2));
+    return Math.max(minR, sizeR);
+  }
+
   function animate(time) {
     requestAnimationFrame(animate);
-    const rect = canvas.parentElement.getBoundingClientRect();
+    const rect = container.getBoundingClientRect();
     const w = rect.width, h = rect.height;
     if (canvas.width !== w * window.devicePixelRatio || canvas.height !== h * window.devicePixelRatio) {
       canvas.width = w * window.devicePixelRatio;
@@ -288,6 +332,9 @@
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     }
     ctx.clearRect(0, 0, w, h);
+
+    blendFactor += (hovering ? 1 : 0 - blendFactor) * blendSpeed;
+    blendFactor = Math.max(0, Math.min(1, blendFactor));
 
     const fitW = w * 0.9;
     const fitH = h * 0.9;
@@ -299,10 +346,7 @@
     const offsetY = h / 2;
 
     const maxSize = 50;
-    const growDur = 3.5, dotGrow = 1.0;
-    const shrinkDelay = 2.2, shrinkDur = 3.5, dotShrink = 1.0;
-    const loopLen = shrinkDelay + shrinkDur;
-    const t = (time * 0.001) % loopLen;
+    const t = time * 0.001;
 
     ctx.fillStyle = '#ffffff';
 
@@ -314,15 +358,9 @@
       const minR = (1 / 2) * scale;
       const offset = ltrOffset(d);
 
-      const growDelayT = offset * (growDur - dotGrow);
-      const growProgress = Math.max(0, Math.min(1, (t - growDelayT) / dotGrow));
-      const growEased = 1 - Math.pow(1 - growProgress, 3);
-
-      const shrinkStart = shrinkDelay + offset * (shrinkDur - dotShrink);
-      const shrinkProgress = Math.max(0, Math.min(1, (t - shrinkStart) / dotShrink));
-      const shrinkEased = Math.pow(shrinkProgress, 3);
-
-      const r = minR + (maxR - minR) * growEased - (maxR - minR) * shrinkEased;
+      const autoR = dotRadius(t, offset, maxR, minR);
+      const mouseR = mouseRadius(offset, maxR, minR);
+      const r = autoR * (1 - blendFactor) + mouseR * blendFactor;
 
       if (r > 0.5) {
         ctx.beginPath();
