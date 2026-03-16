@@ -825,7 +825,7 @@ body.menu-open .mobile-nav-overlay {
   gap: 0;
   max-width: none;
   margin: 0 auto;
-  padding: 0 5vw 60px;
+  padding: 0 5% 60px;
 }
 
 .portfolio-grid.cols-3 {
