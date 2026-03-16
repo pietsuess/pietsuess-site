@@ -929,9 +929,9 @@ body.menu-open .mobile-nav-overlay {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 22px;
-  max-width: 1400px;
+  max-width: none;
   margin: 0 auto;
-  padding: 0 4vw 40px;
+  padding: 0 5% 40px;
 }
 
 .animate-grid-mixed {
