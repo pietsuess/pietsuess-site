@@ -2748,13 +2748,17 @@ body.menu-open .mobile-nav-overlay {
   }
 
   .bg-zone-label {
-    font-size: clamp(3rem, 22vw, 8rem);
+    font-size: clamp(3rem, 18vw, 6rem);
     top: 5%;
     color: rgba(254,249,240,0.12);
   }
 
   .photo-page .bg-zone-label {
     color: rgba(254,249,240,0.12);
+  }
+
+  .edit-page .bg-zone-label {
+    font-size: clamp(3rem, 22vw, 8rem);
   }
 
   .design-page .bg-zone-label {
