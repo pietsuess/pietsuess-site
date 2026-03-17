@@ -1686,17 +1686,17 @@ body.menu-open .mobile-nav-overlay {
 }
 
 .contact-image .edit-bio-resume {
-  padding: 6px 12px;
-  gap: 8px;
-  margin-top: 14px;
+  padding: 10px 19px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .contact-image .edit-bio-resume img {
-  width: 32px;
+  width: 51px;
 }
 
 .contact-image .edit-bio-resume span {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
 }
 
 @media (max-width: 768px) {
