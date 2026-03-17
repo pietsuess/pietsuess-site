@@ -953,8 +953,10 @@ body.menu-open .mobile-nav-overlay {
 .animate-grid-mixed {
   display: grid;
   grid-template-columns: repeat(18, 1fr);
-  grid-auto-rows: 3.5vw;
+  grid-auto-rows: 40px;
   gap: 8px;
+  max-width: 1400px;
+  margin: 0 auto;
   align-items: stretch;
   padding-bottom: 0;
 }
