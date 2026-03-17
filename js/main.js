@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('touchmove', (e) => {
       const dy = touchStartY - e.touches[0].clientY;
       touchStartY = e.touches[0].clientY;
-      virtualScroll = Math.max(0, virtualScroll + dy);
+      virtualScroll += dy;
       requestAnimationFrame(updatePortfolio);
     }, { passive: true });
 
