@@ -1310,7 +1310,7 @@ body.menu-open .mobile-nav-overlay {
 /* Accent rule below title — gold */
 .design-rule-narrow {
   width: 200px;
-  margin: 0 auto 36px;
+  margin: 0 auto 40px;
   border: none;
   height: 2px;
   background: rgba(26,14,46,0.4);
@@ -1327,7 +1327,7 @@ body.menu-open .mobile-nav-overlay {
   text-transform: uppercase;
   letter-spacing: 3px;
   text-align: center;
-  margin: 0 0 16px;
+  margin: 0 0 24px;
   color: var(--ink);
 }
 
@@ -1338,7 +1338,7 @@ body.menu-open .mobile-nav-overlay {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-radius: 16px;
-  padding: 50px 44px;
+  padding: 56px 44px;
   margin-bottom: 36px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -1362,7 +1362,7 @@ body.menu-open .mobile-nav-overlay {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 36px;
+  margin-bottom: 40px;
 }
 
 .design-project-images {
@@ -1372,7 +1372,7 @@ body.menu-open .mobile-nav-overlay {
   justify-content: center;
   width: 100%;
   max-width: 520px;
-  margin-bottom: 28px;
+  margin-bottom: 34px;
 }
 
 .design-project-images img {
