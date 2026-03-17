@@ -240,6 +240,7 @@ button {
 
 .design-page .edit-bio-inner p {
   color: rgba(26,14,46,0.7);
+  max-width: 100%;
 }
 
 .design-page .bg-gradient {
