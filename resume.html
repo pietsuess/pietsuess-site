@@ -716,6 +716,16 @@
     position: relative;
   }
 
+  .edu-wheel::after {
+    content: '';
+    position: absolute;
+    top: -80px;
+    bottom: -80px;
+    left: -30px;
+    right: -30px;
+    cursor: pointer;
+  }
+
   .edu-wheel-body {
     position: absolute;
     inset: 0;
@@ -900,16 +910,22 @@
     background: rgba(244,197,66,0.08);
   }
 
-  body { overflow-x: hidden; }
+  html, body { overflow-x: hidden; }
 
   /* ========== RESPONSIVE ========== */
   @media (max-width: 768px) {
     .container { padding: 0 20px; }
 
-    /* Hero */
+    /* Resumé bg label — fit mobile width */
+    .bg-resume-label {
+      font-size: clamp(6rem, 18vw, 12rem);
+      top: 3%;
+    }
+
+    /* Hero — push content down */
     .hero {
       min-height: auto;
-      padding: 100px 0 60px;
+      padding: 140px 0 40px;
     }
     .hero-name {
       font-size: clamp(2.5rem, 12vw, 4rem);
@@ -933,10 +949,11 @@
       gap: 6px 12px;
     }
     .scroll-hint { display: none; }
-    .ghost-name, .ghost-cascade { display: none; }
+    .ghost-name, .ghost-cascade, .ghost-spinner { display: none; }
+    .page-ruler { display: none !important; }
 
     /* Sections */
-    section { padding: 40px 0; }
+    section { padding: 30px 0; }
     .section-title { font-size: clamp(1.4rem, 5vw, 2rem); margin-bottom: 24px; }
 
     /* Experience cards */
@@ -1743,33 +1760,31 @@
   const spinner = document.getElementById('ghostSpinner');
   if (!spinner) return;
 
-  // Fixed position, centered vertically. Drifts left-to-right with 2 full rotations.
-  // Activates after the cascade lines (which end at ~3650px).
-  const ENTER_SCROLL = 3650;
-  const SCROLL_RANGE = 2800; // scroll distance over which it crosses the screen
+  // Fixed position, centered vertically. Starts off-screen left, drifts right.
+  // Keeps spinning as long as you keep scrolling — no cap.
+  const ENTER_SCROLL = 3000;
+  const SPEED = 0.0004; // progress per pixel scrolled — controls drift speed
+  const ROTATION_RATE = 720; // degrees per 1.0 progress
 
   function updateSpinner() {
     const scrollY = window.scrollY;
     const vw = window.innerWidth;
-    const progress = (scrollY - ENTER_SCROLL) / SCROLL_RANGE; // 0 → 1
+    const progress = (scrollY - ENTER_SCROLL) * SPEED;
 
-    if (progress < 0 || progress > 1) {
+    if (progress < 0) {
       spinner.style.opacity = '0';
       return;
     }
 
-    // Drift from off-screen left to off-screen right
+    // Drift from off-screen left — keeps going as you scroll
     const x = -400 + progress * (vw + 600);
 
-    // 2 full rotations (720°)
-    const rotation = progress * 720;
-
-    // No fade — constant opacity, comes from off-screen
-    let op = 0.1;
+    // Continuous rotation
+    const rotation = progress * ROTATION_RATE;
 
     spinner.style.transform = `translate(${x}px, -50%) rotate(${rotation}deg)`;
     spinner.style.filter = `blur(0.25px)`;
-    spinner.style.opacity = op;
+    spinner.style.opacity = 0.1;
   }
 
   let spinTicking = false;
@@ -2128,6 +2143,44 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     // Freeze in place — no snap-back
     targetAngle = angle;
     animating = false;
+  });
+
+  // Touch support — direct drag to scroll
+  let touchStartY = 0;
+  let touchStartAngle = 0;
+  let dragging = false;
+
+  wheel.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    dragging = true;
+    touchStartY = e.touches[0].clientY;
+    touchStartAngle = angle;
+    const rect = wheel.getBoundingClientRect();
+    mouseRelY = (e.touches[0].clientY - rect.top) / rect.height;
+  }, { passive: false });
+
+  wheel.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const deltaY = e.touches[0].clientY - touchStartY;
+    const dragSensitivity = 0.008;
+    angle = touchStartAngle + deltaY * dragSensitivity;
+    // Clamp to valid range
+    angle = Math.max(0, Math.min(angle, (items.length - 1) * angleStep));
+    // Update marker
+    const rect = wheel.getBoundingClientRect();
+    mouseRelY = (e.touches[0].clientY - rect.top) / rect.height;
+    render(angle);
+  }, { passive: false });
+
+  wheel.addEventListener('touchend', () => {
+    dragging = false;
+    hovering = false;
+    scrollSpeed = 0;
+    // Snap to nearest item
+    const nearest = Math.round(angle / angleStep) * angleStep;
+    targetAngle = nearest;
+    startAnim();
   });
 
   render(angle);
