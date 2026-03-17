@@ -974,10 +974,10 @@
 
     .container { padding: 0 20px; max-width: none; }
 
-    /* Hero — compact */
+    /* Hero — breathe at top */
     .hero {
       min-height: auto;
-      padding: 10px 0 4px;
+      padding: 20px 0 8px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -1081,8 +1081,8 @@
       page-break-inside: avoid;
     }
 
-    .section-label { font-size: 0.5rem; margin-bottom: 2px; }
-    .section-title { font-size: 0.95rem; margin-bottom: 4px; }
+    .section-label { font-size: 0.5rem; margin-bottom: 2px; page-break-after: avoid; }
+    .section-title { font-size: 0.95rem; margin-bottom: 4px; page-break-after: avoid; }
     .summary-section { padding-top: 3px; }
     .summary-section .section-title { margin-bottom: 4px; }
 
@@ -1138,13 +1138,8 @@
     .edu-name { font-size: 0.8rem; }
     .edu-desc { font-size: 0.7rem; }
 
-    /* Footer */
-    .footer {
-      opacity: 1 !important;
-      transform: none !important;
-      padding: 4px 0;
-    }
-    .footer-link { font-size: 0.6rem; padding: 4px 12px; color: #888 !important; border-color: #ddd !important; }
+    /* Footer — hide in print */
+    .footer { display: none !important; }
   }
 </style>
 </head>
