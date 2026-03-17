@@ -964,18 +964,26 @@
 
     .container { padding: 0 20px; max-width: none; }
 
-    /* Hero — compact */
+    /* Hero — compact, title+years on top, name below */
     .hero {
       min-height: auto;
       padding: 16px 0 10px;
+      display: flex;
+      flex-direction: column;
     }
 
+    .hero-title-row {
+      order: 1;
+      margin-bottom: 2px;
+      opacity: 1; transform: none; animation: none;
+    }
 
     .hero-name-wrapper {
+      order: 2;
       opacity: 1 !important;
       transform: none !important;
       animation: none !important;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .hero-name {
@@ -989,14 +997,25 @@
       -webkit-print-color-adjust: exact;
     }
 
+    .hero-title {
+      font-size: 0.85rem;
+      color: #4a1942 !important;
+    }
+
+    .hero-years {
+      font-size: 0.65rem;
+      color: #e8735a !important;
+      background: rgba(232,115,90,0.1) !important;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
     .section-label { color: #b8860b !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .section-title { color: #2a1a3e !important; }
     .summary-text, .exp-details li, .exp-company,
     .collab-desc, .skill-text, .edu-desc { color: #333 !important; }
     .exp-role, .collab-name, .skill-label, .edu-name { color: #2a1a3e !important; }
     .exp-date { color: #7a2848 !important; background: rgba(122,40,72,0.08) !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    .hero-title { color: #4a1942 !important; }
-    .hero-years { color: #e8735a !important; background: rgba(232,115,90,0.1) !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 
     .exp-card, .collab-card, .skill-block, .digital-highlight {
       background: rgba(42,26,62,0.03) !important;
@@ -1004,30 +1023,6 @@
       backdrop-filter: none !important;
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
-    }
-
-    .hero-name-wrapper {
-      order: 2;
-      margin-bottom: 2px;
-    }
-
-    .hero-title-row {
-      order: 1;
-      margin-bottom: 2px;
-      opacity: 1; transform: none; animation: none;
-    }
-
-    .hero {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .hero-title {
-      font-size: 0.85rem;
-    }
-
-    .hero-years {
-      font-size: 0.65rem;
     }
 
     .hero-contact {
