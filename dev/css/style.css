@@ -226,6 +226,15 @@ button {
   background: none;
 }
 
+.design-page .edit-bio-inner {
+  background: rgba(255,255,255,0.35);
+  border: 1px solid rgba(26,14,46,0.08);
+}
+
+.design-page .edit-bio-inner p {
+  color: rgba(26,14,46,0.7);
+}
+
 .design-page .bg-gradient {
   background: linear-gradient(135deg,
     #FAFFA5 0%,
@@ -1272,7 +1281,7 @@ body.menu-open .mobile-nav-overlay {
 }
 
 .design-projects {
-  padding: 20px 4vw 60px;
+  padding: 20px 4vw 120px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -1321,8 +1330,8 @@ body.menu-open .mobile-nav-overlay {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-radius: 16px;
-  padding: 40px 36px;
-  margin-bottom: 30px;
+  padding: 50px 44px;
+  margin-bottom: 36px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -1345,7 +1354,7 @@ body.menu-open .mobile-nav-overlay {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 36px;
 }
 
 .design-project-images {

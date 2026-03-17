@@ -573,7 +573,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const groundY = h * 0.75;
         const centerX = w * 0.5;
-        const color = 'rgba(254,249,240,0.5)';
+        const isDesign = document.body.classList.contains('design-page');
+        const color = isDesign ? 'rgba(26,14,46,0.15)' : 'rgba(254,249,240,0.5)';
 
         // Big square walks right on treadmill
         walkTreadmill(ctx, centerX - bigS * 0.6, groundY, bigS, elapsed * 60, color);
