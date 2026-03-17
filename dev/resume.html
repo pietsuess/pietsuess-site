@@ -248,6 +248,25 @@
     will-change: transform;
   }
 
+  /* Ghost #3 — large spinning drift */
+  .ghost-spinner {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    font-family: 'Urbanist', sans-serif;
+    font-weight: 800;
+    font-size: clamp(6rem, 14vw, 12rem);
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: linear-gradient(135deg, var(--cream) 0%, var(--gold) 60%, var(--coral) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
   /* Ghost name #1 — right side, lens blur to clear, parallax */
   .ghost-name {
     position: fixed;
@@ -967,7 +986,7 @@
 
     .bg-gradient, .bg-gradient::after, .bg-resume-label,
     .print-bar, .scroll-hint,
-    .name-slice, .ghost-name, .ghost-cascade,
+    .name-slice, .ghost-name, .ghost-cascade, .ghost-spinner,
     .page-ruler { display: none !important; }
 
     svg { display: none !important; }
@@ -1157,6 +1176,7 @@
 <div class="ghost-name" id="ghost1">Piet Suess</div>
 <div class="ghost-cascade" id="ghost2"></div>
 <div class="bg-resume-label" id="bgResume">Resum&eacute;</div>
+<div class="ghost-spinner" id="ghostSpinner">Piet Suess</div>
 
 <div class="print-bar">
   <a href="edit.html" class="back-btn">&larr; Back</a>
@@ -1460,7 +1480,7 @@
           <div class="edu-item">
             <div class="edu-year">1983</div>
             <div class="edu-name">Youth Leadership</div>
-            <div class="edu-desc">Leading a core team of three in&nbsp;mischief</div>
+            <div class="edu-desc">Leading a core team of three into&nbsp;mischief</div>
           </div>
           <div class="edu-item edu-endpoint">
             <div class="edu-year">1981</div>
@@ -1714,6 +1734,61 @@
   });
 
   updateCascade();
+})();
+
+// ========== GHOST #3 — large slow-spinning drift ==========
+(function() {
+  const spinner = document.getElementById('ghostSpinner');
+  if (!spinner) return;
+
+  // Placed in the page at a fixed Y, drifts left-to-right with 2 full rotations
+  const PAGE_Y = 2600;  // vertical position in the page
+  spinner.style.top = PAGE_Y + 'px';
+  spinner.style.left = '0px';
+
+  function updateSpinner() {
+    const scrollY = window.scrollY;
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+
+    // Active zone: when the spinner's Y is visible on screen
+    const enterScroll = PAGE_Y - vh;
+    const exitScroll = PAGE_Y + vh * 0.5;
+    const range = exitScroll - enterScroll;
+    const progress = (scrollY - enterScroll) / range; // 0 → 1
+
+    if (progress < 0 || progress > 1) {
+      spinner.style.opacity = '0';
+      return;
+    }
+
+    // Drift from off-screen left to off-screen right
+    const x = -300 + progress * (vw + 300);
+
+    // 2 full rotations (720°)
+    const rotation = progress * 720;
+
+    // Fade in/out at edges
+    let op = 0.06;
+    if (progress < 0.15) op = 0.06 * (progress / 0.15);
+    else if (progress > 0.85) op = 0.06 * ((1 - progress) / 0.15);
+
+    spinner.style.transform = `translateX(${x}px) rotate(${rotation}deg)`;
+    spinner.style.opacity = op;
+  }
+
+  let spinTicking = false;
+  window.addEventListener('scroll', () => {
+    if (!spinTicking) {
+      requestAnimationFrame(() => {
+        updateSpinner();
+        spinTicking = false;
+      });
+      spinTicking = true;
+    }
+  });
+
+  updateSpinner();
 })();
 
 // ========== TEMP: PAGE RULER — rises from bottom, fades upward ==========
