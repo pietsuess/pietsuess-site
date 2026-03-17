@@ -226,6 +226,13 @@ button {
   background: none;
 }
 
+.design-page .edit-bio {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 4vw;
+}
+
 .design-page .edit-bio-inner {
   background: rgba(255,255,255,0.35);
   border: 1px solid rgba(26,14,46,0.08);
