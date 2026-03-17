@@ -1859,15 +1859,19 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
 
   let angle = 0;
   let targetAngle = 0;
-  let scrollSpeed = 0;   // current auto-scroll speed from wheel zone
+  let scrollSpeed = 0;
   let hovering = false;
   let animating = false;
+  let markerPos = 50;    // current marker %, 50 = center
 
   function render(a) {
-    // Marker nudge
-    const normalised = ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-    const markerPct = normalised / (2 * Math.PI);
-    marker.style.top = (42 + markerPct * 16) + '%';
+    // Marker follows scroll direction — drifts past center
+    // When scrolling down (positive speed), marker goes below center
+    // When scrolling up (negative speed), marker goes above center
+    const markerTarget = 50 + scrollSpeed * 1200;
+    markerPos += (markerTarget - markerPos) * 0.12;
+    // Clamp to reasonable range
+    marker.style.top = Math.max(30, Math.min(70, markerPos)) + '%';
 
     items.forEach((item, i) => {
       const itemAngle = a + i * angleStep;
