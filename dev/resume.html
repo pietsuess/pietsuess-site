@@ -940,6 +940,7 @@
     }
     .scroll-hint { display: none; }
     .ghost-name, .ghost-cascade, .ghost-spinner { display: none; }
+    .page-ruler { display: none !important; }
 
     /* Sections */
     section { padding: 30px 0; }
@@ -2132,6 +2133,40 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     hovering = false;
     scrollSpeed = 0;
     // Freeze in place — no snap-back
+    targetAngle = angle;
+    animating = false;
+  });
+
+  // Touch support — same zone-based speed as mouse
+  wheel.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    hovering = true;
+    const rect = wheel.getBoundingClientRect();
+    const touch = e.touches[0];
+    mouseRelY = (touch.clientY - rect.top) / rect.height;
+    scrollSpeed = 0;
+    startAnim();
+  }, { passive: false });
+
+  wheel.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const rect = wheel.getBoundingClientRect();
+    const touch = e.touches[0];
+    mouseRelY = (touch.clientY - rect.top) / rect.height;
+    const fromCenter = mouseRelY - 0.5;
+
+    if (Math.abs(fromCenter) < 0.1) {
+      scrollSpeed = 0;
+    } else {
+      const dir = fromCenter > 0 ? 1 : -1;
+      const magnitude = (Math.abs(fromCenter) - 0.1) / 0.4;
+      scrollSpeed = dir * magnitude * 0.008;
+    }
+  }, { passive: false });
+
+  wheel.addEventListener('touchend', () => {
+    hovering = false;
+    scrollSpeed = 0;
     targetAngle = angle;
     animating = false;
   });
