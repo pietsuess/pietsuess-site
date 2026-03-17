@@ -642,34 +642,78 @@
     margin-top: 4px;
   }
 
-  /* ========== EDUCATION ========== */
-  .edu-timeline {
+  /* ========== EDUCATION — VERTICAL DIAL ========== */
+  .edu-dial {
     position: relative;
     padding-left: 30px;
+    height: 220px;
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  .edu-timeline::before {
+  .edu-dial:active { cursor: grabbing; }
+
+  .edu-dial::before {
     content: '';
     position: absolute;
-    left: 0; top: 6px;
+    left: 0; top: 0;
     width: 1px;
-    height: calc(100% - 12px);
-    background: linear-gradient(to bottom, var(--gold), var(--coral), transparent);
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--gold), var(--coral), transparent);
+  }
+
+  .edu-dial-track {
+    position: absolute;
+    left: 30px;
+    right: 0;
+    top: 0;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .edu-dial.dragging .edu-dial-track {
+    transition: none;
   }
 
   .edu-item {
     position: relative;
-    margin-bottom: 24px;
+    padding: 14px 0;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: left center;
   }
 
   .edu-item::before {
     content: '';
     position: absolute;
-    left: -34px; top: 8px;
+    left: -34px; top: 22px;
     width: 9px; height: 9px;
     border-radius: 50%;
     background: var(--gold);
     box-shadow: 0 0 12px rgba(244,197,66,0.4);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .edu-item.active {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+
+  .edu-item.active::before {
+    transform: scale(1.4);
+    box-shadow: 0 0 20px rgba(244,197,66,0.6);
+  }
+
+  .edu-item.adjacent {
+    transform: scale(0.85);
+    opacity: 0.45;
+  }
+
+  .edu-item.far {
+    transform: scale(0.7);
+    opacity: 0;
   }
 
   .edu-year {
@@ -936,8 +980,10 @@
     .stat-label { font-size: 0.55rem; }
 
     /* Education */
-    .edu-timeline { padding-left: 16px; }
-    .edu-item { margin-bottom: 4px; }
+    .edu-dial { padding-left: 20px; height: 180px; }
+    .edu-dial-track { left: 20px; }
+    .edu-item { padding: 10px 0; }
+    .edu-item::before { left: -24px; }
     .edu-year { font-size: 0.6rem; }
     .edu-name { font-size: 0.8rem; }
     .edu-desc { font-size: 0.7rem; }
@@ -1181,26 +1227,43 @@
     </div>
   </section>
 
-  <!-- EDUCATION -->
+  <!-- EDUCATION — Vertical Dial -->
   <section>
     <div class="section-label">Education</div>
     <div class="section-title">Where it&nbsp;started.</div>
 
-    <div class="edu-timeline">
-      <div class="edu-item">
-        <div class="edu-year">2000 &ndash; 2001</div>
-        <div class="edu-name">Curious Pictures, New&nbsp;York</div>
-        <div class="edu-desc">Animation studio &mdash; moved to New York with a suitcase and&nbsp;$300</div>
-      </div>
-      <div class="edu-item">
-        <div class="edu-year">1999 &ndash; 2000</div>
-        <div class="edu-name">Vancouver Film&nbsp;School</div>
-        <div class="edu-desc">New Media / Digital Arts &mdash;&nbsp;Scholarship</div>
-      </div>
-      <div class="edu-item">
-        <div class="edu-year">1994</div>
-        <div class="edu-name">Self-taught</div>
-        <div class="edu-desc">Making films since&nbsp;1995</div>
+    <div class="edu-dial" id="eduDial">
+      <div class="edu-dial-track" id="eduDialTrack">
+        <div class="edu-item">
+          <div class="edu-year">2000 &ndash; 2001</div>
+          <div class="edu-name">Curious Pictures, New&nbsp;York</div>
+          <div class="edu-desc">Animation studio &mdash; moved to New York with a suitcase and&nbsp;$300</div>
+        </div>
+        <div class="edu-item">
+          <div class="edu-year">1999 &ndash; 2000</div>
+          <div class="edu-name">Vancouver Film&nbsp;School</div>
+          <div class="edu-desc">New Media / Digital Arts &mdash;&nbsp;Scholarship</div>
+        </div>
+        <div class="edu-item">
+          <div class="edu-year">1995</div>
+          <div class="edu-name">Self-taught</div>
+          <div class="edu-desc">Making films since&nbsp;1995</div>
+        </div>
+        <div class="edu-item">
+          <div class="edu-year">1992</div>
+          <div class="edu-name">MS&nbsp;Paint</div>
+          <div class="edu-desc">Created a line of superhero hats with pixel&nbsp;art</div>
+        </div>
+        <div class="edu-item">
+          <div class="edu-year">1991</div>
+          <div class="edu-name">Cubase</div>
+          <div class="edu-desc">Editing the&nbsp;games</div>
+        </div>
+        <div class="edu-item">
+          <div class="edu-year">~1990</div>
+          <div class="edu-name">MS-DOS</div>
+          <div class="edu-desc">Painting pixels in Paintbrush. Editing GORILLAS.BAS and NIBBLES.BAS to make them do things they weren't supposed&nbsp;to</div>
+        </div>
       </div>
     </div>
   </section>
@@ -1654,6 +1717,112 @@ const cardObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.1 });
 
 document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
+
+// ========== EDUCATION VERTICAL DIAL ==========
+(function() {
+  const dial = document.getElementById('eduDial');
+  const track = document.getElementById('eduDialTrack');
+  const items = track.querySelectorAll('.edu-item');
+  const total = items.length;
+  let current = 0;
+  let dragging = false;
+  let startY = 0;
+  let currentY = 0;
+
+  function getItemHeight() {
+    return items[0].offsetHeight + parseFloat(getComputedStyle(items[0]).paddingTop) * 2;
+  }
+
+  function update() {
+    const itemH = getItemHeight();
+    const dialH = dial.offsetHeight;
+    const centerOffset = (dialH / 2) - (itemH / 2);
+    track.style.transform = 'translateY(' + (centerOffset - current * itemH) + 'px)';
+
+    items.forEach((item, i) => {
+      item.classList.remove('active', 'adjacent', 'far');
+      if (i === current) {
+        item.classList.add('active');
+      } else if (Math.abs(i - current) === 1) {
+        item.classList.add('adjacent');
+      } else {
+        item.classList.add('far');
+      }
+    });
+  }
+
+  function snapTo(idx) {
+    current = Math.max(0, Math.min(total - 1, idx));
+    update();
+  }
+
+  // Mouse drag
+  dial.addEventListener('mousedown', (e) => {
+    dragging = true;
+    startY = e.clientY;
+    dial.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    currentY = e.clientY;
+    const dy = startY - currentY;
+    const itemH = getItemHeight();
+    const dialH = dial.offsetHeight;
+    const centerOffset = (dialH / 2) - (itemH / 2);
+    const dragOffset = centerOffset - current * itemH - dy;
+    track.style.transform = 'translateY(' + dragOffset + 'px)';
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    dial.classList.remove('dragging');
+    const dy = startY - currentY;
+    const itemH = getItemHeight();
+    const moved = Math.round(dy / itemH);
+    snapTo(current + moved);
+  });
+
+  // Touch drag
+  dial.addEventListener('touchstart', (e) => {
+    dragging = true;
+    startY = e.touches[0].clientY;
+    dial.classList.add('dragging');
+  }, { passive: true });
+
+  dial.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const dy = startY - currentY;
+    const itemH = getItemHeight();
+    const dialH = dial.offsetHeight;
+    const centerOffset = (dialH / 2) - (itemH / 2);
+    const dragOffset = centerOffset - current * itemH - dy;
+    track.style.transform = 'translateY(' + dragOffset + 'px)';
+    e.preventDefault();
+  }, { passive: false });
+
+  dial.addEventListener('touchend', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    dial.classList.remove('dragging');
+    const dy = startY - (e.changedTouches[0]?.clientY || currentY);
+    const itemH = getItemHeight();
+    const moved = Math.round(dy / itemH);
+    snapTo(current + moved);
+  });
+
+  // Mouse wheel
+  dial.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (e.deltaY > 0 && current < total - 1) snapTo(current + 1);
+    else if (e.deltaY < 0 && current > 0) snapTo(current - 1);
+  }, { passive: false });
+
+  update();
+})();
 
 </script>
 
