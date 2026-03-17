@@ -1160,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         x: Math.random() * 2000,
         y: Math.random() * 2000,
         r: 0.5 + depth * 2.5,
-        alpha: 0.3 + depth * 0.7,
+        alpha: 0.15 + depth * 0.35,
         depth: depth,
         // Orbital motion — deeper dots orbit slower
         cx: Math.random() * 2000,
