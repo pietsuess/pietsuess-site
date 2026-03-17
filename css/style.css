@@ -2759,6 +2759,7 @@ body.menu-open .mobile-nav-overlay {
   .design-page .bg-zone-label {
     font-size: clamp(3rem, 18vw, 6rem);
     color: rgba(26,14,46,0.12);
+    top: 15%;
   }
 
   .arcade-link {
