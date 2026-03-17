@@ -1862,16 +1862,14 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   let scrollSpeed = 0;
   let hovering = false;
   let animating = false;
-  let markerPos = 50;    // current marker %, 50 = center
+  let mouseRelY = 0.5;  // where the mouse is on the wheel (0=top, 1=bottom)
 
   function render(a) {
-    // Marker follows scroll direction — drifts past center
-    // When scrolling down (positive speed), marker goes below center
-    // When scrolling up (negative speed), marker goes above center
-    const markerTarget = 50 + scrollSpeed * 1200;
-    markerPos += (markerTarget - markerPos) * 0.12;
-    // Clamp to reasonable range
-    marker.style.top = Math.max(30, Math.min(70, markerPos)) + '%';
+    // Marker directly tracks mouse position on wheel — no spring-back
+    // Lower half = marker below center, upper half = marker above center
+    // Only moves in the direction you're in
+    const markerPct = 35 + mouseRelY * 30; // range: 35% to 65%
+    marker.style.top = markerPct + '%';
 
     items.forEach((item, i) => {
       const itemAngle = a + i * angleStep;
@@ -1951,22 +1949,24 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   // Center = dead zone (no scroll)
   wheel.addEventListener('mousemove', (e) => {
     const rect = wheel.getBoundingClientRect();
-    const relY = (e.clientY - rect.top) / rect.height; // 0 = top, 1 = bottom
-    const fromCenter = relY - 0.5; // -0.5 to +0.5
+    mouseRelY = (e.clientY - rect.top) / rect.height; // 0 = top, 1 = bottom
+    const fromCenter = mouseRelY - 0.5;
 
     // Dead zone in the middle 20%
     if (Math.abs(fromCenter) < 0.1) {
       scrollSpeed = 0;
     } else {
-      // Speed proportional to distance from center, capped
       const dir = fromCenter > 0 ? 1 : -1;
-      const magnitude = (Math.abs(fromCenter) - 0.1) / 0.4; // 0 to 1
+      const magnitude = (Math.abs(fromCenter) - 0.1) / 0.4;
       scrollSpeed = dir * magnitude * 0.008;
     }
   });
 
-  wheel.addEventListener('mouseenter', () => {
+  wheel.addEventListener('mouseenter', (e) => {
     hovering = true;
+    // Set marker immediately to entry position — no bounce
+    const rect = wheel.getBoundingClientRect();
+    mouseRelY = (e.clientY - rect.top) / rect.height;
     scrollSpeed = 0;
     startAnim();
   });
