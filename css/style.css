@@ -268,13 +268,6 @@ button {
 .site-content {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.site-content > .site-footer {
-  margin-top: auto;
 }
 
 
@@ -2333,7 +2326,7 @@ body.menu-open .mobile-nav-overlay {
 
 .site-footer {
   background: rgba(0,0,0,0.3);
-  padding: 20px 40px;
+  padding: 20px 40px 120px;
   position: relative;
   z-index: 1;
 }
