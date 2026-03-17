@@ -983,6 +983,7 @@
       opacity: 1 !important;
       transform: none !important;
       animation: none !important;
+      margin-top: 0;
       margin-bottom: 4px;
     }
 
@@ -1393,7 +1394,7 @@
           </div>
           <div class="edu-item">
             <div class="edu-year">1983</div>
-            <div class="edu-name">Mischief</div>
+            <div class="edu-name">Youth Leadership</div>
             <div class="edu-desc">Leading a core team of three in&nbsp;mischief</div>
           </div>
           <div class="edu-item edu-endpoint">
@@ -1987,7 +1988,9 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   wheel.addEventListener('mouseleave', () => {
     hovering = false;
     scrollSpeed = 0;
-    snapTarget();
+    // Freeze in place — no snap-back
+    targetAngle = angle;
+    animating = false;
   });
 
   render(angle);
