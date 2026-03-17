@@ -642,78 +642,133 @@
     margin-top: 4px;
   }
 
-  /* ========== EDUCATION — VERTICAL DIAL ========== */
-  .edu-dial {
-    position: relative;
-    padding-left: 30px;
+  /* ========== EDUCATION — 3D WHEEL DIAL ========== */
+  .edu-section-layout {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+
+  /* The physical wheel — left side */
+  .edu-wheel {
+    flex-shrink: 0;
+    width: 44px;
     height: 220px;
-    overflow: hidden;
+    position: relative;
     cursor: grab;
     user-select: none;
     -webkit-user-select: none;
   }
+  .edu-wheel:active { cursor: grabbing; }
 
-  .edu-dial:active { cursor: grabbing; }
-
-  .edu-dial::before {
-    content: '';
+  .edu-wheel-body {
     position: absolute;
-    left: 0; top: 0;
-    width: 1px;
-    height: 100%;
-    background: linear-gradient(to bottom, transparent, var(--gold), var(--coral), transparent);
+    inset: 0;
+    border-radius: 22px;
+    background: linear-gradient(
+      to bottom,
+      rgba(30,15,50,0.9) 0%,
+      rgba(60,30,70,0.7) 20%,
+      rgba(254,249,240,0.12) 45%,
+      rgba(254,249,240,0.18) 55%,
+      rgba(60,30,70,0.7) 80%,
+      rgba(30,15,50,0.9) 100%
+    );
+    border: 1px solid rgba(254,249,240,0.1);
+    box-shadow:
+      inset 0 0 20px rgba(0,0,0,0.4),
+      inset 0 0 4px rgba(254,249,240,0.05),
+      0 0 20px rgba(0,0,0,0.3);
+    overflow: hidden;
   }
 
-  .edu-dial-track {
+  /* Horizontal grip lines on the wheel */
+  .edu-wheel-grip {
     position: absolute;
-    left: 30px;
-    right: 0;
-    top: 0;
+    left: 6px; right: 6px;
+    height: 1px;
+    background: rgba(254,249,240,0.08);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .edu-dial.dragging .edu-dial-track {
+  /* Gold marker dot — center of wheel */
+  .edu-wheel-marker {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 14px rgba(244,197,66,0.5);
+    z-index: 2;
+  }
+
+  /* Highlight band across center */
+  .edu-wheel-highlight {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 40px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(244,197,66,0.06) 30%,
+      rgba(244,197,66,0.1) 50%,
+      rgba(244,197,66,0.06) 70%,
+      transparent
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* The text content — right side, 3D cylinder */
+  .edu-content {
+    flex: 1;
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    perspective: 600px;
+  }
+
+  .edu-content::before,
+  .edu-content::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 60px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .edu-content::before {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(26,14,46,0.95), transparent);
+  }
+  .edu-content::after {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(26,14,46,0.95), transparent);
+  }
+
+  .edu-cylinder {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .edu-section-layout.dragging .edu-cylinder {
     transition: none;
   }
 
   .edu-item {
-    position: relative;
-    padding: 14px 0;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    transform-origin: left center;
-  }
-
-  .edu-item::before {
-    content: '';
     position: absolute;
-    left: -34px; top: 22px;
-    width: 9px; height: 9px;
-    border-radius: 50%;
-    background: var(--gold);
-    box-shadow: 0 0 12px rgba(244,197,66,0.4);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .edu-item.active {
-    transform: scale(1.12);
-    opacity: 1;
-  }
-
-  .edu-item.active::before {
-    transform: scale(1.4);
-    box-shadow: 0 0 20px rgba(244,197,66,0.6);
-  }
-
-  .edu-item.adjacent {
-    transform: scale(0.85);
-    opacity: 0.45;
-  }
-
-  .edu-item.far {
-    transform: scale(0.7);
-    opacity: 0;
+    width: 100%;
+    left: 0;
+    backface-visibility: hidden;
+    padding: 8px 0;
   }
 
   .edu-year {
@@ -980,10 +1035,10 @@
     .stat-label { font-size: 0.55rem; }
 
     /* Education */
-    .edu-dial { padding-left: 20px; height: 180px; }
-    .edu-dial-track { left: 20px; }
-    .edu-item { padding: 10px 0; }
-    .edu-item::before { left: -24px; }
+    .edu-section-layout { gap: 20px; }
+    .edu-wheel { width: 36px; height: 170px; }
+    .edu-wheel-body { border-radius: 18px; }
+    .edu-content { height: 170px; }
     .edu-year { font-size: 0.6rem; }
     .edu-name { font-size: 0.8rem; }
     .edu-desc { font-size: 0.7rem; }
@@ -1227,42 +1282,60 @@
     </div>
   </section>
 
-  <!-- EDUCATION — Vertical Dial -->
+  <!-- EDUCATION — 3D Wheel Dial -->
   <section>
     <div class="section-label">Education</div>
     <div class="section-title">Where it&nbsp;started.</div>
 
-    <div class="edu-dial" id="eduDial">
-      <div class="edu-dial-track" id="eduDialTrack">
-        <div class="edu-item">
-          <div class="edu-year">2000 &ndash; 2001</div>
-          <div class="edu-name">Curious Pictures, New&nbsp;York</div>
-          <div class="edu-desc">Animation studio &mdash; moved to New York with a suitcase and&nbsp;$300</div>
+    <div class="edu-section-layout" id="eduDialWrap">
+      <!-- Physical wheel -->
+      <div class="edu-wheel" id="eduWheel">
+        <div class="edu-wheel-body">
+          <div class="edu-wheel-grip" style="top:20%"></div>
+          <div class="edu-wheel-grip" style="top:30%"></div>
+          <div class="edu-wheel-grip" style="top:40%"></div>
+          <div class="edu-wheel-grip" style="top:50%"></div>
+          <div class="edu-wheel-grip" style="top:60%"></div>
+          <div class="edu-wheel-grip" style="top:70%"></div>
+          <div class="edu-wheel-grip" style="top:80%"></div>
         </div>
-        <div class="edu-item">
-          <div class="edu-year">1999 &ndash; 2000</div>
-          <div class="edu-name">Vancouver Film&nbsp;School</div>
-          <div class="edu-desc">New Media / Digital Arts &mdash;&nbsp;Scholarship</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">1995</div>
-          <div class="edu-name">Self-taught</div>
-          <div class="edu-desc">Making films since&nbsp;1995</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">1992</div>
-          <div class="edu-name">MS&nbsp;Paint</div>
-          <div class="edu-desc">Created a line of superhero hats with pixel&nbsp;art</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">1991</div>
-          <div class="edu-name">Cubase</div>
-          <div class="edu-desc">Editing the&nbsp;games</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">~1990</div>
-          <div class="edu-name">MS-DOS</div>
-          <div class="edu-desc">Painting pixels in Paintbrush. Editing GORILLAS.BAS and NIBBLES.BAS to make them do things they weren't supposed&nbsp;to</div>
+        <div class="edu-wheel-highlight"></div>
+        <div class="edu-wheel-marker"></div>
+      </div>
+
+      <!-- 3D cylinder text -->
+      <div class="edu-content">
+        <div class="edu-cylinder" id="eduCylinder">
+          <div class="edu-item" data-index="0">
+            <div class="edu-year">2000 &ndash; 2001</div>
+            <div class="edu-name">Curious Pictures, New&nbsp;York</div>
+            <div class="edu-desc">Animation studio &mdash; moved to New York with a suitcase and&nbsp;$300</div>
+          </div>
+          <div class="edu-item" data-index="1">
+            <div class="edu-year">1999 &ndash; 2000</div>
+            <div class="edu-name">Vancouver Film&nbsp;School</div>
+            <div class="edu-desc">New Media / Digital Arts &mdash;&nbsp;Scholarship</div>
+          </div>
+          <div class="edu-item" data-index="2">
+            <div class="edu-year">1995</div>
+            <div class="edu-name">Self-taught</div>
+            <div class="edu-desc">Making films since&nbsp;1995</div>
+          </div>
+          <div class="edu-item" data-index="3">
+            <div class="edu-year">1992</div>
+            <div class="edu-name">MS&nbsp;Paint</div>
+            <div class="edu-desc">Created a line of superhero hats with pixel&nbsp;art</div>
+          </div>
+          <div class="edu-item" data-index="4">
+            <div class="edu-year">1991</div>
+            <div class="edu-name">Cubase</div>
+            <div class="edu-desc">Editing the&nbsp;games</div>
+          </div>
+          <div class="edu-item" data-index="5">
+            <div class="edu-year">~1990</div>
+            <div class="edu-name">MS-DOS</div>
+            <div class="edu-desc">Painting pixels in Paintbrush. Editing GORILLAS.BAS and NIBBLES.BAS to make them do things they weren't supposed&nbsp;to</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1718,110 +1791,149 @@ const cardObserver = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
 
-// ========== EDUCATION VERTICAL DIAL ==========
+// ========== EDUCATION 3D WHEEL DIAL ==========
 (function() {
-  const dial = document.getElementById('eduDial');
-  const track = document.getElementById('eduDialTrack');
-  const items = track.querySelectorAll('.edu-item');
+  const wrap = document.getElementById('eduDialWrap');
+  const cylinder = document.getElementById('eduCylinder');
+  const wheel = document.getElementById('eduWheel');
+  const grips = wheel.querySelectorAll('.edu-wheel-grip');
+  const items = cylinder.querySelectorAll('.edu-item');
   const total = items.length;
-  let current = 0;
+
+  // Angle between items on the cylinder
+  const angleStep = 360 / total;
+  // Radius of the cylinder (controls depth)
+  const radius = 140;
+
+  // Current rotation angle (degrees) — fluid, not snapped to indices
+  let angle = 0;
+  let targetAngle = 0;
+  let velocity = 0;
+  let animating = false;
   let dragging = false;
   let startY = 0;
-  let currentY = 0;
+  let lastY = 0;
+  let lastTime = 0;
 
-  function getItemHeight() {
-    return items[0].offsetHeight + parseFloat(getComputedStyle(items[0]).paddingTop) * 2;
-  }
-
-  function update() {
-    const itemH = getItemHeight();
-    const dialH = dial.offsetHeight;
-    const centerOffset = (dialH / 2) - (itemH / 2);
-    track.style.transform = 'translateY(' + (centerOffset - current * itemH) + 'px)';
-
+  // Position items around the cylinder
+  function positionItems() {
     items.forEach((item, i) => {
-      item.classList.remove('active', 'adjacent', 'far');
-      if (i === current) {
-        item.classList.add('active');
-      } else if (Math.abs(i - current) === 1) {
-        item.classList.add('adjacent');
-      } else {
-        item.classList.add('far');
-      }
+      const itemAngle = angle + i * angleStep;
+      const rad = itemAngle * Math.PI / 180;
+      const y = Math.sin(rad) * radius;
+      const z = Math.cos(rad) * radius;
+      const scale = (z + radius) / (2 * radius) * 0.5 + 0.5; // 0.5 to 1.0
+      const opacity = Math.max(0, (z + radius * 0.3) / (radius * 1.3));
+      item.style.transform = 'translateY(calc(110px + ' + y + 'px - 50%)) translateZ(' + z + 'px) scale(' + scale.toFixed(3) + ')';
+      item.style.opacity = opacity.toFixed(3);
+      item.style.zIndex = Math.round(z + radius);
     });
   }
 
-  function snapTo(idx) {
-    current = Math.max(0, Math.min(total - 1, idx));
-    update();
+  // Animate grip lines on the wheel to match rotation
+  function updateGrips() {
+    grips.forEach((grip, i) => {
+      const basePos = 15 + i * 10; // 15% to 85%
+      const offset = (angle % 10) * 0.5;
+      const pos = ((basePos + offset) % 70) + 15;
+      grip.style.top = pos + '%';
+    });
   }
 
-  // Mouse drag
-  dial.addEventListener('mousedown', (e) => {
+  // Smooth animation loop
+  function animate() {
+    if (!dragging) {
+      // Snap to nearest item
+      const nearestIdx = Math.round(-angle / angleStep) % total;
+      targetAngle = -nearestIdx * angleStep;
+
+      // Spring toward target with deceleration
+      const diff = targetAngle - angle;
+      velocity += diff * 0.08;
+      velocity *= 0.75;
+      angle += velocity;
+
+      // Stop when settled
+      if (Math.abs(velocity) < 0.01 && Math.abs(diff) < 0.01) {
+        angle = targetAngle;
+        velocity = 0;
+        positionItems();
+        updateGrips();
+        animating = false;
+        return;
+      }
+    }
+
+    positionItems();
+    updateGrips();
+    animating = true;
+    requestAnimationFrame(animate);
+  }
+
+  function startAnim() {
+    if (!animating) {
+      animating = true;
+      requestAnimationFrame(animate);
+    }
+  }
+
+  // Mouse drag — on both wheel and content area
+  function onDown(e) {
     dragging = true;
-    startY = e.clientY;
-    dial.classList.add('dragging');
-    e.preventDefault();
-  });
+    velocity = 0;
+    startY = e.clientY || e.touches[0].clientY;
+    lastY = startY;
+    lastTime = Date.now();
+    wrap.classList.add('dragging');
+    if (e.preventDefault) e.preventDefault();
+  }
 
-  window.addEventListener('mousemove', (e) => {
+  function onMove(e) {
     if (!dragging) return;
-    currentY = e.clientY;
-    const dy = startY - currentY;
-    const itemH = getItemHeight();
-    const dialH = dial.offsetHeight;
-    const centerOffset = (dialH / 2) - (itemH / 2);
-    const dragOffset = centerOffset - current * itemH - dy;
-    track.style.transform = 'translateY(' + dragOffset + 'px)';
-  });
+    const y = e.clientY !== undefined ? e.clientY : e.touches[0].clientY;
+    const dy = y - lastY;
+    const now = Date.now();
+    const dt = Math.max(1, now - lastTime);
 
-  window.addEventListener('mouseup', () => {
+    angle += dy * 0.4;
+    velocity = (dy * 0.4) / dt * 16; // normalize to ~60fps
+
+    lastY = y;
+    lastTime = now;
+    positionItems();
+    updateGrips();
+    if (e.cancelable) e.preventDefault();
+  }
+
+  function onUp(e) {
     if (!dragging) return;
     dragging = false;
-    dial.classList.remove('dragging');
-    const dy = startY - currentY;
-    const itemH = getItemHeight();
-    const moved = Math.round(dy / itemH);
-    snapTo(current + moved);
+    wrap.classList.remove('dragging');
+    // Clamp velocity for momentum
+    velocity = Math.max(-15, Math.min(15, velocity));
+    startAnim();
+  }
+
+  // Bind to both wheel and content
+  [wheel, cylinder.parentElement].forEach(el => {
+    el.addEventListener('mousedown', onDown);
+    el.addEventListener('touchstart', onDown, { passive: false });
   });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
 
-  // Touch drag
-  dial.addEventListener('touchstart', (e) => {
-    dragging = true;
-    startY = e.touches[0].clientY;
-    dial.classList.add('dragging');
-  }, { passive: true });
-
-  dial.addEventListener('touchmove', (e) => {
-    if (!dragging) return;
-    currentY = e.touches[0].clientY;
-    const dy = startY - currentY;
-    const itemH = getItemHeight();
-    const dialH = dial.offsetHeight;
-    const centerOffset = (dialH / 2) - (itemH / 2);
-    const dragOffset = centerOffset - current * itemH - dy;
-    track.style.transform = 'translateY(' + dragOffset + 'px)';
+  // Scroll wheel
+  wrap.addEventListener('wheel', (e) => {
     e.preventDefault();
+    angle -= e.deltaY * 0.3;
+    startAnim();
   }, { passive: false });
 
-  dial.addEventListener('touchend', (e) => {
-    if (!dragging) return;
-    dragging = false;
-    dial.classList.remove('dragging');
-    const dy = startY - (e.changedTouches[0]?.clientY || currentY);
-    const itemH = getItemHeight();
-    const moved = Math.round(dy / itemH);
-    snapTo(current + moved);
-  });
-
-  // Mouse wheel
-  dial.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    if (e.deltaY > 0 && current < total - 1) snapTo(current + 1);
-    else if (e.deltaY < 0 && current > 0) snapTo(current - 1);
-  }, { passive: false });
-
-  update();
+  // Initial position
+  positionItems();
+  updateGrips();
 })();
 
 </script>
