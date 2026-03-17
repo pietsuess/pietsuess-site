@@ -2135,38 +2135,42 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     animating = false;
   });
 
-  // Touch support — same zone-based speed as mouse
+  // Touch support — drag to scroll
+  let touchStartY = 0;
+  let touchStartAngle = 0;
+
   wheel.addEventListener('touchstart', (e) => {
     e.preventDefault();
     hovering = true;
+    touchStartY = e.touches[0].clientY;
+    touchStartAngle = angle;
     const rect = wheel.getBoundingClientRect();
-    const touch = e.touches[0];
-    mouseRelY = (touch.clientY - rect.top) / rect.height;
+    mouseRelY = (e.touches[0].clientY - rect.top) / rect.height;
     scrollSpeed = 0;
     startAnim();
   }, { passive: false });
 
   wheel.addEventListener('touchmove', (e) => {
     e.preventDefault();
+    const deltaY = e.touches[0].clientY - touchStartY;
+    // Drag down = advance forward (positive angle), drag up = backward
+    const dragSensitivity = 0.005;
+    targetAngle = touchStartAngle + deltaY * dragSensitivity;
+    // Clamp to valid range
+    targetAngle = Math.max(0, Math.min(targetAngle, (items.length - 1) * angleStep));
+    // Update marker position
     const rect = wheel.getBoundingClientRect();
-    const touch = e.touches[0];
-    mouseRelY = (touch.clientY - rect.top) / rect.height;
-    const fromCenter = mouseRelY - 0.5;
-
-    if (Math.abs(fromCenter) < 0.1) {
-      scrollSpeed = 0;
-    } else {
-      const dir = fromCenter > 0 ? 1 : -1;
-      const magnitude = (Math.abs(fromCenter) - 0.1) / 0.4;
-      scrollSpeed = dir * magnitude * 0.008;
-    }
+    mouseRelY = (e.touches[0].clientY - rect.top) / rect.height;
+    startAnim();
   }, { passive: false });
 
   wheel.addEventListener('touchend', () => {
     hovering = false;
     scrollSpeed = 0;
-    targetAngle = angle;
-    animating = false;
+    // Snap to nearest item
+    const nearest = Math.round(angle / angleStep) * angleStep;
+    targetAngle = nearest;
+    startAnim();
   });
 
   render(angle);
