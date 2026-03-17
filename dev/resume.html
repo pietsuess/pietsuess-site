@@ -2158,8 +2158,6 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     const deltaY = e.touches[0].clientY - touchStartY;
     const dragSensitivity = 0.008;
     angle = touchStartAngle + deltaY * dragSensitivity;
-    // Clamp to valid range
-    angle = Math.max(0, Math.min(angle, (items.length - 1) * angleStep));
     // Update marker
     const rect = wheel.getBoundingClientRect();
     mouseRelY = (e.touches[0].clientY - rect.top) / rect.height;
