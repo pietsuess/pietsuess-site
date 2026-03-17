@@ -507,17 +507,25 @@ button {
   right: 10px;
   z-index: 99;
   opacity: 0.6;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .arcade-link:hover {
   opacity: 1;
   transform: scale(1.1);
+  filter: drop-shadow(0 0 12px rgba(232,115,90,0.6)) drop-shadow(0 0 24px rgba(244,197,66,0.3));
 }
 
 .arcade-link img {
   width: 60px;
   height: auto;
   border-radius: 8px;
+  border: 2px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+.arcade-link:hover img {
+  border-color: var(--coral);
 }
 
 .splash-page .site-header {
@@ -688,6 +696,14 @@ body.menu-open .mobile-nav-overlay {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid rgba(254,249,240,0.15);
+  color: var(--coral) !important;
+  text-shadow: 0 0 8px rgba(232,115,90,0.4);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.nav-arcade-link:hover {
+  color: var(--gold) !important;
+  text-shadow: 0 0 12px rgba(244,197,66,0.6);
 }
 
 
@@ -937,7 +953,7 @@ body.menu-open .mobile-nav-overlay {
 .animate-grid-mixed {
   display: grid;
   grid-template-columns: repeat(18, 1fr);
-  grid-auto-rows: 2.5vw;
+  grid-auto-rows: 3.5vw;
   gap: 8px;
   align-items: stretch;
   padding-bottom: 0;
