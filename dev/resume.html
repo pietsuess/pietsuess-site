@@ -764,11 +764,11 @@
   .edu-timeline::before {
     content: '';
     position: absolute;
-    left: 0; top: 0;
+    left: 0; top: 10%;
     width: 1px;
-    height: 100%;
-    background: linear-gradient(to bottom, transparent 5%, var(--gold) 30%, var(--coral) 70%, transparent 95%);
-    z-index: 1;
+    height: 80%;
+    background: linear-gradient(to bottom, transparent, var(--gold) 25%, var(--coral) 75%, transparent);
+    z-index: 200;
   }
 
 
@@ -805,9 +805,9 @@
     position: absolute;
     top: -2px;
     left: -34px;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(to right, var(--gold), var(--coral), transparent);
+    width: 120px;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--coral) 40%, transparent 100%);
     opacity: 0.4;
   }
 
@@ -1078,7 +1078,7 @@
     .edu-wheel-wrap { display: none; }
     .edu-timeline { padding-left: 16px; height: auto; overflow: visible; }
     .edu-track { position: relative; height: auto; }
-    .edu-item { position: relative !important; transform: none !important; opacity: 1 !important; padding: 4px 0; top: auto !important; }
+    .edu-item { position: relative !important; transform: none !important; opacity: 1 !important; filter: none !important; padding: 4px 0; top: auto !important; }
     .edu-item::before { left: -20px; top: 12px; }
     .edu-year { font-size: 0.6rem; }
     .edu-name { font-size: 0.8rem; }
