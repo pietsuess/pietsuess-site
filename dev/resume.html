@@ -257,7 +257,7 @@
     z-index: 0;
     font-family: 'Urbanist', sans-serif;
     font-weight: 800;
-    font-size: clamp(8rem, 18vw, 14rem);
+    font-size: clamp(6rem, 14vw, 11rem);
     letter-spacing: -0.03em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -1746,7 +1746,7 @@
   // Fixed position, centered vertically. Drifts left-to-right with 2 full rotations.
   // Activates after the cascade lines (which end at ~3650px).
   const ENTER_SCROLL = 3700;
-  const SCROLL_RANGE = 2000; // scroll distance over which it crosses the screen
+  const SCROLL_RANGE = 2800; // scroll distance over which it crosses the screen
 
   function updateSpinner() {
     const scrollY = window.scrollY;
@@ -1770,7 +1770,7 @@
     else if (progress > 0.88) op = 0.1 * ((1 - progress) / 0.12);
 
     spinner.style.transform = `translate(${x}px, -50%) rotate(${rotation}deg)`;
-    spinner.style.filter = `blur(1.5px)`;
+    spinner.style.filter = `blur(0.25px)`;
     spinner.style.opacity = op;
   }
 
