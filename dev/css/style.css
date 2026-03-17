@@ -594,7 +594,7 @@ button {
 }
 
 .social-icons .resume-social-icon img {
-  width: 20px;
+  width: auto;
   height: 20px;
   opacity: 0.7;
   transition: opacity 0.3s;
