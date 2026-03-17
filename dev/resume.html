@@ -718,40 +718,51 @@
     z-index: 1;
   }
 
-  /* Original timeline — identical to before */
+  /* Timeline — 3-item window with scrolling */
   .edu-timeline {
     position: relative;
     padding-left: 30px;
     flex: 1;
+    height: 180px;
+    overflow: hidden;
   }
 
   .edu-timeline::before {
     content: '';
     position: absolute;
-    left: 0; top: 6px;
+    left: 0; top: 0;
     width: 1px;
-    height: calc(100% - 12px);
-    background: linear-gradient(to bottom, var(--gold), var(--coral), transparent);
+    height: 100%;
+    background: linear-gradient(to bottom, transparent 5%, var(--gold) 30%, var(--coral) 70%, transparent 95%);
+    z-index: 1;
+  }
+
+  .edu-track {
+    position: absolute;
+    left: 30px;
+    right: 0;
+    top: 0;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .edu-item {
     position: relative;
-    margin-bottom: 24px;
-    transition: opacity 0.4s ease;
+    padding: 12px 0;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: left center;
   }
 
   .edu-item::before {
     content: '';
     position: absolute;
-    left: -34px; top: 8px;
+    left: -34px; top: 20px;
     width: 9px; height: 9px;
     border-radius: 50%;
     background: var(--gold);
     box-shadow: 0 0 12px rgba(244,197,66,0.4);
-  }
-
-  .edu-item.dimmed {
-    opacity: 0.3;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .edu-year {
@@ -1019,8 +1030,10 @@
 
     /* Education */
     .edu-wheel { display: none; }
-    .edu-timeline { padding-left: 16px; }
-    .edu-item { margin-bottom: 4px; }
+    .edu-timeline { padding-left: 16px; height: auto; overflow: visible; }
+    .edu-track { position: relative; left: auto; right: auto; }
+    .edu-item { padding: 4px 0; }
+    .edu-item::before { left: -20px; top: 12px; }
     .edu-year { font-size: 0.6rem; }
     .edu-name { font-size: 0.8rem; }
     .edu-desc { font-size: 0.7rem; }
@@ -1285,37 +1298,39 @@
         <div class="edu-wheel-marker"></div>
       </div>
 
-      <!-- Timeline — original layout -->
+      <!-- Timeline -->
       <div class="edu-timeline" id="eduTimeline">
-        <div class="edu-item">
-          <div class="edu-year">2000 &ndash; 2001</div>
-          <div class="edu-name">Curious Pictures, New&nbsp;York</div>
-          <div class="edu-desc">Animation studio &mdash; moved to New York with a suitcase and&nbsp;$300</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">1999 &ndash; 2000</div>
-          <div class="edu-name">Vancouver Film&nbsp;School</div>
-          <div class="edu-desc">New Media / Digital Arts &mdash;&nbsp;Scholarship</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">1995</div>
-          <div class="edu-name">Self-taught</div>
-          <div class="edu-desc">Making films since&nbsp;1995</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">1992</div>
-          <div class="edu-name">MS&nbsp;Paint</div>
-          <div class="edu-desc">Created a line of superhero hats with pixel&nbsp;art</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">1991</div>
-          <div class="edu-name">Cubase</div>
-          <div class="edu-desc">Editing the&nbsp;games</div>
-        </div>
-        <div class="edu-item">
-          <div class="edu-year">~1990</div>
-          <div class="edu-name">MS-DOS</div>
-          <div class="edu-desc">Painting pixels in Paintbrush. Editing GORILLAS.BAS and NIBBLES.BAS to make them do things they weren't supposed&nbsp;to</div>
+        <div class="edu-track" id="eduTrack">
+          <div class="edu-item">
+            <div class="edu-year">2000 &ndash; 2001</div>
+            <div class="edu-name">Curious Pictures, New&nbsp;York</div>
+            <div class="edu-desc">Animation studio &mdash; moved to New York with a suitcase and&nbsp;$300</div>
+          </div>
+          <div class="edu-item">
+            <div class="edu-year">1999 &ndash; 2000</div>
+            <div class="edu-name">Vancouver Film&nbsp;School</div>
+            <div class="edu-desc">New Media / Digital Arts &mdash;&nbsp;Scholarship</div>
+          </div>
+          <div class="edu-item">
+            <div class="edu-year">1995</div>
+            <div class="edu-name">Self-taught</div>
+            <div class="edu-desc">Making films since&nbsp;1995</div>
+          </div>
+          <div class="edu-item">
+            <div class="edu-year">1992</div>
+            <div class="edu-name">MS&nbsp;Paint</div>
+            <div class="edu-desc">Created a line of superhero hats with pixel&nbsp;art</div>
+          </div>
+          <div class="edu-item">
+            <div class="edu-year">1991</div>
+            <div class="edu-name">Cubase</div>
+            <div class="edu-desc">Editing the&nbsp;games</div>
+          </div>
+          <div class="edu-item">
+            <div class="edu-year">~1990</div>
+            <div class="edu-name">MS-DOS</div>
+            <div class="edu-desc">Painting pixels in Paintbrush. Editing GORILLAS.BAS and NIBBLES.BAS to make them do things they weren't supposed&nbsp;to</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1776,54 +1791,92 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   const wheel = document.getElementById('eduWheel');
   if (!wheel) return;
   const grips = wheel.querySelectorAll('.edu-wheel-grip');
-  const timeline = document.getElementById('eduTimeline');
-  const items = timeline.querySelectorAll('.edu-item');
+  const track = document.getElementById('eduTrack');
+  const items = track.querySelectorAll('.edu-item');
   const total = items.length;
+
   let current = 0;
   let lastY = null;
-  let gripOffset = 0;
+  let accum = 0;
+  const THRESHOLD = 25; // less sensitive — needs more mouse movement per step
 
-  function highlight(idx) {
-    current = Math.max(0, Math.min(total - 1, idx));
+  function getItemH() {
+    return items[0].offsetHeight;
+  }
+
+  function update() {
+    const itemH = getItemH();
+    const viewH = 180;
+    // Center the current item in the middle of the view
+    const offset = (viewH / 2) - (itemH / 2) - current * itemH;
+    track.style.transform = 'translateY(' + offset + 'px)';
+
     items.forEach((item, i) => {
-      item.classList.toggle('dimmed', i !== current);
+      const dist = Math.abs(i - current);
+      if (dist === 0) {
+        // Center — slightly bigger
+        item.style.transform = 'scale(1.08)';
+        item.style.opacity = '1';
+        item.querySelector('.edu-item')
+      } else if (dist === 1) {
+        // Adjacent — normal size, slightly dimmed
+        item.style.transform = 'scale(0.92)';
+        item.style.opacity = '0.5';
+      } else {
+        // Far — hidden
+        item.style.transform = 'scale(0.85)';
+        item.style.opacity = '0';
+      }
     });
+  }
+
+  function scrollTo(idx) {
+    current = Math.max(0, Math.min(total - 1, idx));
+    update();
   }
 
   function updateGrips(dy) {
-    gripOffset = (gripOffset + dy * 0.3) % 10;
     grips.forEach((grip, i) => {
-      const base = 15 + i * 10;
-      const pos = ((base + gripOffset) % 70) + 15;
-      grip.style.top = pos + '%';
+      const cur = parseFloat(grip.style.top) || (15 + i * 10);
+      let next = cur + dy * 0.15;
+      // Wrap around
+      if (next > 85) next -= 70;
+      if (next < 15) next += 70;
+      grip.style.top = next + '%';
     });
   }
 
-  // Mouseover scrolling — move through the wheel top-to-bottom or bottom-to-top
+  // Mouseover — accumulate movement, step when threshold reached
   wheel.addEventListener('mousemove', (e) => {
     const y = e.clientY;
     if (lastY !== null) {
       const dy = y - lastY;
-      if (Math.abs(dy) > 8) {
-        if (dy > 0) highlight(current + 1);
-        else highlight(current - 1);
-        updateGrips(dy);
-        lastY = y;
+      accum += dy;
+      updateGrips(dy);
+
+      if (accum > THRESHOLD) {
+        scrollTo(current + 1);
+        accum = 0;
+      } else if (accum < -THRESHOLD) {
+        scrollTo(current - 1);
+        accum = 0;
       }
-    } else {
-      lastY = y;
     }
+    lastY = y;
   });
 
   wheel.addEventListener('mouseleave', () => {
     lastY = null;
-    // Un-dim all on leave
-    items.forEach(item => item.classList.remove('dimmed'));
+    accum = 0;
   });
 
   wheel.addEventListener('mouseenter', () => {
     lastY = null;
+    accum = 0;
   });
+
+  // Initial state
+  update();
 })();
 
 </script>
