@@ -1745,7 +1745,7 @@
 
   // Fixed position, centered vertically. Drifts left-to-right with 2 full rotations.
   // Activates after the cascade lines (which end at ~3650px).
-  const ENTER_SCROLL = 3700;
+  const ENTER_SCROLL = 3650;
   const SCROLL_RANGE = 2800; // scroll distance over which it crosses the screen
 
   function updateSpinner() {
@@ -1764,10 +1764,8 @@
     // 2 full rotations (720°)
     const rotation = progress * 720;
 
-    // Fade in/out at edges
+    // No fade — constant opacity, comes from off-screen
     let op = 0.1;
-    if (progress < 0.12) op = 0.1 * (progress / 0.12);
-    else if (progress > 0.88) op = 0.1 * ((1 - progress) / 0.12);
 
     spinner.style.transform = `translate(${x}px, -50%) rotate(${rotation}deg)`;
     spinner.style.filter = `blur(0.25px)`;
