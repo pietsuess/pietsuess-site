@@ -2145,36 +2145,36 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     animating = false;
   });
 
-  // Touch support — drag to scroll
+  // Touch support — direct drag to scroll
   let touchStartY = 0;
   let touchStartAngle = 0;
+  let dragging = false;
 
   wheel.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    hovering = true;
+    dragging = true;
     touchStartY = e.touches[0].clientY;
     touchStartAngle = angle;
     const rect = wheel.getBoundingClientRect();
     mouseRelY = (e.touches[0].clientY - rect.top) / rect.height;
-    scrollSpeed = 0;
-    startAnim();
   }, { passive: false });
 
   wheel.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
     e.preventDefault();
     const deltaY = e.touches[0].clientY - touchStartY;
-    // Drag down = advance forward (positive angle), drag up = backward
-    const dragSensitivity = 0.005;
-    targetAngle = touchStartAngle + deltaY * dragSensitivity;
+    const dragSensitivity = 0.008;
+    angle = touchStartAngle + deltaY * dragSensitivity;
     // Clamp to valid range
-    targetAngle = Math.max(0, Math.min(targetAngle, (items.length - 1) * angleStep));
-    // Update marker position
+    angle = Math.max(0, Math.min(angle, (items.length - 1) * angleStep));
+    // Update marker
     const rect = wheel.getBoundingClientRect();
     mouseRelY = (e.touches[0].clientY - rect.top) / rect.height;
-    startAnim();
+    render(angle);
   }, { passive: false });
 
   wheel.addEventListener('touchend', () => {
+    dragging = false;
     hovering = false;
     scrollSpeed = 0;
     // Snap to nearest item
