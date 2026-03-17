@@ -2583,10 +2583,21 @@ body.menu-open .mobile-nav-overlay {
 
   .design-project-images {
     max-width: 100%;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .design-project-images img {
+    flex: none;
+    width: 80%;
   }
 
   .design-project-images.single-image {
     max-width: 100%;
+  }
+
+  .design-project-images.single-image img {
+    width: 90%;
   }
 
   .about-grid {
