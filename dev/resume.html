@@ -250,12 +250,14 @@
 
   /* Ghost #3 — large spinning drift */
   .ghost-spinner {
-    position: absolute;
+    position: fixed;
+    top: 50%;
+    left: 0;
     pointer-events: none;
     z-index: 0;
     font-family: 'Urbanist', sans-serif;
     font-weight: 800;
-    font-size: clamp(6rem, 14vw, 12rem);
+    font-size: clamp(8rem, 18vw, 14rem);
     letter-spacing: -0.03em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -1741,21 +1743,15 @@
   const spinner = document.getElementById('ghostSpinner');
   if (!spinner) return;
 
-  // Placed in the page at a fixed Y, drifts left-to-right with 2 full rotations
-  const PAGE_Y = 2600;  // vertical position in the page
-  spinner.style.top = PAGE_Y + 'px';
-  spinner.style.left = '0px';
+  // Fixed position, centered vertically. Drifts left-to-right with 2 full rotations.
+  // Activates after the cascade lines (which end at ~3650px).
+  const ENTER_SCROLL = 3700;
+  const SCROLL_RANGE = 2000; // scroll distance over which it crosses the screen
 
   function updateSpinner() {
     const scrollY = window.scrollY;
-    const vh = window.innerHeight;
     const vw = window.innerWidth;
-
-    // Active zone: when the spinner's Y is visible on screen
-    const enterScroll = PAGE_Y - vh;
-    const exitScroll = PAGE_Y + vh * 0.5;
-    const range = exitScroll - enterScroll;
-    const progress = (scrollY - enterScroll) / range; // 0 → 1
+    const progress = (scrollY - ENTER_SCROLL) / SCROLL_RANGE; // 0 → 1
 
     if (progress < 0 || progress > 1) {
       spinner.style.opacity = '0';
@@ -1763,17 +1759,17 @@
     }
 
     // Drift from off-screen left to off-screen right
-    const x = -300 + progress * (vw + 300);
+    const x = -400 + progress * (vw + 600);
 
     // 2 full rotations (720°)
     const rotation = progress * 720;
 
     // Fade in/out at edges
-    let op = 0.06;
-    if (progress < 0.15) op = 0.06 * (progress / 0.15);
-    else if (progress > 0.85) op = 0.06 * ((1 - progress) / 0.15);
+    let op = 0.1;
+    if (progress < 0.12) op = 0.1 * (progress / 0.12);
+    else if (progress > 0.88) op = 0.1 * ((1 - progress) / 0.12);
 
-    spinner.style.transform = `translateX(${x}px) rotate(${rotation}deg)`;
+    spinner.style.transform = `translate(${x}px, -50%) rotate(${rotation}deg)`;
     spinner.style.opacity = op;
   }
 
