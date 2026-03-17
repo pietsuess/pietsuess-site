@@ -906,10 +906,16 @@
   @media (max-width: 768px) {
     .container { padding: 0 20px; }
 
-    /* Hero */
+    /* Resumé bg label — shrink to fit mobile */
+    .bg-resume-label {
+      font-size: clamp(4rem, 14vw, 8rem);
+      top: 4%;
+    }
+
+    /* Hero — push content down */
     .hero {
       min-height: auto;
-      padding: 100px 0 60px;
+      padding: 140px 0 40px;
     }
     .hero-name {
       font-size: clamp(2.5rem, 12vw, 4rem);
@@ -933,10 +939,10 @@
       gap: 6px 12px;
     }
     .scroll-hint { display: none; }
-    .ghost-name, .ghost-cascade { display: none; }
+    .ghost-name, .ghost-cascade, .ghost-spinner { display: none; }
 
     /* Sections */
-    section { padding: 40px 0; }
+    section { padding: 30px 0; }
     .section-title { font-size: clamp(1.4rem, 5vw, 2rem); margin-bottom: 24px; }
 
     /* Experience cards */
