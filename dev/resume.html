@@ -327,6 +327,10 @@
     color: rgba(254,249,240,0.2);
   }
 
+  .hero-print-contact {
+    display: none;
+  }
+
   @keyframes heroIn {
     to { opacity: 1; transform: translateY(0); }
   }
@@ -958,7 +962,7 @@
   @media print {
     @page { size: letter; margin: 0.25in; }
 
-    html { font-size: 9.5px; }
+    html { font-size: 10.5px; }
     body { background: #fff !important; color: #1a0e2e !important; }
 
     .bg-gradient, .bg-gradient::after, .bg-resume-label,
@@ -1053,18 +1057,17 @@
       display: none !important;
     }
 
-    .hero-contact {
+    .hero-contact { display: none !important; }
+
+    .hero-print-contact {
+      display: block !important;
       font-size: 0.7rem;
-      gap: 3px 10px;
-      opacity: 1; transform: none; animation: none;
-    }
-
-    .hero-contact a, .hero-contact span {
       color: #666 !important;
+      margin-top: 2px;
     }
-
-    .hero-contact .sep {
+    .hero-print-contact .sep {
       color: #ccc !important;
+      margin: 0 4px;
     }
 
     /* Sections */
@@ -1176,6 +1179,7 @@
       <div class="hero-title">Creative Director &amp; Post-Production&nbsp;Veteran</div>
       <div class="hero-years">30+ Years</div>
     </div>
+    <div class="hero-print-contact">pietsuess.com <span class="sep">&bull;</span> linkedin.com/in/piet-suess <span class="sep">&bull;</span> Salt Spring Island, BC</div>
   </div>
 
   <!-- SUMMARY -->
