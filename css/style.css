@@ -226,6 +226,24 @@ button {
   background: none;
 }
 
+.design-page .edit-bio {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 40px;
+  padding: 0 4vw;
+}
+
+.design-page .edit-bio-inner {
+  background: rgba(255,255,255,0.35);
+  border: 1px solid rgba(26,14,46,0.08);
+}
+
+.design-page .edit-bio-inner p {
+  color: rgba(26,14,46,0.7);
+  max-width: 100%;
+}
+
 .design-page .bg-gradient {
   background: linear-gradient(135deg,
     #FAFFA5 0%,
@@ -1260,20 +1278,20 @@ body.menu-open .mobile-nav-overlay {
   width: 100%;
   height: 1px;
   margin-top: 44px;
-  background: linear-gradient(90deg, transparent, rgba(254,249,240,0.35) 20%, rgba(254,249,240,0.35) 80%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(26,14,46,0.15) 20%, rgba(26,14,46,0.15) 80%, transparent);
 }
 
 .design-intro p {
   font-size: 0.95rem;
   font-weight: 300;
   line-height: 1.7;
-  color: rgba(254,249,240,0.7);
+  color: rgba(26,14,46,0.65);
   margin: 0 0 12px;
 }
 
 .design-projects {
-  padding: 20px 4vw 60px;
-  max-width: 960px;
+  padding: 20px 4vw 180px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -1293,7 +1311,7 @@ body.menu-open .mobile-nav-overlay {
 /* Accent rule below title — gold */
 .design-rule-narrow {
   width: 200px;
-  margin: 0 auto 36px;
+  margin: 0 auto 40px;
   border: none;
   height: 2px;
   background: rgba(26,14,46,0.4);
@@ -1310,8 +1328,34 @@ body.menu-open .mobile-nav-overlay {
   text-transform: uppercase;
   letter-spacing: 3px;
   text-align: center;
-  margin: 0 0 16px;
-  color: var(--cream);
+  margin: 0 0 24px;
+  color: var(--ink);
+}
+
+/* Light glassmorphism card for each project */
+.design-project-card {
+  background: rgba(255,255,255,0.35);
+  border: 1px solid rgba(26,14,46,0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  padding: 56px 44px;
+  margin-bottom: 36px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.design-project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(26,14,46,0.08);
+}
+
+.design-project-card .design-support-images,
+.design-project-card .design-support-grid {
+  margin-bottom: 0;
+}
+
+.design-project-card .design-rule-narrow {
+  background: rgba(26,14,46,0.12);
 }
 
 .design-project-row,
@@ -1319,7 +1363,7 @@ body.menu-open .mobile-nav-overlay {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
 }
 
 .design-project-images {
@@ -1329,7 +1373,7 @@ body.menu-open .mobile-nav-overlay {
   justify-content: center;
   width: 100%;
   max-width: 520px;
-  margin-bottom: 28px;
+  margin-bottom: 34px;
 }
 
 .design-project-images img {
@@ -1363,7 +1407,7 @@ body.menu-open .mobile-nav-overlay {
 .design-project-text .project-desc {
   font-size: 0.9rem;
   line-height: 1.7;
-  color: rgba(254,249,240,0.65);
+  color: rgba(26,14,46,0.6);
   font-weight: 300;
   margin: 0 0 14px;
   text-align: justify;
