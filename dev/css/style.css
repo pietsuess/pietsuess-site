@@ -593,6 +593,44 @@ button {
   fill: currentColor;
 }
 
+.social-icons .resume-social-icon img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.social-icons .resume-social-icon:hover img {
+  opacity: 1;
+}
+
+.contact-resume-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  text-decoration: none;
+  color: var(--cream);
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.contact-resume-link:hover {
+  opacity: 1;
+}
+
+.contact-resume-link img {
+  width: 40px;
+  height: auto;
+}
+
+.contact-resume-link span {
+  font-family: 'Urbanist', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
 /* Hamburger (mobile) */
 .hamburger {
   display: none;
