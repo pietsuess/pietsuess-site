@@ -1034,17 +1034,23 @@
     .exp-date { color: #7a2848 !important; background: rgba(122,40,72,0.06) !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 
     .exp-card, .collab-card, .skill-block, .digital-highlight {
-      background: rgba(42,26,62,0.03) !important;
-      border: 1px solid rgba(42,26,62,0.1) !important;
+      background: none !important;
+      border: none !important;
       backdrop-filter: none !important;
-      print-color-adjust: exact;
-      -webkit-print-color-adjust: exact;
+      box-shadow: none !important;
+    }
+
+    .exp-card::before {
+      display: none !important;
+    }
+
+    .exp-details li {
+      list-style: disc !important;
+      padding-left: 0 !important;
     }
 
     .exp-details li::before {
-      background: #e8735a !important;
-      print-color-adjust: exact;
-      -webkit-print-color-adjust: exact;
+      display: none !important;
     }
 
     .hero-contact {
@@ -1085,16 +1091,17 @@
 
     /* Experience cards */
     .exp-card {
-      padding: 5px 10px;
-      margin-bottom: 3px;
+      padding: 2px 0;
+      margin-bottom: 2px;
       backdrop-filter: none;
-      border-radius: 6px;
+      border-radius: 0;
     }
     .exp-card:hover { transform: none; box-shadow: none; }
     .exp-role { font-size: 0.82rem; }
     .exp-date { font-size: 0.6rem; padding: 1px 7px; }
-    .exp-company { font-size: 0.7rem; margin-bottom: 2px; }
-    .exp-details li { font-size: 0.7rem; margin-bottom: 0; line-height: 1.35; padding-left: 12px; }
+    .exp-company { font-size: 0.7rem; margin-bottom: 1px; }
+    .exp-details { padding-left: 16px !important; }
+    .exp-details li { font-size: 0.7rem; margin-bottom: 0; line-height: 1.35; padding-left: 0; }
 
     /* Collabs — 3 col */
     .collab-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; }
