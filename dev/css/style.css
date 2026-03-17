@@ -2325,7 +2325,7 @@ body.menu-open .mobile-nav-overlay {
 
 .site-footer {
   background: rgba(0,0,0,0.3);
-  padding: 40px;
+  padding: 20px 40px;
   position: relative;
   z-index: 1;
 }
