@@ -752,7 +752,7 @@
     z-index: 1;
   }
 
-  /* Timeline — 3-item window with scrolling */
+  /* Timeline — circular wheel with center window */
   .edu-timeline {
     position: relative;
     padding-left: 30px;
@@ -769,6 +769,41 @@
     height: 100%;
     background: linear-gradient(to bottom, transparent 5%, var(--gold) 30%, var(--coral) 70%, transparent 95%);
     z-index: 1;
+  }
+
+  /* Glassy center window */
+  .edu-window {
+    position: absolute;
+    left: 20px;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 52px;
+    background: rgba(254,249,240,0.03);
+    border: 1px solid rgba(254,249,240,0.06);
+    border-radius: 8px;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Soft fade above and below the window */
+  .edu-timeline-fade-top,
+  .edu-timeline-fade-bottom {
+    position: absolute;
+    left: 0; right: 0;
+    height: 50px;
+    z-index: 50;
+    pointer-events: none;
+  }
+  .edu-timeline-fade-top {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(26,14,46,0.7), transparent);
+  }
+  .edu-timeline-fade-bottom {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(26,14,46,0.7), transparent);
   }
 
   .edu-track {
@@ -1340,6 +1375,9 @@
 
       <!-- Timeline -->
       <div class="edu-timeline" id="eduTimeline">
+        <div class="edu-window"></div>
+        <div class="edu-timeline-fade-top"></div>
+        <div class="edu-timeline-fade-bottom"></div>
         <div class="edu-track" id="eduTrack">
           <div class="edu-item">
             <div class="edu-year">2000 &ndash; 2001</div>
@@ -1841,14 +1879,14 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   const items = track.querySelectorAll('.edu-item');
   const total = items.length;
 
-  // Circular wheel — angle-based positioning
-  const angleStep = (2 * Math.PI) / total;  // radians between items
-  const RADIUS = 90;   // virtual wheel radius in px
-  const VIEW_H = 180;  // container height
+  const angleStep = (2 * Math.PI) / total;
+  const RADIUS = 90;
+  const VIEW_H = 180;
 
-  let angle = 0;         // current rotation angle (radians)
+  let angle = 0;
   let targetAngle = 0;
-  let lastY = null;
+  let scrollSpeed = 0;   // current auto-scroll speed from wheel zone
+  let hovering = false;
   let animating = false;
 
   function render(a) {
@@ -1858,24 +1896,17 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     marker.style.top = (42 + markerPct * 16) + '%';
 
     items.forEach((item, i) => {
-      // Each item's angle on the wheel (0 = front/bottom of wheel facing us)
       const itemAngle = a + i * angleStep;
-
-      // Y position: sin puts front at 0, top at -RADIUS, bottom at +RADIUS
       const y = -Math.sin(itemAngle) * RADIUS;
-
-      // Z depth: cos gives depth. +1 = front (closest), -1 = back (farthest)
       const z = Math.cos(itemAngle);
 
-      // Scale: front = 1.15, sides = 0.85, back = 0.55
-      const scale = 0.55 + (z + 1) * 0.3;
+      // Front = 1.18, sides = 0.82, back = 0.5
+      const scale = 0.5 + (z + 1) * 0.34;
 
-      // Opacity: front = 1, sides = 0.45, back = 0.1
       const opacity = z > 0
-        ? 0.45 + z * 0.55
-        : Math.max(0.08, 0.45 + z * 0.37);
+        ? 0.4 + z * 0.6
+        : Math.max(0.06, 0.4 + z * 0.34);
 
-      // Position vertically centered in view
       const top = (VIEW_H / 2) + y - 20;
 
       item.style.position = 'absolute';
@@ -1888,21 +1919,36 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     });
   }
 
-  // Sticky spring animation
   function animate() {
-    const diff = targetAngle - angle;
-    // Very sticky: 0.04 = slow pull toward target
-    angle += diff * 0.04;
-
-    if (Math.abs(diff) < 0.0005) {
-      angle = targetAngle;
+    if (hovering) {
+      // Zone-based auto-scroll: speed set by mouse position on wheel
+      angle += scrollSpeed;
       render(angle);
-      animating = false;
-      return;
-    }
+      // Animate grip lines
+      if (Math.abs(scrollSpeed) > 0.0001) {
+        grips.forEach((grip, i) => {
+          const cur = parseFloat(grip.style.top) || (15 + i * 10);
+          let next = cur + scrollSpeed * 25;
+          if (next > 85) next -= 70;
+          if (next < 15) next += 70;
+          grip.style.top = next + '%';
+        });
+      }
+      requestAnimationFrame(animate);
+    } else {
+      // Settling to nearest snap
+      const diff = targetAngle - angle;
+      angle += diff * 0.04;
 
-    render(angle);
-    requestAnimationFrame(animate);
+      if (Math.abs(diff) < 0.0005) {
+        angle = targetAngle;
+        render(angle);
+        animating = false;
+        return;
+      }
+      render(angle);
+      requestAnimationFrame(animate);
+    }
   }
 
   function startAnim() {
@@ -1913,43 +1959,40 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   }
 
   function snapTarget() {
-    // Snap to nearest item position
     const nearest = Math.round(angle / angleStep) * angleStep;
     targetAngle = nearest;
     startAnim();
   }
 
-  function updateGrips(dy) {
-    grips.forEach((grip, i) => {
-      const cur = parseFloat(grip.style.top) || (15 + i * 10);
-      let next = cur + dy * 0.1;
-      if (next > 85) next -= 70;
-      if (next < 15) next += 70;
-      grip.style.top = next + '%';
-    });
-  }
-
-  // Mousemove — stickier, slower
+  // Mouse position on wheel = scroll direction and speed
+  // Top of wheel = scroll up (backward), bottom = scroll down (forward)
+  // Center = dead zone (no scroll)
   wheel.addEventListener('mousemove', (e) => {
-    const y = e.clientY;
-    if (lastY !== null) {
-      const dy = y - lastY;
-      // Very slow: each pixel = tiny angle change
-      angle += dy * 0.004;
-      targetAngle = angle;
-      render(angle);
-      updateGrips(dy);
-    }
-    lastY = y;
-  });
+    const rect = wheel.getBoundingClientRect();
+    const relY = (e.clientY - rect.top) / rect.height; // 0 = top, 1 = bottom
+    const fromCenter = relY - 0.5; // -0.5 to +0.5
 
-  wheel.addEventListener('mouseleave', () => {
-    lastY = null;
-    snapTarget();
+    // Dead zone in the middle 20%
+    if (Math.abs(fromCenter) < 0.1) {
+      scrollSpeed = 0;
+    } else {
+      // Speed proportional to distance from center, capped
+      const dir = fromCenter > 0 ? 1 : -1;
+      const magnitude = (Math.abs(fromCenter) - 0.1) / 0.4; // 0 to 1
+      scrollSpeed = dir * magnitude * 0.008;
+    }
   });
 
   wheel.addEventListener('mouseenter', () => {
-    lastY = null;
+    hovering = true;
+    scrollSpeed = 0;
+    startAnim();
+  });
+
+  wheel.addEventListener('mouseleave', () => {
+    hovering = false;
+    scrollSpeed = 0;
+    snapTarget();
   });
 
   render(angle);
