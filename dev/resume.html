@@ -650,18 +650,51 @@
   }
 
   /* Slim wheel to the left */
-  .edu-wheel {
+  .edu-wheel-wrap {
     flex-shrink: 0;
-    width: 28px;
-    height: 160px;
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
     margin-top: 4px;
+  }
+
+  .edu-wheel-arrow {
+    font-size: 0.5rem;
+    color: rgba(254,249,240,0.25);
+    line-height: 1;
+    padding: 3px 0;
+  }
+
+  .edu-wheel-housing-top,
+  .edu-wheel-housing-bottom {
+    width: 32px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(254,249,240,0.04);
+    border: 1px solid rgba(254,249,240,0.06);
+  }
+
+  .edu-wheel-housing-top {
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+  }
+
+  .edu-wheel-housing-bottom {
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+  }
+
+  .edu-wheel {
+    width: 28px;
+    height: 140px;
+    position: relative;
   }
 
   .edu-wheel-body {
     position: absolute;
     inset: 0;
-    border-radius: 14px;
+    border-radius: 0;
     background: linear-gradient(
       to bottom,
       rgba(30,15,50,0.9) 0%,
@@ -698,6 +731,7 @@
     background: var(--gold);
     box-shadow: 0 0 12px rgba(244,197,66,0.5);
     z-index: 2;
+    transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .edu-wheel-highlight {
@@ -1029,7 +1063,7 @@
     .stat-label { font-size: 0.55rem; }
 
     /* Education */
-    .edu-wheel { display: none; }
+    .edu-wheel-wrap { display: none; }
     .edu-timeline { padding-left: 16px; height: auto; overflow: visible; }
     .edu-track { position: relative; left: auto; right: auto; }
     .edu-item { padding: 4px 0; }
@@ -1283,19 +1317,25 @@
     <div class="section-title">Where it&nbsp;started.</div>
 
     <div class="edu-layout">
-      <!-- Wheel -->
-      <div class="edu-wheel" id="eduWheel">
-        <div class="edu-wheel-body">
-          <div class="edu-wheel-grip" style="top:20%"></div>
-          <div class="edu-wheel-grip" style="top:30%"></div>
-          <div class="edu-wheel-grip" style="top:40%"></div>
-          <div class="edu-wheel-grip" style="top:50%"></div>
-          <div class="edu-wheel-grip" style="top:60%"></div>
-          <div class="edu-wheel-grip" style="top:70%"></div>
-          <div class="edu-wheel-grip" style="top:80%"></div>
+      <!-- Wheel with housing -->
+      <div class="edu-wheel-wrap">
+        <div class="edu-wheel-arrow">&#9650;</div>
+        <div class="edu-wheel-housing-top"></div>
+        <div class="edu-wheel" id="eduWheel">
+          <div class="edu-wheel-body">
+            <div class="edu-wheel-grip" style="top:20%"></div>
+            <div class="edu-wheel-grip" style="top:30%"></div>
+            <div class="edu-wheel-grip" style="top:40%"></div>
+            <div class="edu-wheel-grip" style="top:50%"></div>
+            <div class="edu-wheel-grip" style="top:60%"></div>
+            <div class="edu-wheel-grip" style="top:70%"></div>
+            <div class="edu-wheel-grip" style="top:80%"></div>
+          </div>
+          <div class="edu-wheel-highlight"></div>
+          <div class="edu-wheel-marker" id="eduWheelMarker"></div>
         </div>
-        <div class="edu-wheel-highlight"></div>
-        <div class="edu-wheel-marker"></div>
+        <div class="edu-wheel-housing-bottom"></div>
+        <div class="edu-wheel-arrow">&#9660;</div>
       </div>
 
       <!-- Timeline -->
@@ -1796,6 +1836,7 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   const wheel = document.getElementById('eduWheel');
   if (!wheel) return;
   const grips = wheel.querySelectorAll('.edu-wheel-grip');
+  const marker = document.getElementById('eduWheelMarker');
   const track = document.getElementById('eduTrack');
   const items = track.querySelectorAll('.edu-item');
   const total = items.length;
@@ -1803,7 +1844,7 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   let current = 0;
   let lastY = null;
   let accum = 0;
-  const THRESHOLD = 25; // less sensitive — needs more mouse movement per step
+  const THRESHOLD = 25;
 
   function getItemH() {
     return items[0].offsetHeight;
@@ -1812,23 +1853,22 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
   function update() {
     const itemH = getItemH();
     const viewH = 180;
-    // Center the current item in the middle of the view
     const offset = (viewH / 2) - (itemH / 2) - current * itemH;
     track.style.transform = 'translateY(' + offset + 'px)';
+
+    // Marker nudges based on position in list (small range: 42%–58%)
+    const pct = total > 1 ? current / (total - 1) : 0.5;
+    marker.style.top = (42 + pct * 16) + '%';
 
     items.forEach((item, i) => {
       const dist = Math.abs(i - current);
       if (dist === 0) {
-        // Center — slightly bigger
         item.style.transform = 'scale(1.08)';
         item.style.opacity = '1';
-        item.querySelector('.edu-item')
       } else if (dist === 1) {
-        // Adjacent — normal size, slightly dimmed
         item.style.transform = 'scale(0.92)';
         item.style.opacity = '0.5';
       } else {
-        // Far — hidden
         item.style.transform = 'scale(0.85)';
         item.style.opacity = '0';
       }
@@ -1844,14 +1884,12 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     grips.forEach((grip, i) => {
       const cur = parseFloat(grip.style.top) || (15 + i * 10);
       let next = cur + dy * 0.15;
-      // Wrap around
       if (next > 85) next -= 70;
       if (next < 15) next += 70;
       grip.style.top = next + '%';
     });
   }
 
-  // Mouseover — accumulate movement, step when threshold reached
   wheel.addEventListener('mousemove', (e) => {
     const y = e.clientY;
     if (lastY !== null) {
@@ -1880,7 +1918,6 @@ document.querySelectorAll('section').forEach(el => cardObserver.observe(el));
     accum = 0;
   });
 
-  // Initial state
   update();
 })();
 
