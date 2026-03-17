@@ -1750,33 +1750,31 @@
   const spinner = document.getElementById('ghostSpinner');
   if (!spinner) return;
 
-  // Fixed position, centered vertically. Drifts left-to-right with 2 full rotations.
-  // Activates after the cascade lines (which end at ~3650px).
-  const ENTER_SCROLL = 3650;
-  const SCROLL_RANGE = 2800; // scroll distance over which it crosses the screen
+  // Fixed position, centered vertically. Starts off-screen left, drifts right.
+  // Keeps spinning as long as you keep scrolling — no cap.
+  const ENTER_SCROLL = 3000;
+  const SPEED = 0.0004; // progress per pixel scrolled — controls drift speed
+  const ROTATION_RATE = 720; // degrees per 1.0 progress
 
   function updateSpinner() {
     const scrollY = window.scrollY;
     const vw = window.innerWidth;
-    const progress = (scrollY - ENTER_SCROLL) / SCROLL_RANGE; // 0 → 1
+    const progress = (scrollY - ENTER_SCROLL) * SPEED;
 
-    if (progress < 0 || progress > 1) {
+    if (progress < 0) {
       spinner.style.opacity = '0';
       return;
     }
 
-    // Drift from off-screen left to off-screen right
+    // Drift from off-screen left — keeps going as you scroll
     const x = -400 + progress * (vw + 600);
 
-    // 2 full rotations (720°)
-    const rotation = progress * 720;
-
-    // No fade — constant opacity, comes from off-screen
-    let op = 0.1;
+    // Continuous rotation
+    const rotation = progress * ROTATION_RATE;
 
     spinner.style.transform = `translate(${x}px, -50%) rotate(${rotation}deg)`;
     spinner.style.filter = `blur(0.25px)`;
-    spinner.style.opacity = op;
+    spinner.style.opacity = 0.1;
   }
 
   let spinTicking = false;
