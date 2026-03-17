@@ -966,6 +966,8 @@
     .name-slice, .ghost-name, .ghost-cascade,
     .page-ruler { display: none !important; }
 
+    svg { display: none !important; }
+
     .container { padding: 0 20px; max-width: none; }
 
     /* Hero — compact, title+years on top, name below */
@@ -991,13 +993,16 @@
       animation: none !important;
       margin-top: 0;
       margin-bottom: 2px;
-      height: auto !important;
-      overflow: visible !important;
+    }
+
+    .hero-name-wrapper .name-slice {
+      display: none !important;
     }
 
     .hero-name {
       font-size: 2.8rem;
       visibility: visible !important;
+      position: relative !important;
       background: linear-gradient(135deg, #2a1a3e, #7a2848, #e8735a) !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
@@ -1045,6 +1050,9 @@
       opacity: 1 !important;
       transform: none !important;
       padding: 5px 0;
+    }
+
+    .exp-card {
       page-break-inside: avoid;
     }
 
