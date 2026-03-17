@@ -800,6 +800,17 @@
     box-shadow: 0 0 12px rgba(244,197,66,0.4);
   }
 
+  .edu-endpoint::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -34px;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, var(--gold), var(--coral), transparent);
+    opacity: 0.4;
+  }
+
   .edu-year {
     font-family: 'Urbanist', sans-serif;
     font-size: 0.75rem;
@@ -1372,7 +1383,7 @@
             <div class="edu-name">MS-DOS</div>
             <div class="edu-desc">Begins using&nbsp;MS-DOS</div>
           </div>
-          <div class="edu-item">
+          <div class="edu-item edu-endpoint">
             <div class="edu-year">1981</div>
             <div class="edu-name">Born</div>
             <div class="edu-desc"></div>
