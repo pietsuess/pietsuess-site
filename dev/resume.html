@@ -963,7 +963,8 @@
 
     .bg-gradient, .bg-gradient::after, .bg-resume-label,
     .print-bar, .scroll-hint,
-    .name-slice, .ghost-name, .ghost-cascade { display: none !important; }
+    .name-slice, .ghost-name, .ghost-cascade,
+    .page-ruler { display: none !important; }
 
     .container { padding: 0 20px; max-width: none; }
 
@@ -973,6 +974,7 @@
       padding: 16px 0 10px;
       display: flex;
       flex-direction: column;
+      justify-content: flex-start;
     }
 
     .hero-title-row {
@@ -989,6 +991,8 @@
       animation: none !important;
       margin-top: 0;
       margin-bottom: 2px;
+      height: auto !important;
+      overflow: visible !important;
     }
 
     .hero-name {
@@ -1686,11 +1690,13 @@
 
   // Fixed strip on right side
   const strip = document.createElement('div');
+  strip.className = 'page-ruler';
   strip.style.cssText = 'position:fixed;right:0;top:0;width:50px;height:100%;z-index:9998;pointer-events:none;overflow:visible;';
   document.body.appendChild(strip);
 
   // Readout — fixed bottom left
   const readout = document.createElement('div');
+  readout.className = 'page-ruler';
   readout.style.cssText = `position:fixed;left:8px;bottom:8px;z-index:9999;font:bold 13px monospace;color:${TAPE_COLOR};background:${BG};padding:4px 8px;border-radius:4px;pointer-events:none;`;
   document.body.appendChild(readout);
 
