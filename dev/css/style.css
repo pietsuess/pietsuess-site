@@ -2611,13 +2611,19 @@ body.menu-open .mobile-nav-overlay {
     grid-template-columns: 1fr;
     gap: 0;
     padding: 0 0 40px;
+    max-width: 100%;
   }
 
   /* Animate */
   .animate-grid {
     grid-template-columns: 1fr;
     gap: var(--grid-gap);
-    padding: 0 6vw 30px;
+    padding: 0 0 30px;
+    max-width: 100%;
+  }
+
+  .animate-grid-mixed {
+    max-width: 100%;
   }
 
   /* Photo */
