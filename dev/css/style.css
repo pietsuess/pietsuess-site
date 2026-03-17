@@ -2758,7 +2758,7 @@ body.menu-open .mobile-nav-overlay {
   }
 
   .splash-page .bg-zone-label {
-    font-size: clamp(3rem, 14vw, 5rem);
+    font-size: clamp(3rem, 16vw, 6rem);
   }
 
   .edit-page .bg-zone-label {
