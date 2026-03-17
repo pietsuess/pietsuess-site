@@ -1008,7 +1008,7 @@ body.menu-open .mobile-nav-overlay {
 .animate-grid-mixed .anim-item img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
@@ -1683,6 +1683,20 @@ body.menu-open .mobile-nav-overlay {
 
 .edit-bio-resume:hover span {
   color: var(--gold);
+}
+
+.contact-image .edit-bio-resume {
+  padding: 6px 12px;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.contact-image .edit-bio-resume img {
+  width: 32px;
+}
+
+.contact-image .edit-bio-resume span {
+  font-size: 0.6rem;
 }
 
 @media (max-width: 768px) {
