@@ -1096,16 +1096,16 @@
     .exp-details li { font-size: 0.7rem; margin-bottom: 0; line-height: 1.35; padding-left: 12px; }
 
     /* Collabs — 3 col */
-    .collab-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
-    .collab-card { padding: 6px 10px; border-radius: 6px; }
-    .collab-name { font-size: 0.8rem; margin-bottom: 1px; }
-    .collab-desc { font-size: 0.65rem; }
+    .collab-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; }
+    .collab-card { padding: 4px 8px; border-radius: 6px; }
+    .collab-name { font-size: 0.75rem; margin-bottom: 0; }
+    .collab-desc { font-size: 0.6rem; }
 
     /* Skills */
-    .skills-row { gap: 4px; margin-bottom: 4px; }
-    .skill-block { padding: 6px 10px; border-radius: 6px; }
-    .skill-label { font-size: 0.55rem; margin-bottom: 2px; }
-    .skill-text { font-size: 0.7rem; line-height: 1.4; }
+    .skills-row { gap: 3px; margin-bottom: 2px; }
+    .skill-block { padding: 4px 8px; border-radius: 6px; }
+    .skill-label { font-size: 0.5rem; margin-bottom: 1px; }
+    .skill-text { font-size: 0.65rem; line-height: 1.35; }
 
     /* Interactive stats */
     .digital-highlight { padding: 8px 12px; border-radius: 6px; }
@@ -1114,11 +1114,14 @@
     .stat-num { font-size: 1.1rem; color: #e8735a !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .stat-label { font-size: 0.55rem; color: #888 !important; }
 
+    /* Hide Tools section — covered by Disciplines */
+    .tools-section { display: none !important; }
+
     /* Education */
     .edu-wheel-wrap { display: none; }
     .edu-timeline { padding-left: 16px; height: auto; overflow: visible; }
     .edu-track { position: relative; height: auto; }
-    .edu-item { position: relative !important; transform: none !important; opacity: 1 !important; filter: none !important; padding: 3px 0; top: auto !important; }
+    .edu-item { position: relative !important; transform: none !important; opacity: 1 !important; filter: none !important; padding: 1px 0; top: auto !important; }
     .edu-item::before { left: -20px; top: 12px; }
     .edu-year { font-size: 0.6rem; color: #b8860b !important; }
     .edu-name { font-size: 0.8rem; }
@@ -1128,7 +1131,7 @@
     .footer {
       opacity: 1 !important;
       transform: none !important;
-      padding: 8px 0;
+      padding: 4px 0;
     }
     .footer-link { font-size: 0.6rem; padding: 4px 12px; color: #888 !important; border-color: #ddd !important; }
   }
@@ -1367,7 +1370,7 @@
 
 
   <!-- TOOLS -->
-  <section>
+  <section class="tools-section">
     <div class="section-label">Tools</div>
     <div class="section-title">Core&nbsp;tools.</div>
 
