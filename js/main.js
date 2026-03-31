@@ -331,6 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
      5. MEASURING TAPE — sidebar ruler
      ------------------------------------------------------- */
   (function() {
+    // Hide on mobile
+    if (window.innerWidth <= 800) return;
     // Only show on pages with enough content
     if (document.body.scrollHeight < window.innerHeight * 1.5) return;
 
