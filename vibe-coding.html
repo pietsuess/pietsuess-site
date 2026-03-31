@@ -58,6 +58,32 @@
   @media (max-width: 500px) {
     .vc-grid { grid-template-columns: 1fr; }
     .vc-header h1 { font-size: 2rem; }
+    ::-webkit-scrollbar { display: none; }
+    html { scrollbar-width: none; }
+  }
+
+  .vc-card-full {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 12px; overflow: hidden;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+  }
+  .vc-card-full:hover {
+    border-color: rgba(255,255,255,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-3px);
+  }
+  .vc-card-full .vc-card-thumb {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    border-bottom: none; border-right: 1px solid var(--glass-border);
+  }
+  @media (max-width: 800px) {
+    .vc-card-full { grid-template-columns: 1fr; }
+    .vc-card-full .vc-card-thumb { border-right: none; border-bottom: 1px solid var(--glass-border); aspect-ratio: 16/9; height: auto; }
   }
 
   .vc-card {
@@ -606,17 +632,14 @@
   <div class="vc-section-label">Portfolio Site</div>
   <div class="vc-grid">
 
-    <div class="vc-card" data-img="portfolio">
+    <div class="vc-card-full" data-img="portfolio">
       <img class="vc-card-thumb" src="toolkit-screenshots/portfolio.jpg" alt="Portfolio" loading="lazy">
       <div class="vc-card-body">
         <div class="vc-card-title">PietSuess.com Rebuild</div>
         <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Full portfolio site rebuilt in dark gradient wrapper. Animated gradient background, glassmorphism cards, 6 zone pages, 24+ project pages, walking squares animation, education wheel. Deployed to GitHub Pages.</div>
+        <div class="vc-card-desc">Full portfolio site rebuilt in dark gradient wrapper. Animated gradient background, glassmorphism cards, 6 zone pages, 24+ project pages, walking squares animation, education wheel. Deployed to GitHub Pages. You're looking at it.</div>
         <div class="vc-card-tags"><span class="vc-tag">Portfolio</span><span class="vc-tag">Animation</span><span class="vc-tag">Glassmorphism</span><span class="vc-tag">Full Site</span></div>
         <div class="vc-card-date">Mar 13 - 26</div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://pietsuess.com" target="_blank" onclick="event.stopPropagation()">View Site &#8599;</a>
-        </div>
       </div>
     </div>
 
@@ -635,7 +658,7 @@
 
 <script src="js/main.js"></script>
 <script>
-document.querySelectorAll('.vc-card[data-img]').forEach(card => {
+document.querySelectorAll('[data-img]').forEach(card => {
   card.addEventListener('click', () => {
     const img = card.dataset.img;
     const title = card.querySelector('.vc-card-title').textContent;
@@ -661,7 +684,7 @@ const devices = {
   'schedule-editor':D, bmats:D, chat:D+M,
   portfolio:D+M
 };
-document.querySelectorAll('.vc-card[data-img]').forEach(card => {
+document.querySelectorAll('[data-img]').forEach(card => {
   const key = card.dataset.img;
   if (devices[key]) {
     const date = card.querySelector('.vc-card-date');
