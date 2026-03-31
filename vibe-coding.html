@@ -142,21 +142,53 @@
   }
   .vc-card-link:hover { background: var(--gold); transform: translateY(-1px); }
 
-  .vc-lightbox-overlay {
+  .vc-detail-overlay {
     display: none; position: fixed; inset: 0; z-index: 9000;
     background: rgba(0,0,0,0.92); justify-content: center; align-items: center;
-    padding: 40px; cursor: pointer;
+    padding: 40px;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
-  .vc-lightbox-overlay.open { display: flex; }
-  .vc-lightbox-img {
-    max-width: 90vw; max-height: 85vh; border-radius: 8px;
-    border: 2px solid rgba(255,255,255,0.15);
-    box-shadow: 0 0 60px rgba(0,0,0,0.5);
+  .vc-detail-overlay.open { display: flex; }
+  .vc-detail-panel {
+    display: grid; grid-template-columns: 1.2fr 1fr;
+    max-width: 960px; width: 100%; max-height: 85vh;
+    background: linear-gradient(135deg, rgba(42,26,62,0.95), rgba(26,14,46,0.98));
+    border: 1px solid var(--glass-border); border-radius: 16px;
+    overflow: hidden; position: relative;
   }
-  .vc-lightbox-caption {
-    position: fixed; bottom: 20px; left: 0; right: 0; text-align: center;
-    font-family: 'Urbanist', sans-serif; font-size: 14px; font-weight: 600;
-    color: var(--cream); letter-spacing: 1px; opacity: 0.7;
+  .vc-detail-img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    border-right: 1px solid var(--glass-border);
+  }
+  .vc-detail-body {
+    padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+  }
+  .vc-detail-close {
+    position: absolute; top: 12px; right: 16px; background: none; border: none;
+    color: rgba(254,249,240,0.5); font-size: 28px; cursor: pointer; z-index: 1;
+    transition: color 0.2s;
+  }
+  .vc-detail-close:hover { color: var(--cream); }
+  .vc-detail-title {
+    font-family: 'Urbanist', sans-serif; font-size: 24px; font-weight: 700;
+    color: var(--cream); margin: 0;
+  }
+  .vc-detail-client {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gold); opacity: 0.8;
+  }
+  .vc-detail-desc {
+    font-size: 14px; color: rgba(254,249,240,0.7); line-height: 1.8;
+    text-align: justify; text-align-last: left;
+  }
+  .vc-detail-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .vc-detail-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 12px; }
+  @media (max-width: 700px) {
+    .vc-detail-overlay { padding: 16px; }
+    .vc-detail-panel { grid-template-columns: 1fr; max-height: 90vh; }
+    .vc-detail-img { aspect-ratio: 16/9; height: auto; border-right: none; border-bottom: 1px solid var(--glass-border); }
+    .vc-detail-body { padding: 20px; }
+    .vc-detail-title { font-size: 20px; }
   }
 
   .vc-stat-bar {
@@ -649,29 +681,153 @@
   </main>
 </div>
 
-<!-- Screenshot lightbox -->
-<div class="vc-lightbox-overlay" id="lightbox" onclick="closeLightbox()">
-  <img class="vc-lightbox-img" id="lightbox-img" src="" alt="">
-  <div class="vc-lightbox-caption" id="lightbox-caption"></div>
+<!-- Detail overlay -->
+<div class="vc-detail-overlay" id="detail">
+  <div class="vc-detail-panel">
+    <img class="vc-detail-img" id="detail-img" src="" alt="">
+    <div class="vc-detail-body">
+      <button class="vc-detail-close" onclick="closeDetail()">&times;</button>
+      <div class="vc-detail-title" id="detail-title"></div>
+      <div class="vc-detail-client" id="detail-client"></div>
+      <div class="vc-detail-desc" id="detail-desc"></div>
+      <div class="vc-detail-tags" id="detail-tags"></div>
+      <div class="vc-detail-links" id="detail-links"></div>
+    </div>
+  </div>
 </div>
 
 <script src="js/main.js"></script>
 <script>
+const details = {
+  maya: {
+    desc: 'Full website build for the Unprofessional Variety Show, a quarterly cabaret night in NYC. Features a WYSIWYG admin panel for managing shows, performers, and content without touching code. Show detail pages with 60+ embedded videos compressed for fast loading. Donate modal, SEO with JSON-LD event schema, mobile-responsive layout, blog with search, and a merch shop. Data-driven architecture where all content lives in JSON files published from the admin.',
+    links: [['View Site','https://unprofessionalvarietyshow.com'],['Admin Demo','https://unprofessionalvarietyshow.com/admin/?demo']]
+  },
+  sscy: {
+    desc: 'Complete website rebuild for the Salt Spring Centre of Yoga. Multi-page site with program offerings, accommodation rentals, event calendar pulling from Google Calendar, blog, shop with Stripe integration, and contact pages. Built a dedicated mobile site with automatic device detection and redirects. Cinzel and Archivo Narrow typography with a warm, spiritual palette.',
+    links: [['View Site','https://clients.pietsuess.com/sscy/']]
+  },
+  selena: {
+    desc: 'Full website rebuild migrating from Squarespace to a custom static site. Multi-page layout with blog (6 articles), online booking integration, FAQs with accordion UI, and detailed about pages. Dynamic scroll-driven animations, parallax effects, and reveal transitions. Includes a JSON-powered admin panel for content editing without code.',
+    links: [['View Site','https://clients.pietsuess.com/selena/'],['Admin Demo','https://clients.pietsuess.com/selena/admin/?demo#pages']]
+  },
+  unveil: {
+    desc: 'Product animation showcase built for Unveil. Interactive demos with hover and click states, mobile-optimized views, and animated WebP/GIF assets exported in three colorways and multiple sizes. Clean product-focused layout designed to highlight the animation work.',
+    links: [['Animations','https://clients.pietsuess.com/unveil/'],['Interactive','https://clients.pietsuess.com/unveil/interactive.html']]
+  },
+  lotus: {
+    desc: 'Interactive proposal site with animated presentation flow and PDF export. Built as a pitch tool with smooth transitions between sections, glassmorphic card layouts, and a polished delivery feel.',
+    links: [['View','https://clients.pietsuess.com/lotus/']]
+  },
+  '424': {
+    desc: 'Single-page property listing with photo gallery, unit details, pricing, and contact information. Clean layout focused on showcasing the property with minimal friction.',
+    links: [['View','https://arcade.pietsuess.com/424-350-e-2nd.html']]
+  },
+  'heart-lines': {
+    desc: 'Interactive heart-shaped generative line animation. Mouse movement influences the density and flow of lines that trace heart forms. Built as a creative experiment exploring cursor-driven procedural art.',
+    links: [['View','https://clients.pietsuess.com/natalie/heart-lines.html']]
+  },
+  clearing: {
+    desc: 'A lantern cursor explores scattered glassmorphic content discs on dark ground. Magnetic proximity detection reveals content as the light sweeps across the page. Cards glow and become readable only when the cursor is near, creating a discovery-based navigation experience.',
+    links: [['View','https://clients.pietsuess.com/sscy/wireframe-clearing.html']]
+  },
+  intent: {
+    desc: '3D room with mouse-driven parallax. Floating content cards orbit in elliptical paths while always facing the viewer. Warm palette with natural depth cues creates a spatial sense of exploring a physical environment.',
+    links: [['View','https://clients.pietsuess.com/sscy/wireframe-intent.html']]
+  },
+  scatter: {
+    desc: 'Draggable cards scattered across a table surface. Pick up cards to bring them to front, throw to re-scatter with physics-based momentum. Double-click any card for a fullscreen view with animated transitions. Real physics simulation with rotation and velocity.',
+    links: [['View','https://clients.pietsuess.com/sscy/wireframe-scatter.html']]
+  },
+  'depth-scroll': {
+    desc: 'Full-page content cards scrolling through Z-space. Layers approach and recede as you scroll, creating a tunnel of information where content moves toward and past the viewer. Perspective-based layout with smooth depth transitions.',
+    links: [['View','https://clients.pietsuess.com/sscy/wireframe-depth-scroll.html']]
+  },
+  deck: {
+    desc: 'Stacked card navigation where pages layer like a physical deck. Swipe or click to peel back the top card and reveal the next one underneath. Each card is a full content page with its own layout and imagery.',
+    links: [['View','https://clients.pietsuess.com/sscy/wireframe-deck.html']]
+  },
+  chalkboard: {
+    desc: 'Hand-drawn chalkboard aesthetic where content is presented as if written and sketched on a classroom board. Chalk-textured typography, smudge effects, and drawn borders create an analog warmth.',
+    links: [['View','https://clients.pietsuess.com/sscy/wireframe-chalkboard.html']]
+  },
+  orbit: {
+    desc: 'Content cards orbiting in an elliptical path around a central element. Continuous motion with readable content that slows as cards pass the focal point. 3D perspective with depth-based scaling.',
+    links: [['View','https://clients.pietsuess.com/sscy/wireframe-orbit-section.html']]
+  },
+  'maya-depth': {
+    desc: 'Wireframe card stack for the variety show. Full-page show cards layered in depth, scroll to navigate through the lineup. Each card features the show poster and details at different Z positions.',
+    links: [['View','https://clients.pietsuess.com/maya/depth.html']]
+  },
+  'maya-scatter': {
+    desc: 'Show cards scattered across the page in a collage layout. Pick up, drag, and throw cards to explore the variety show lineup. Physics-based interactions with rotation and momentum.',
+    links: [['View','https://clients.pietsuess.com/maya/scatter.html']]
+  },
+  navigator: {
+    desc: 'A 12,500-line HTML5 canvas space exploration game that doubles as a portfolio. Five themed zones (Direction, Editing, Animation, Photography, Design) each with content popups showing real work. Boss battles, black hole mechanics, mission objectives, fuel management, a global leaderboard with Firebase, and analytics tracking. Ships upgrade through gameplay, and content unlocks as you explore.',
+    links: [['Play','https://arcade.pietsuess.com/navigator.html']]
+  },
+  'return-to-space': {
+    desc: 'Navigator sequel expanding the universe. Features light speed travel with multi-layer procedural flame and particle systems, Jupiter with orbiting moons, asteroid fields with shattering physics, smooth zoom transitions between scales, and a Mars mission where you fly to, land on, and explore the surface collecting crystals. Debris field mini-game with tactical combat.',
+    links: [['Play','https://arcade.pietsuess.com/return-to-space.html']]
+  },
+  victory: {
+    desc: 'Pixel art victory sequence triggered after completing Navigator. Walk through a hangar, discover the Delta Wing ship, and explore rooms with depth-sorted SVG objects. The pilot game leads into the Mars mission. Music system with mute toggle, fullscreen preservation when returning to the main game.',
+    links: [['Victory','https://arcade.pietsuess.com/navigator-victory.html'],['Mars','https://arcade.pietsuess.com/return-to-space.html?mars']]
+  },
+  tunnel: {
+    desc: 'Mobile-first tunnel racing game with tilt or touch controls. Five sectors mapped to portfolio zones, each with 4 levels of increasing difficulty. Hazard progression introduces rings, mines, blocks, barriers, knots, and speed run sectors. Portfolio content carousels unlock as you clear sectors. Global leaderboard, sector-gated content, and a full tutorial system.',
+    links: [['Play','https://arcade.pietsuess.com/tunnel.html']]
+  },
+  'cube-toss': {
+    desc: 'Physics-based cube throwing game with realistic surface friction, collision impulse transfer, and rolling mechanics. External JSON level system allows easy level creation. Built-in level editor with drag-and-drop object placement, property editing, and export.',
+    links: [['Play','https://arcade.pietsuess.com/cube-toss.html']]
+  },
+  gary: {
+    desc: 'Pixel art platformer prototype with sub-grid collision detection, pushable objects with chain pushing, roll mechanics, and tap-step movement for precise platforming. Includes a full level editor with sprite sheet picker, tile painting, object placement, and JSON export/import.',
+    links: [['Play','https://arcade.pietsuess.com/dev/play.html'],['Editor','https://arcade.pietsuess.com/dev/gary-editor.html']]
+  },
+  'schedule-editor': {
+    desc: 'Interactive weekly schedule editor built for the yoga centre. Click to stamp events on a time grid, drag to resize or move them. Venue color coding with hex color inputs, 3-level undo system, and vector PDF export with embedded fonts. Syncs with Google Sheets for collaborative editing.',
+    links: [['View','https://clients.pietsuess.com/sscy/schedule-editor.html?demo']]
+  },
+  bmats: {
+    desc: 'Video subtitle review tool with embedded Vimeo player synchronized to subtitle tracks. Multi-language tabs for reviewing translations, correction panel where reviewers can flag and annotate issues, with Google Sheets integration for collaborative feedback collection.',
+    links: [['Demo','https://arcade.pietsuess.com/dev/bmats-demo.html']]
+  },
+  chat: {
+    desc: 'Real-time chat application with image support via drag/drop, clipboard paste, and file picker. Multiple channel rooms (Book, Studio), presence indicators showing who is online, password-protected login, emoji reactions on messages, and a lightbox for viewing shared images.',
+    links: []
+  },
+  portfolio: {
+    desc: 'Full portfolio site rebuilt from scratch in a dark gradient wrapper. Animated gradient background, glassmorphic card layouts, noise texture overlay, 6 zone pages with project grids, 24+ individual project pages with modals, walking squares logo animation, 3D education wheel, and a measuring tape ruler. Single-repo deployment to GitHub Pages. You\'re looking at it.',
+    links: []
+  }
+};
+
 document.querySelectorAll('[data-img]').forEach(card => {
   card.addEventListener('click', () => {
-    const img = card.dataset.img;
-    const title = card.querySelector('.vc-card-title').textContent;
-    document.getElementById('lightbox-img').src = 'toolkit-screenshots/' + img + '.jpg';
-    document.getElementById('lightbox-caption').textContent = title;
-    document.getElementById('lightbox').classList.add('open');
+    const key = card.dataset.img;
+    const d = details[key] || {};
+    document.getElementById('detail-img').src = 'toolkit-screenshots/' + key + '.jpg';
+    document.getElementById('detail-title').textContent = card.querySelector('.vc-card-title').textContent;
+    document.getElementById('detail-client').textContent = card.querySelector('.vc-card-client').textContent;
+    document.getElementById('detail-desc').textContent = d.desc || card.querySelector('.vc-card-desc').textContent;
+    document.getElementById('detail-tags').innerHTML = card.querySelector('.vc-card-tags').innerHTML.replace(/vc-tag/g, 'vc-tag');
+    const linksEl = document.getElementById('detail-links');
+    linksEl.innerHTML = (d.links || []).map(l => '<a class="vc-card-link" href="' + l[1] + '" target="_blank" onclick="event.stopPropagation()">' + l[0] + ' &#8599;</a>').join('');
+    document.getElementById('detail').classList.add('open');
     document.body.style.overflow = 'hidden';
   });
 });
-function closeLightbox(){
-  document.getElementById('lightbox').classList.remove('open');
+function closeDetail(){
+  document.getElementById('detail').classList.remove('open');
   document.body.style.overflow = '';
 }
-document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightbox(); });
+document.getElementById('detail').addEventListener('click', e => {
+  if (e.target === document.getElementById('detail')) closeDetail();
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeDetail(); });
 
 // Device icons
 const D = '<svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>';
