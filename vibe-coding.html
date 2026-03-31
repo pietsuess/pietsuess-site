@@ -160,7 +160,8 @@
     overflow: hidden; position: relative; flex-shrink: 0;
   }
   .vc-detail-iframe {
-    width: 100%; height: 100%; border: none; display: block;
+    border: none; display: block;
+    transform-origin: 0 0;
   }
   .vc-detail-img {
     width: 100%; height: 100%; object-fit: cover; display: block;
@@ -825,15 +826,23 @@ function sizePanel() {
   const pad = 40;
   const maxW = vw - pad;
   const maxH = vh - pad;
-  const screenRatio = screen.width / screen.height;
+  const fullW = screen.width;
+  const fullH = screen.height;
+  const screenRatio = fullW / fullH;
   // Each half gets 50% of total width
   let halfW = Math.floor(maxW / 2);
   let panelH = Math.round(halfW / screenRatio);
-  // If too tall, scale down from height
   if (panelH > maxH) {
     panelH = maxH;
     halfW = Math.round(panelH * screenRatio);
   }
+  // Scale iframe: render at full screen size, shrink to fit
+  const scaleX = halfW / fullW;
+  const scaleY = panelH / fullH;
+  const s = Math.min(scaleX, scaleY);
+  detailIframe.style.width = fullW + 'px';
+  detailIframe.style.height = fullH + 'px';
+  detailIframe.style.transform = 'scale(' + s + ')';
   detailPreview.style.width = halfW + 'px';
   detailPreview.style.height = panelH + 'px';
   detailPanel.style.width = (halfW * 2) + 'px';
