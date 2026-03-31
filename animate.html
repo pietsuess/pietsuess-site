@@ -499,6 +499,9 @@ if (location.search.includes('dev')) {
   const grid = document.querySelector('.animate-grid-mixed');
   if (!grid) throw 'no grid';
 
+  // Scroll to grid so editor starts ready to use
+  setTimeout(() => grid.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+
   // Show grid lines
   grid.style.position = 'relative';
   const overlay = document.createElement('div');
