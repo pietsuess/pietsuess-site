@@ -818,27 +818,26 @@ const detailImg = document.getElementById('detail-img');
 const detailIframe = document.getElementById('detail-iframe');
 const detailPreview = document.getElementById('detail-preview');
 const detailPanel = document.querySelector('.vc-detail-panel');
-const INFO_WIDTH = 340;
-
 function sizePanel() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  if (vw <= 700) return; // mobile handled by CSS
+  if (vw <= 700) return;
   const pad = 40;
+  const maxW = vw - pad;
   const maxH = vh - pad;
   const screenRatio = screen.width / screen.height;
-  // Preview takes screen aspect ratio, info panel sits beside it
-  let previewH = maxH;
-  let previewW = Math.round(previewH * screenRatio);
-  // If preview + info exceeds viewport width, scale down
-  const maxTotalW = vw - pad;
-  if (previewW + INFO_WIDTH > maxTotalW) {
-    previewW = maxTotalW - INFO_WIDTH;
-    previewH = Math.round(previewW / screenRatio);
+  // Each half gets 50% of total width
+  let halfW = Math.floor(maxW / 2);
+  let panelH = Math.round(halfW / screenRatio);
+  // If too tall, scale down from height
+  if (panelH > maxH) {
+    panelH = maxH;
+    halfW = Math.round(panelH * screenRatio);
   }
-  detailPreview.style.width = previewW + 'px';
-  detailPreview.style.height = previewH + 'px';
-  detailPanel.style.height = previewH + 'px';
+  detailPreview.style.width = halfW + 'px';
+  detailPreview.style.height = panelH + 'px';
+  detailPanel.style.width = (halfW * 2) + 'px';
+  detailPanel.style.height = panelH + 'px';
 }
 
 document.querySelectorAll('[data-img]').forEach(card => {
