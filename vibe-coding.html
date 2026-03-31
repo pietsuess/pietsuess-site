@@ -100,6 +100,8 @@
     color: rgba(254,249,240,0.55);
   }
   .vc-card-date { font-size: 10px; color: rgba(254,249,240,0.3); }
+  .vc-device { display: inline-flex; gap: 4px; float: right; margin-top: 2px; }
+  .vc-device svg { width: 14px; height: 14px; fill: rgba(254,249,240,0.3); }
   .vc-card-links { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
   .vc-card-link {
     display: inline-block; font-family: 'Urbanist', sans-serif;
@@ -648,6 +650,29 @@ function closeLightbox(){
   document.body.style.overflow = '';
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightbox(); });
+
+// Device icons
+const D = '<svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>';
+const M = '<svg viewBox="0 0 24 24"><path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-2 20h-4v-1h4v1zm3.25-3H6.75V4h10.5v14z"/></svg>';
+const devices = {
+  maya:D+M, sscy:D+M, selena:D, unveil:D+M, lotus:D, '424':D,
+  'heart-lines':D, clearing:D, intent:D, scatter:D, 'depth-scroll':D, deck:D, chalkboard:D, orbit:D, 'maya-depth':D, 'maya-scatter':D,
+  navigator:D, 'return-to-space':D, victory:D, tunnel:M, 'cube-toss':D, gary:D,
+  'schedule-editor':D, bmats:D, chat:D+M,
+  portfolio:D+M
+};
+document.querySelectorAll('.vc-card[data-img]').forEach(card => {
+  const key = card.dataset.img;
+  if (devices[key]) {
+    const date = card.querySelector('.vc-card-date');
+    if (date) {
+      const span = document.createElement('span');
+      span.className = 'vc-device';
+      span.innerHTML = devices[key];
+      date.appendChild(span);
+    }
+  }
+});
 </script>
 </body>
 </html>
