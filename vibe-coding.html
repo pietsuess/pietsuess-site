@@ -53,15 +53,17 @@
   @media (max-width: 800px) {
     .vc-grid { grid-template-columns: repeat(2, 1fr); }
     .vc-content { padding: 20px 16px 60px; }
-    .vc-stat-bar { gap: 20px; padding: 16px; }
-    .vc-stat-num { font-size: 24px; }
+    .vc-stat-bar { gap: 0; padding: 12px 8px; justify-content: space-between; }
+    .vc-stat { flex: 1; }
+    .vc-stat-num { font-size: 22px; }
+    .vc-stat-label { font-size: 8px; letter-spacing: 1px; }
+    ::-webkit-scrollbar { display: none; }
+    html { scrollbar-width: none; }
   }
   @media (max-width: 500px) {
     .vc-grid { grid-template-columns: 1fr; }
     .vc-header h1 { font-size: 2rem; }
     #bgZoneLabel { font-size: 14vw; }
-    ::-webkit-scrollbar { display: none; }
-    html { scrollbar-width: none; }
   }
 
   .vc-card-full {
