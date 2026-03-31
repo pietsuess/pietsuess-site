@@ -829,7 +829,7 @@ document.querySelectorAll('[data-img]').forEach(card => {
     const liveUrl = (d.links && d.links.length) ? d.links[0][1] : '';
     if (liveUrl) {
       detailIframe.src = liveUrl;
-      detailIframe.onload = () => { detailImg.style.opacity = '0'; };
+      detailIframe.onload = () => { detailImg.style.opacity = '0'; detailImg.style.pointerEvents = 'none'; };
     } else {
       detailIframe.src = 'about:blank';
     }
@@ -848,6 +848,7 @@ function closeDetail(){
   document.body.style.overflow = '';
   detailIframe.src = 'about:blank';
   detailImg.style.opacity = '1';
+  detailImg.style.pointerEvents = '';
 }
 document.getElementById('detail').addEventListener('click', e => {
   if (e.target === document.getElementById('detail')) closeDetail();
