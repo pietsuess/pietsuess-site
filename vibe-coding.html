@@ -150,15 +150,14 @@
   }
   .vc-detail-overlay.open { display: flex; }
   .vc-detail-panel {
-    display: grid; grid-template-columns: 1.4fr 1fr;
-    width: 95vw; max-width: 1400px; max-height: 92vh;
+    display: flex;
     background: linear-gradient(135deg, rgba(42,26,62,0.95), rgba(26,14,46,0.98));
     border: 1px solid var(--glass-border); border-radius: 16px;
     overflow: hidden; position: relative;
   }
   .vc-detail-preview {
     background: #000; border-right: 1px solid var(--glass-border);
-    overflow: hidden; position: relative;
+    overflow: hidden; position: relative; flex-shrink: 0;
   }
   .vc-detail-iframe {
     width: 100%; height: 100%; border: none; display: block;
@@ -192,9 +191,9 @@
   .vc-detail-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 12px; }
   @media (max-width: 700px) {
     .vc-detail-overlay { padding: 8px; }
-    .vc-detail-panel { grid-template-columns: 1fr; max-height: 95vh; width: 100vw; }
-    .vc-detail-preview { border-right: none; border-bottom: 1px solid var(--glass-border); min-height: 200px; }
-    .vc-detail-body { padding: 20px; }
+    .vc-detail-panel { flex-direction: column; max-height: 95vh; width: 100vw; }
+    .vc-detail-preview { border-right: none; border-bottom: 1px solid var(--glass-border); width: 100% !important; height: 40vh !important; }
+    .vc-detail-body { padding: 20px; overflow-y: auto; flex: 1; }
     .vc-detail-title { font-size: 20px; }
   }
 
@@ -817,15 +816,37 @@ const details = {
 
 const detailImg = document.getElementById('detail-img');
 const detailIframe = document.getElementById('detail-iframe');
+const detailPreview = document.getElementById('detail-preview');
+const detailPanel = document.querySelector('.vc-detail-panel');
+const INFO_WIDTH = 340;
+
+function sizePanel() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  if (vw <= 700) return; // mobile handled by CSS
+  const pad = 40;
+  const maxH = vh - pad;
+  const screenRatio = screen.width / screen.height;
+  // Preview takes screen aspect ratio, info panel sits beside it
+  let previewH = maxH;
+  let previewW = Math.round(previewH * screenRatio);
+  // If preview + info exceeds viewport width, scale down
+  const maxTotalW = vw - pad;
+  if (previewW + INFO_WIDTH > maxTotalW) {
+    previewW = maxTotalW - INFO_WIDTH;
+    previewH = Math.round(previewW / screenRatio);
+  }
+  detailPreview.style.width = previewW + 'px';
+  detailPreview.style.height = previewH + 'px';
+  detailPanel.style.height = previewH + 'px';
+}
 
 document.querySelectorAll('[data-img]').forEach(card => {
   card.addEventListener('click', () => {
     const key = card.dataset.img;
     const d = details[key] || {};
-    // Show screenshot as placeholder
     detailImg.src = 'toolkit-screenshots/' + key + '.jpg';
     detailImg.style.opacity = '1';
-    // Load live site if links available
     const liveUrl = (d.links && d.links.length) ? d.links[0][1] : '';
     if (liveUrl) {
       detailIframe.src = liveUrl;
@@ -839,6 +860,7 @@ document.querySelectorAll('[data-img]').forEach(card => {
     document.getElementById('detail-tags').innerHTML = card.querySelector('.vc-card-tags').innerHTML;
     const linksEl = document.getElementById('detail-links');
     linksEl.innerHTML = (d.links || []).map(l => '<a class="vc-card-link" href="' + l[1] + '" target="_blank" onclick="event.stopPropagation()">' + l[0] + ' &#8599;</a>').join('');
+    sizePanel();
     document.getElementById('detail').classList.add('open');
     document.body.style.overflow = 'hidden';
   });
@@ -850,6 +872,9 @@ function closeDetail(){
   detailImg.style.opacity = '1';
   detailImg.style.pointerEvents = '';
 }
+window.addEventListener('resize', () => {
+  if (document.getElementById('detail').classList.contains('open')) sizePanel();
+});
 document.getElementById('detail').addEventListener('click', e => {
   if (e.target === document.getElementById('detail')) closeDetail();
 });
