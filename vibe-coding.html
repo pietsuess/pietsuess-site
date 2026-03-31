@@ -287,12 +287,12 @@
   <div class="vc-content">
 
   <div class="vc-stat-bar" style="margin-top:10px">
-    <div class="vc-stat"><div class="vc-stat-num">23</div><div class="vc-stat-label">Projects</div></div>
+    <div class="vc-stat"><div class="vc-stat-num">25</div><div class="vc-stat-label">Projects</div></div>
     <div class="vc-stat"><div class="vc-stat-num">18</div><div class="vc-stat-label">Days</div></div>
     <div class="vc-stat"><div class="vc-stat-num">6</div><div class="vc-stat-label">Client Sites</div></div>
     <div class="vc-stat"><div class="vc-stat-num">7</div><div class="vc-stat-label">Experiments</div></div>
     <div class="vc-stat"><div class="vc-stat-num">6</div><div class="vc-stat-label">Games</div></div>
-    <div class="vc-stat"><div class="vc-stat-num">3</div><div class="vc-stat-label">Tools</div></div>
+    <div class="vc-stat"><div class="vc-stat-num">5</div><div class="vc-stat-label">Tools</div></div>
   </div>
 
   <div class="vc-section-label">Client Sites</div>
@@ -623,6 +623,34 @@
       </div>
     </div>
 
+    <div class="vc-card" data-img="grid-editor">
+      <img class="vc-card-thumb" src="toolkit-screenshots/grid-editor.jpg" alt="Grid Editor" loading="lazy">
+      <div class="vc-card-body">
+        <div class="vc-card-title">Animation Grid Editor</div>
+        <div class="vc-card-client">Piet Suess</div>
+        <div class="vc-card-desc">Visual drag-and-drop grid editor for the animation portfolio page. Move and resize items on an 18-column grid, copy layout code.</div>
+        <div class="vc-card-tags"><span class="vc-tag">Editor</span><span class="vc-tag">Grid</span><span class="vc-tag">Drag &amp; Drop</span></div>
+        <div class="vc-card-date">Mar 2026</div>
+        <div class="vc-card-links">
+          <a class="vc-card-link" href="https://pietsuess.com/animate.html?dev" target="_blank" onclick="event.stopPropagation()">Demo &#8599;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="vc-card" data-img="content-editor">
+      <img class="vc-card-thumb" src="toolkit-screenshots/content-editor.jpg" alt="Content Editor" loading="lazy">
+      <div class="vc-card-body">
+        <div class="vc-card-title">Navigator Content Editor</div>
+        <div class="vc-card-client">Piet Suess</div>
+        <div class="vc-card-desc">Drag-and-drop content editor for Navigator's Photo and Design zone galleries. Pulls images from GitHub repos, reorder and export as game data.</div>
+        <div class="vc-card-tags"><span class="vc-tag">Editor</span><span class="vc-tag">Content</span><span class="vc-tag">GitHub API</span></div>
+        <div class="vc-card-date">Mar 2026</div>
+        <div class="vc-card-links">
+          <a class="vc-card-link" href="https://arcade.pietsuess.com/dev/content-editor.html" target="_blank" onclick="event.stopPropagation()">Demo &#8599;</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="vc-section-label">Portfolio Site</div>
@@ -763,6 +791,14 @@ const details = {
     desc: 'Video subtitle review tool with embedded Vimeo player synchronized to subtitle tracks. Multi-language tabs for reviewing translations, correction panel where reviewers can flag and annotate issues, with Google Sheets integration for collaborative feedback collection.',
     links: [['Demo','https://arcade.pietsuess.com/dev/bmats-demo.html']]
   },
+  'grid-editor': {
+    desc: 'Visual drag-and-drop grid layout editor built into the animation portfolio page. Activate with ?dev to overlay an 18-column grid, then drag items to reposition or pull corners to resize. Grid lines toggle on/off, and Copy Layout exports the CSS grid positions for all items ready to paste into the source.',
+    links: [['Demo','https://pietsuess.com/animate.html?dev']]
+  },
+  'content-editor': {
+    desc: 'Content management tool for Navigator\'s Photo and Design zone galleries. Pulls images directly from GitHub repos (piet-photos and design-portfolio), displays them with drag-and-drop reordering. Export generates the CONTENT_DATA arrays ready to paste into the game code. Supports both Photo (12 items, 19 thematic groups) and Design (8 projects) zones.',
+    links: [['Demo','https://arcade.pietsuess.com/dev/content-editor.html']]
+  },
   chat: {
     desc: 'Real-time chat application with image support via drag/drop, clipboard paste, and file picker. Multiple channel rooms (Book, Studio), presence indicators showing who is online, password-protected login, emoji reactions on messages, and a lightbox for viewing shared images.',
     links: []
@@ -853,7 +889,7 @@ const devices = {
   maya:D+M, sscy:D+M, selena:D, unveil:D+M, lotus:D, '424':D,
   'heart-lines':D, clearing:D, intent:D, scatter:D, 'depth-scroll':D, deck:D, chalkboard:D, orbit:D, 'maya-depth':D, 'maya-scatter':D,
   navigator:D, 'return-to-space':D, victory:D, tunnel:M, 'cube-toss':D, gary:D,
-  'schedule-editor':D, bmats:D, chat:D+M,
+  'schedule-editor':D, bmats:D, 'grid-editor':D, 'content-editor':D, chat:D+M,
   portfolio:D+M
 };
 document.querySelectorAll('[data-img]').forEach(card => {
