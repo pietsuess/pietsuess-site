@@ -847,6 +847,7 @@ document.querySelectorAll('[data-img]').forEach(card => {
         }
       };
     } else {
+      detailIframe.onload = null;
       detailIframe.src = 'about:blank';
     }
     document.getElementById('detail-title').textContent = card.querySelector('.vc-card-title').textContent;
