@@ -1532,8 +1532,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Send final data on page leave
     window.addEventListener('beforeunload', () => send('leave'));
 
-    // Heartbeat every 30s
-    setInterval(() => send('heartbeat'), 30000);
   })();
 
 });
