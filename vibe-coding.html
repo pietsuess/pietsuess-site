@@ -318,12 +318,9 @@
       <div class="vc-card-body">
         <div class="vc-card-title">Salt Spring Centre of Yoga</div>
         <div class="vc-card-client">SSCY</div>
-        <div class="vc-card-desc">Full website rebuild with shop, offerings, rentals, calendar, blog, and contact pages. Dedicated mobile site with responsive redirects.</div>
+        <div class="vc-card-desc">Full website rebuild with shop, offerings, rentals, calendar, blog, and contact pages. Dedicated mobile site with responsive redirects. In development.</div>
         <div class="vc-card-tags"><span class="vc-tag">Full Site</span><span class="vc-tag">Mobile</span><span class="vc-tag">Multi-page</span><span class="vc-tag">Shop</span></div>
         <div class="vc-card-date">Mar 21 - 28</div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://clients.pietsuess.com/sscy/" target="_blank" onclick="event.stopPropagation()">View Site &#8599;</a>
-        </div>
       </div>
     </div>
 
@@ -687,7 +684,9 @@ const details = {
   },
   sscy: {
     desc: 'Complete website rebuild for the Salt Spring Centre of Yoga. Multi-page site with program offerings, accommodation rentals, event calendar pulling from Google Calendar, blog, shop with Stripe integration, and contact pages. Built a dedicated mobile site with automatic device detection and redirects. Cinzel and Archivo Narrow typography with a warm, spiritual palette.',
-    links: [['View Site','https://clients.pietsuess.com/sscy/']]
+    links: [],
+    iframeUrl: 'https://clients.pietsuess.com/sscy/',
+    noScroll: true
   },
   selena: {
     desc: 'Full website rebuild migrating from Squarespace to a custom static site. Multi-page layout with blog (6 articles), online booking integration, FAQs with accordion UI, and detailed about pages. Dynamic scroll-driven animations, parallax effects, and reveal transitions. Includes a JSON-powered admin panel for content editing without code.',
@@ -835,10 +834,12 @@ document.querySelectorAll('[data-img]').forEach(card => {
     const d = details[key] || {};
     detailImg.src = 'toolkit-screenshots/' + key + '.jpg';
     detailImg.style.opacity = '1';
-    const liveUrl = (d.links && d.links.length) ? d.links[0][1] : '';
+    const liveUrl = d.iframeUrl || ((d.links && d.links.length) ? d.links[0][1] : '');
+    detailPreview.style.overflow = d.noScroll ? 'hidden' : '';
+    detailIframe.style.pointerEvents = d.noScroll ? 'none' : '';
     if (liveUrl) {
       detailIframe.src = liveUrl;
-      detailIframe.onload = () => { detailImg.style.opacity = '0'; detailImg.style.pointerEvents = 'none'; };
+      detailIframe.onload = () => { detailImg.style.opacity = '0'; if (!d.noScroll) detailImg.style.pointerEvents = 'none'; };
     } else {
       detailIframe.src = 'about:blank';
     }
