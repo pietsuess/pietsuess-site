@@ -686,7 +686,8 @@ const details = {
     desc: 'Complete website rebuild for the Salt Spring Centre of Yoga. Multi-page site with program offerings, accommodation rentals, event calendar pulling from Google Calendar, blog, shop with Stripe integration, and contact pages. Built a dedicated mobile site with automatic device detection and redirects. Cinzel and Archivo Narrow typography with a warm, spiritual palette.',
     links: [],
     iframeUrl: 'https://clients.pietsuess.com/sscy/',
-    noScroll: true
+    noScroll: true,
+    status: 'In Development'
   },
   selena: {
     desc: 'Full website rebuild migrating from Squarespace to a custom static site. Multi-page layout with blog (6 articles), online booking integration, FAQs with accordion UI, and detailed about pages. Dynamic scroll-driven animations, parallax effects, and reveal transitions. Includes a JSON-powered admin panel for content editing without code.',
@@ -836,10 +837,15 @@ document.querySelectorAll('[data-img]').forEach(card => {
     detailImg.style.opacity = '1';
     const liveUrl = d.iframeUrl || ((d.links && d.links.length) ? d.links[0][1] : '');
     detailPreview.style.overflow = d.noScroll ? 'hidden' : '';
-    detailIframe.style.pointerEvents = d.noScroll ? 'none' : '';
     if (liveUrl) {
       detailIframe.src = liveUrl;
-      detailIframe.onload = () => { detailImg.style.opacity = '0'; if (!d.noScroll) detailImg.style.pointerEvents = 'none'; };
+      detailIframe.onload = () => {
+        detailImg.style.opacity = '0';
+        detailImg.style.pointerEvents = 'none';
+        if (d.noScroll) {
+          try { detailIframe.contentDocument.documentElement.style.overflow = 'hidden'; } catch(e) {}
+        }
+      };
     } else {
       detailIframe.src = 'about:blank';
     }
@@ -848,7 +854,9 @@ document.querySelectorAll('[data-img]').forEach(card => {
     document.getElementById('detail-desc').textContent = d.desc || card.querySelector('.vc-card-desc').textContent;
     document.getElementById('detail-tags').innerHTML = card.querySelector('.vc-card-tags').innerHTML;
     const linksEl = document.getElementById('detail-links');
-    linksEl.innerHTML = (d.links || []).map(l => '<a class="vc-card-link" href="' + l[1] + '" target="_blank" onclick="event.stopPropagation()">' + l[0] + ' &#8599;</a>').join('');
+    let linksHtml = (d.links || []).map(l => '<a class="vc-card-link" href="' + l[1] + '" target="_blank" onclick="event.stopPropagation()">' + l[0] + ' &#8599;</a>').join('');
+    if (d.status) linksHtml += '<span style="font-family:Urbanist,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);opacity:0.6;padding:8px 0;">' + d.status + '</span>';
+    linksEl.innerHTML = linksHtml;
     sizePanel();
     document.getElementById('detail').classList.add('open');
     document.body.style.overflow = 'hidden';
