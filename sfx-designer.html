@@ -55,10 +55,14 @@
   .module.gen .mod-title { color:#ff69b4; }
   .module.fx .mod-title { color:#00ffcc; }
   .module.out .mod-title { color:#ffe000; }
+  .module.pat { border-color:#aa66ff44; background:rgba(25,10,40,0.6); }
+  .module.pat .mod-title { color:#aa66ff; }
+  .module.mix { border-color:#ff994444; background:rgba(40,20,10,0.6); }
+  .module.mix .mod-title { color:#ff9944; }
   .pat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; width:68px; }
-  .pat-step { width:15px; height:15px; border:1px solid #ff69b455; background:#ff69b411; cursor:pointer; border-radius:2px; }
-  .pat-step.on { background:#ff69b4; border-color:#ff69b4; }
-  .pat-step:hover { border-color:#ff69b4; }
+  .pat-step { width:15px; height:15px; border:1px solid #aa66ff55; background:#aa66ff11; cursor:pointer; border-radius:2px; }
+  .pat-step.on { background:#aa66ff; border-color:#aa66ff; }
+  .pat-step:hover { border-color:#aa66ff; }
   .pat-step.current { box-shadow:0 0 6px #ffe000; border-color:#ffe000; }
   /* Jacks — left edge (inputs) and right edge (outputs) */
   .jack-row { display:flex; flex-direction:column; position:absolute; top:0; bottom:0; justify-content:space-around; z-index:10; }
@@ -136,6 +140,55 @@
   <button id="undoBtn">UNDO</button>
   <button id="fsBtn" onclick="document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()">FULLSCREEN</button>
   <button id="blurMuteBtn" style="border-color:#00ffcc44;color:#00ffcc;font-size:8px;">BLUR: MUTE</button>
+  <button id="helpBtn" style="border-color:#ffe00044;color:#ffe000;font-size:8px;">?</button>
+</div>
+<div id="helpOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:10000;overflow-y:auto;padding:40px;font-family:inherit;color:#ccc;font-size:11px;letter-spacing:0.5px;line-height:1.6;">
+  <div style="max-width:700px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <span style="color:#ffe000;font-size:14px;letter-spacing:2px;">CONTROLS</span>
+      <span id="helpClose" style="color:#ff4444;cursor:pointer;font-size:18px;">X</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div style="color:#ff69b4;margin-bottom:6px;letter-spacing:1px;">MODULES</div>
+        <div>Drag title bar to move</div>
+        <div>Double-click title to expand/collapse knobs</div>
+        <div>Click module to bring to front</div>
+        <div>Shift-click to multi-select, drag to move group</div>
+        <div>Drag empty space to box-select</div>
+        <div style="color:#00ffcc;margin:10px 0 6px;letter-spacing:1px;">CABLES</div>
+        <div>Drag from output jack to start cable</div>
+        <div>Drop on module or input jack to connect</div>
+        <div>Click input jack to disconnect</div>
+        <div>Cable style selector in top bar</div>
+        <div style="color:#ff9944;margin:10px 0 6px;letter-spacing:1px;">OUTPUT SELECTOR (1 2 3 4)</div>
+        <div>Each module has 4 independent outputs</div>
+        <div>Click 1/2/3/4 to switch which output's knobs you edit</div>
+        <div>Output 1 mixes all inputs, 2-4 match their input</div>
+        <div>Drag from specific output jacks on right edge</div>
+      </div>
+      <div>
+        <div style="color:#00ffcc;margin-bottom:6px;letter-spacing:1px;">THROUGH NODES</div>
+        <div>Drag onto a cable to insert inline</div>
+        <div>Alt+drag to start cable from output</div>
+        <div>Ctrl/Cmd+click to pop off (reconnects cable)</div>
+        <div>Double-click to toggle horizontal/vertical</div>
+        <div style="color:#aa66ff;margin:10px 0 6px;letter-spacing:1px;">PATTERN BOARDS</div>
+        <div>4x4 grid = 16-step sequencer</div>
+        <div>Click squares to toggle steps on/off</div>
+        <div>Each output (1/2/3/4) has its own pattern + BPM</div>
+        <div>As effect: Generator > Pattern > Mix (gates audio)</div>
+        <div>As trigger: Pattern out > Generator in (triggers hits)</div>
+        <div>Set generator RATE to OFF when using pattern trigger</div>
+        <div style="color:#ffe000;margin:10px 0 6px;letter-spacing:1px;">KNOBS</div>
+        <div>Drag up/down to adjust value</div>
+        <div>Click yellow number to type exact value</div>
+        <div style="color:#ffe000;margin:10px 0 6px;letter-spacing:1px;">PLAYBACK</div>
+        <div>Spacebar or PLAY button to toggle play/stop</div>
+        <div>BLUR: MUTE stops playback when tab loses focus</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <canvas id="cableCanvas"></canvas>
@@ -467,7 +520,7 @@
       </div>
     </div>
 
-    <div class="module fx">
+    <div class="module fx mix">
       <div class="mod-title">MIX 1</div>
       <div class="knob-row">
         <div class="knob-wrap"><canvas class="knob-canvas" data-id="mixLevel" width="72" height="72"></canvas><div class="knob-val" id="mixLevelV">1.00</div><div class="knob-label">LEVEL</div></div>
@@ -475,7 +528,7 @@
       </div>
     </div>
 
-    <div class="module fx">
+    <div class="module fx mix">
       <div class="mod-title">MIX 2</div>
       <div class="knob-row">
         <div class="knob-wrap"><canvas class="knob-canvas" data-id="mix2Level" width="72" height="72"></canvas><div class="knob-val" id="mix2LevelV">1.00</div><div class="knob-label">LEVEL</div></div>
@@ -483,7 +536,7 @@
       </div>
     </div>
 
-    <div class="module fx">
+    <div class="module fx mix">
       <div class="mod-title">MIX 3</div>
       <div class="knob-row">
         <div class="knob-wrap"><canvas class="knob-canvas" data-id="mix3Level" width="72" height="72"></canvas><div class="knob-val" id="mix3LevelV">1.00</div><div class="knob-label">LEVEL</div></div>
@@ -507,7 +560,7 @@
       <div class="mod-title">T4</div>
     </div>
 
-    <div class="module fx">
+    <div class="module fx mix">
       <div class="mod-title">MIX 4</div>
       <div class="knob-row">
         <div class="knob-wrap"><canvas class="knob-canvas" data-id="mix4Level" width="72" height="72"></canvas><div class="knob-val" id="mix4LevelV">1.00</div><div class="knob-label">LEVEL</div></div>
@@ -515,7 +568,7 @@
       </div>
     </div>
 
-    <div class="module fx">
+    <div class="module fx mix">
       <div class="mod-title">MIX 5</div>
       <div class="knob-row">
         <div class="knob-wrap"><canvas class="knob-canvas" data-id="mix5Level" width="72" height="72"></canvas><div class="knob-val" id="mix5LevelV">1.00</div><div class="knob-label">LEVEL</div></div>
@@ -523,7 +576,7 @@
       </div>
     </div>
 
-    <div class="module fx">
+    <div class="module fx pat">
       <div class="mod-title">PATTERN 1</div>
       <div class="knob-row">
         <div class="pat-grid" id="patGrid1"></div>
@@ -531,7 +584,7 @@
       </div>
     </div>
 
-    <div class="module fx">
+    <div class="module fx pat">
       <div class="mod-title">PATTERN 2</div>
       <div class="knob-row">
         <div class="pat-grid" id="patGrid2"></div>
@@ -539,7 +592,7 @@
       </div>
     </div>
 
-    <div class="module fx">
+    <div class="module fx pat">
       <div class="mod-title">PATTERN 3</div>
       <div class="knob-row">
         <div class="pat-grid" id="patGrid3"></div>
@@ -2117,6 +2170,17 @@ document.getElementById('blurMuteBtn').addEventListener('click', () => {
   btn.style.borderColor = blurMuteEnabled ? '#00ffcc44' : '#ff666644';
 });
 
+// Help overlay
+document.getElementById('helpBtn').addEventListener('click', () => {
+  document.getElementById('helpOverlay').style.display = '';
+});
+document.getElementById('helpClose').addEventListener('click', () => {
+  document.getElementById('helpOverlay').style.display = 'none';
+});
+document.getElementById('helpOverlay').addEventListener('click', e => {
+  if(e.target.id === 'helpOverlay') e.target.style.display = 'none';
+});
+
 // Visualizer collapse toggle — shrinks the whole output module
 document.getElementById('vizToggle').addEventListener('click', () => {
   const panel = document.getElementById('vizPanel');
@@ -2602,6 +2666,26 @@ document.addEventListener('mouseup', e => {
       dragCable.fromJack.classList.add('connected');
       const toJackEl = findJackEl(toMod, toIdx, 'input');
       if(toJackEl) toJackEl.classList.add('connected');
+      // Auto-set RATE to OFF when pattern connects to a generator with rate
+      const srcName = MOD_NAMES[fromMod];
+      const tgtName = MOD_NAMES[toMod];
+      if(srcName && srcName.startsWith('PATTERN')){
+        const rateMap = {'IMPACT':'impRate','METALLIC':'metRate','PLUCK':'plkRate','BELL':'belRate','MALLET':'malRate','SWEEP':'swpRate','ARPEGGIO':'arpRate'};
+        const rateKey = rateMap[tgtName];
+        if(rateKey){
+          // Set rate to 0 on the specific output matching the input
+          if(modOutputState[toMod] && modOutputState[toMod][toIdx]){
+            modOutputState[toMod][toIdx][rateKey] = 0;
+          }
+          // If this is the currently selected output, update the display too
+          if(selectedOutput[toMod] === toIdx){
+            knobState[rateKey] = 0;
+            updateKnobDisplay(rateKey);
+            const canvas = document.querySelector(`.knob-canvas[data-id="${rateKey}"]`);
+            if(canvas) drawKnob(canvas, rateKey);
+          }
+        }
+      }
       rebuildIfPlaying();
     }
   }
@@ -2710,9 +2794,9 @@ requestAnimationFrame(() => {
   const savedLayout = [
     {left:"32px",  top:"38px",  w:"184px",  tb:0},  // 0  OSCILLATOR
     {left:"32px",  top:"84px",  w:"184px",  tb:0},  // 1  SUB OCTAVE
-    {left:"37px",  top:"190px", w:"184px",  tb:0},  // 2  SUB RUMBLE
-    {left:"36px",  top:"144px", w:"184px",  tb:0},  // 3  NOISE GEN
-    {left:"33px",  top:"234px", w:"184px",  tb:0},  // 4  FM OSC
+    {left:"25px",  top:"192px", w:"184px",  tb:0},  // 2  SUB RUMBLE
+    {left:"30px",  top:"143px", w:"184px",  tb:0},  // 3  NOISE GEN
+    {left:"29px",  top:"235px", w:"184px",  tb:0},  // 4  FM OSC
     {left:"261px", top:"41px",  w:"184px",  tb:0},  // 5  PWM OSC
     {left:"263px", top:"225px", w:"184px",  tb:0},  // 6  IMPACT
     {left:"261px", top:"133px", w:"184px",  tb:0},  // 7  CRACKLE
@@ -2728,35 +2812,35 @@ requestAnimationFrame(() => {
     {left:"495px", top:"271px", w:"184px",  tb:0},  // 17 SHIMMER
     {left:"33px",  top:"326px", w:"184px",  tb:0},  // 18 BOW
     {left:"780px", top:"38px",  w:"184px",  tb:0},  // 19 TREMOLO
-    {left:"780px", top:"84px",  w:"184px",  tb:0},  // 20 PITCH WOBBLE
+    {left:"779px", top:"222px", w:"184px",  tb:0},  // 20 PITCH WOBBLE
     {left:"780px", top:"130px", w:"184px",  tb:0},  // 21 RING MOD
     {left:"780px", top:"176px", w:"142px",  tb:0},  // 22 DISTORTION
-    {left:"780px", top:"222px", w:"184px",  tb:0},  // 23 FILTER
+    {left:"779px", top:"83px",  w:"184px",  tb:0},  // 23 FILTER
     {left:"780px", top:"268px", w:"184px",  tb:0},  // 24 DETUNE / CHORUS
     {left:"1100px",top:"38px",  w:"266px",  tb:0},  // 25 PHASER
     {left:"1100px",top:"84px",  w:"266px",  tb:0},  // 26 DELAY
     {left:"1020px",top:"130px", w:"348px",  tb:0},  // 27 ENVELOPE
     {left:"1020px",top:"176px", w:"184px",  tb:0},  // 28 REVERB
     {left:"1020px",top:"222px", w:"184px",  tb:0},  // 29 COMPRESSOR
-    {left:"1020px",top:"268px", w:"184px",  tb:0},  // 30 EQ
-    {left:"1020px",top:"314px", w:"184px",  tb:0},  // 31 BITCRUSHER
+    {left:"1023px",top:"356px", w:"184px",  tb:0},  // 30 EQ
+    {left:"1021px",top:"265px", w:"184px",  tb:0},  // 31 BITCRUSHER
     {left:"780px", top:"314px", w:"184px",  tb:0},  // 32 FLANGER
     {left:"780px", top:"360px", w:"184px",  tb:0},  // 33 GATE
-    {left:"1020px",top:"360px", w:"184px",  tb:0},  // 34 PANNER
-    {left:"83px",  top:"588px", w:"184px",  tb:1},  // 35 MIX 1
-    {left:"216px", top:"657px", w:"184px",  tb:1},  // 36 MIX 2
-    {left:"381px", top:"608px", w:"184px",  tb:1},  // 37 MIX 3
-    {left:"78px",  top:"372px", w:"",       tb:0},  // 38 THROUGH 1
-    {left:"37px",  top:"372px", w:"",       tb:0},  // 39 THROUGH 2
-    {left:"120px", top:"372px", w:"",       tb:0},  // 40 THROUGH 3
-    {left:"160px", top:"372px", w:"",       tb:0},  // 41 THROUGH 4
-    {left:"915px", top:"428px", w:"184px",  tb:0},  // 42 MIX 4
-    {left:"914px", top:"479px", w:"184px",  tb:0},  // 43 MIX 5
-    {left:"700px", top:"460px", w:"184px",  tb:0},  // 44 PATTERN 1
-    {left:"700px", top:"525px", w:"184px",  tb:0},  // 45 PATTERN 2
-    {left:"700px", top:"590px", w:"184px",  tb:0},  // 46 PATTERN 3
-    {left:"116px", top:"778px", w:"",       tb:1},  // 47 INPUT MIX
-    {left:"116px", top:"878px", w:"",       tb:1}   // 48 MASTER
+    {left:"1021px",top:"311px", w:"184px",  tb:0},  // 34 PANNER
+    {left:"202px", top:"690px", w:"184px",  tb:1},  // 35 MIX 1
+    {left:"370px", top:"638px", w:"184px",  tb:1},  // 36 MIX 2
+    {left:"538px", top:"582px", w:"184px",  tb:1},  // 37 MIX 3
+    {left:"96px",  top:"391px", w:"",       tb:0},  // 38 THROUGH 1
+    {left:"55px",  top:"391px", w:"",       tb:0},  // 39 THROUGH 2
+    {left:"138px", top:"391px", w:"",       tb:0},  // 40 THROUGH 3
+    {left:"178px", top:"391px", w:"",       tb:0},  // 41 THROUGH 4
+    {left:"914px", top:"515px", w:"184px",  tb:0},  // 42 MIX 4
+    {left:"913px", top:"566px", w:"184px",  tb:0},  // 43 MIX 5
+    {left:"314px", top:"362px", w:"184px",  tb:0},  // 44 PATTERN 1
+    {left:"422px", top:"413px", w:"184px",  tb:0},  // 45 PATTERN 2
+    {left:"539px", top:"464px", w:"184px",  tb:0},  // 46 PATTERN 3
+    {left:"304px", top:"796px", w:"",       tb:1},  // 47 INPUT MIX
+    {left:"604px", top:"1023px",w:"",       tb:1}   // 48 MASTER
   ];
 
   // Selection state
