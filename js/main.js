@@ -1424,7 +1424,12 @@ document.addEventListener('DOMContentLoaded', () => {
      ------------------------------------------------------- */
   (function() {
     const ANALYTICS_URL = 'https://script.google.com/macros/s/AKfycbxQcS_M7eZe3ob69qbxaH3QDUUqDQGvec6BKDN94wildC5p3LGTSwytm_2ZyutpznB4/exec';
-    const session = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    // Persist session across page navigations within same tab
+    let session = sessionStorage.getItem('ps_analytics_session');
+    if(!session){
+      session = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+      sessionStorage.setItem('ps_analytics_session', session);
+    }
     const pageLoadTime = Date.now();
     const page = location.pathname.split('/').pop() || 'index.html';
     let maxScroll = 0;
@@ -1463,6 +1468,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function send(event) {
+      // Cull Keating, BC (Piet's home area)
+      if(geo.city && geo.city.toLowerCase() === 'keating') return;
       try { navigator.sendBeacon(ANALYTICS_URL, JSON.stringify(payload(event))); } catch(e){}
     }
 
