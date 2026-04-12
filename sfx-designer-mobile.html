@@ -52,10 +52,10 @@
 
   /* ===== MOBILE SHELL ===== */
   #mobileShell { display:flex; flex-direction:column; height:100vh; width:100vw; background:#0a0a14; color:#00ffcc; font-family:'Press Start 2P',monospace,sans-serif; font-size:10px; overflow:hidden; }
-  #mobileTopBar { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:4px 12px 6px; background:transparent; border-bottom:1px solid #00ffcc33; flex-shrink:0; }
+  #mobileTopBar { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:4px 12px 6px; background:transparent; border-bottom:2px solid #00ffcc33; flex-shrink:0; }
   #mobileTopBar button {
     padding:10px 14px; background:rgba(0,255,204,0.1); color:#00ffcc;
-    border:1px solid #00ffcc; font-family:inherit; font-size:14px;
+    border:2px solid #00ffcc; font-family:inherit; font-size:14px;
     cursor:pointer; letter-spacing:1px; min-width:48px; min-height:48px;
   }
   #mobileTopBar button:hover { background:rgba(0,255,204,0.22); }
@@ -68,11 +68,11 @@
   #mobileBottomBar {
     display:flex; flex-direction:column; align-items:stretch;
     height:72px; padding:4px 12px 8px; background:transparent;
-    border-top:1px solid #00ffcc33; flex-shrink:0;
+    border-top:2px solid #00ffcc33; flex-shrink:0;
     touch-action:none; cursor:pointer; position:relative;
   }
   #bottomBarHandle {
-    width:44px; height:3px; background:#00ffcc55; border-radius:1px;
+    width:44px; height:6px; background:#00ffcc55; border-radius:1px;
     margin:2px auto 4px; flex-shrink:0;
   }
   #bottomBarContent {
@@ -80,8 +80,8 @@
     flex:1; pointer-events:none;
   }
   #miniInputMix { display:flex; gap:4px; flex:1; }
-  .miniChan { width:12px; height:30px; background:#111; border:1px solid #ff994444; border-radius:1px; }
-  #miniMasterKnob { width:40px; height:40px; border:1px solid #ffe00044; border-radius:50%; background:#111; margin:0 10px; }
+  .miniChan { width:12px; height:30px; background:#111; border:2px solid #ff994444; border-radius:1px; }
+  #miniMasterKnob { width:40px; height:40px; border:2px solid #ffe00044; border-radius:50%; background:#111; margin:0 10px; }
   .module.through .mod-title { display:none; }
   .module.through .jack-row { display:none; }
   .module.through .bypass-btn { display:none; }
@@ -156,48 +156,61 @@
   .mobilePage { scroll-snap-align:start; align-items:stretch !important; justify-content:flex-start !important; }
   .mobilePage .pageInner { width:100%; display:flex; flex-direction:column; gap:12px; }
   .mobileBar {
-    background:rgba(0,0,0,0.6);
-    border:1px solid #00ffccaa;
+    background:rgba(0,20,20,0.85);
+    border:2px solid #00ffccaa;
     padding:6px 10px; display:flex; flex-direction:column; gap:6px;
+    position:relative;
   }
   .mobileBarHeader {
     display:flex; justify-content:flex-end; align-items:center;
     font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#00ffcc;
-    padding:2px 2px 6px 2px; border-bottom:1px solid #00ffcc88;
+    padding:2px 2px 6px 2px; border-bottom:2px solid #00ffcc88;
     touch-action:none; user-select:none; min-height:8px;
   }
   .mobileBarHeader.dragging { background:rgba(255,224,0,0.15); }
   .mobileBarHeader .barActions { display:flex; gap:4px; }
   .mobileBarHeader button {
     padding:8px 12px; background:rgba(0,255,204,0.1); color:#00ffcc;
-    border:1px solid #00ffcc; font-family:inherit; font-size:13px;
+    border:2px solid #00ffcc; font-family:inherit; font-size:13px;
     cursor:pointer; letter-spacing:1px; min-height:40px;
   }
   .mobileBarHeader button:hover { background:rgba(0,255,204,0.22); }
   .mobileBarHeader button:disabled { opacity:0.3; }
   .mobileBarHeader button.danger { color:#ff4444; border-color:#ff4444; background:transparent; }
+  /* Minimal X-glyph for bar delete (no box) */
+  .barDelX {
+    position:absolute; top:2px; right:6px;
+    background:transparent; border:none; outline:none;
+    color:#e6ffff; font-family:inherit; font-size:26px; line-height:1;
+    cursor:pointer; padding:0; margin:0; z-index:4;
+    text-shadow:0 0 6px rgba(0,255,204,0.6);
+  }
+  .barDelX::before {
+    content:""; position:absolute; inset:-12px; /* ~44px tap target */
+  }
+  .barDelX:disabled { opacity:0.25; cursor:default; }
   .mobileBarCols { display:flex; gap:6px; align-items:stretch; min-height:70px; }
   .mobileCol { flex:1 1 0; min-width:0; display:flex; flex-direction:column; position:relative; }
   .mobileCol.empty {
-    border:1px dashed #00ffcc88;
+    border:2px dashed #00ffcc88;
     background:rgba(0,0,0,0.3);
     display:flex; align-items:center; justify-content:center;
-    color:#888; font-size:22px; min-height:72px;
+    color:#888; font-size:36px; min-height:72px;
     cursor:pointer;
   }
   .mobileCol.empty:active { background:rgba(255,224,0,0.08); border-color:#ffe00088; }
   .mobileCol.addMini {
     flex:0 0 48px; min-width:48px;
-    border:1px dashed #00ffcc88;
+    border:2px dashed #00ffcc88;
     background:rgba(0,0,0,0.3);
     display:flex; align-items:center; justify-content:center;
-    color:#888; font-size:22px; min-height:72px;
+    color:#888; font-size:32px; min-height:72px;
     cursor:pointer;
   }
   .mobileCol.addMini:active { background:rgba(255,224,0,0.08); border-color:#ffe00088; }
   .mobileCol .colDelBtn {
     position:absolute; top:2px; right:2px; width:22px; height:22px;
-    border:1px solid #ff444488; background:rgba(0,0,0,0.5); color:#ff4444;
+    border:2px solid #ff444488; background:rgba(0,0,0,0.5); color:#ff4444;
     font-family:inherit; font-size:11px; cursor:pointer; line-height:1; padding:0;
     z-index:3;
   }
@@ -209,10 +222,10 @@
     display:flex; flex-direction:column; gap:4px;
     min-height:60px;
   }
-  .mobileNode.gen { background:rgba(40,10,20,0.6); border:1px solid #ff69b4aa; color:#00ffcc; }
-  .mobileNode.fx  { background:rgba(0,0,0,0.6); border:1px solid #00ffcc88; color:#00ffcc; }
-  .mobileNode.mix { background:rgba(40,20,10,0.6); border:1px solid #ff9944aa; color:#00ffcc; }
-  .mobileNode.pat { background:rgba(25,10,40,0.6); border:1px solid #aa66ffaa; color:#00ffcc; }
+  .mobileNode.gen { background:rgba(40,10,20,0.6); border:2px solid #ff69b4aa; color:#00ffcc; }
+  .mobileNode.fx  { background:rgba(0,0,0,0.6); border:2px solid #00ffcc88; color:#00ffcc; }
+  .mobileNode.mix { background:rgba(40,20,10,0.6); border:2px solid #ff9944aa; color:#00ffcc; }
+  .mobileNode.pat { background:rgba(25,10,40,0.6); border:2px solid #aa66ffaa; color:#00ffcc; }
 
   .mobileNode .nodeHeader {
     display:flex; justify-content:space-between; align-items:center;
@@ -225,13 +238,13 @@
   .mobileNode.mix .nodeTitle { color:#ff9944; }
   .mobileNode.pat .nodeTitle { color:#aa66ff; }
   .mobileNode .nodeDeleteBtn {
-    width:32px; height:32px; border:1px solid #ff4444; background:transparent;
+    width:32px; height:32px; border:2px solid #ff4444; background:transparent;
     color:#ff4444; font-family:inherit; font-size:16px; cursor:pointer; border-radius:0;
     line-height:1; padding:0;
   }
   .mobileNode .nodeExpandBtn {
     padding:8px 14px; background:rgba(0,255,204,0.1); color:#00ffcc;
-    border:1px solid #00ffcc; font-family:inherit; font-size:14px;
+    border:2px solid #00ffcc; font-family:inherit; font-size:14px;
     cursor:pointer; letter-spacing:1px; line-height:1;
     align-self:flex-start; min-height:36px;
   }
@@ -241,7 +254,7 @@
   }
   .mobileNode .nodeJack {
     width:8px; height:10px; border-radius:1px;
-    background:#111; border:1px solid #555;
+    background:#111; border:2px solid #555;
     position:relative; cursor:pointer;
   }
   .mobileNode .nodeJack.input { border-color:#00ffccaa; }
@@ -255,7 +268,7 @@
   .mobileNode .nodeExpanded { display:flex; flex-direction:column; gap:6px; padding-top:4px; }
   .mobileNode .mobOutSel { display:flex; gap:4px; justify-content:center; }
   .mobileNode .mobOutBtn {
-    width:32px; height:28px; border:1px solid #888; background:#111; color:#aaa;
+    width:32px; height:28px; border:2px solid #888; background:#111; color:#aaa;
     font-family:inherit; font-size:14px; cursor:pointer; text-align:center; line-height:28px;
     padding:0; position:relative;
   }
@@ -280,14 +293,14 @@
   .mobileNode .mobKnobVal { font-size:18px; color:#ffe000; text-align:center; height:22px; cursor:pointer; }
   .mobileNode .mobKnobValInput {
     width:64px; height:18px; background:#0a0a14; color:#ffe000;
-    border:1px solid #ffe00088; font-family:inherit; font-size:11px;
+    border:2px solid #ffe00088; font-family:inherit; font-size:11px;
     text-align:center; padding:0; box-sizing:border-box; border-radius:2px;
   }
   .mobileNode .mobKnobLabel { font-size:14px; color:#00ffcc; text-align:center; white-space:nowrap; }
 
   .mobPatGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:3px; width:108px; margin:4px auto 0; }
   .mobPatStep {
-    width:24px; height:24px; border:1px solid #aa66ffaa; background:#aa66ff22;
+    width:24px; height:24px; border:2px solid #aa66ffaa; background:#aa66ff22;
     border-radius:2px; cursor:pointer; position:relative;
   }
   .mobPatStep::before {
@@ -303,30 +316,30 @@
     padding:16px;
   }
   .modalBox {
-    background:#0d0d18; border:1px solid #ffe00044; border-radius:8px;
+    background:#0d0d18; border:2px solid #ffe00044; border-radius:8px;
     max-width:340px; width:100%; max-height:85vh; overflow-y:auto;
     display:flex; flex-direction:column;
   }
   .modalHeader {
     display:flex; justify-content:space-between; align-items:center;
-    padding:10px 12px; border-bottom:1px solid #222;
+    padding:10px 12px; border-bottom:2px solid #222;
     color:#ffe000; font-size:11px; letter-spacing:2px;
   }
   .modalClose {
-    width:28px; height:28px; border:1px solid #ff4444; background:transparent;
+    width:28px; height:28px; border:2px solid #ff4444; background:transparent;
     color:#ff4444; font-family:inherit; font-size:14px; cursor:pointer; border-radius:4px;
     line-height:1;
   }
   .modalBody { padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
   .modalTabs { display:flex; gap:2px; padding:6px 10px 0; }
   .modalTab {
-    flex:1; padding:8px 4px; background:#111; border:1px solid #333; border-bottom:none;
+    flex:1; padding:8px 4px; background:#111; border:2px solid #333; border-bottom:none;
     color:#888; font-family:inherit; font-size:9px; letter-spacing:1px;
     cursor:pointer; border-radius:4px 4px 0 0;
   }
   .modalTab.active { color:#ffe000; border-color:#ffe000; background:#1a1a1a; }
   .pickerRow {
-    padding:14px 14px; border:1px solid #00ffcc88; background:rgba(0,0,0,0.6); border-radius:0;
+    padding:14px 14px; border:2px solid #00ffcc88; background:rgba(0,0,0,0.6); border-radius:0;
     font-size:18px; letter-spacing:2px; text-transform:uppercase; cursor:pointer;
     min-height:52px; display:flex; align-items:center;
   }
@@ -339,7 +352,7 @@
   /* Knob Modal */
   .knobModalRotary {
     width:240px; height:240px; margin:0 auto; position:relative;
-    border-radius:50%; background:#0a0a14; border:2px solid #ffe00066;
+    border-radius:50%; background:#0a0a14; border:4px solid #ffe00066;
     display:flex; align-items:center; justify-content:center;
     touch-action:none;
   }
@@ -350,7 +363,7 @@
     font-size:10px; color:#00ffcc; text-align:center; letter-spacing:2px;
   }
   .knobModalInput {
-    width:100%; background:#0a0a14; color:#ffe000; border:1px solid #ffe00066;
+    width:100%; background:#0a0a14; color:#ffe000; border:2px solid #ffe00066;
     font-family:inherit; font-size:14px; padding:8px; text-align:center; border-radius:4px;
     box-sizing:border-box;
   }
@@ -359,7 +372,7 @@
   }
   .knobModalButtons button {
     flex:1; padding:10px; font-family:inherit; font-size:9px;
-    background:rgba(0,255,204,0.1); border:1px solid #00ffcc; color:#00ffcc; cursor:pointer; border-radius:0;
+    background:rgba(0,255,204,0.1); border:2px solid #00ffcc; color:#00ffcc; cursor:pointer; border-radius:0;
     letter-spacing:2px;
   }
   .knobModalButtons button:hover { background:rgba(0,255,204,0.22); }
@@ -371,18 +384,28 @@
     display:flex; align-items:center; justify-content:center; padding:20px;
   }
   .confirmBox {
-    background:#0d0d18; border:1px solid #ff4444; border-radius:6px;
+    background:#0d0d18; border:2px solid #ff4444; border-radius:6px;
     padding:16px; max-width:300px; width:100%;
     color:#ccc; font-size:11px; letter-spacing:1px; line-height:1.5;
   }
   .confirmBox .confirmBtns { display:flex; gap:8px; margin-top:14px; }
   .confirmBox button {
     flex:1; padding:8px; font-family:inherit; font-size:9px;
-    background:rgba(0,255,204,0.1); border:1px solid #00ffcc; color:#00ffcc; cursor:pointer; border-radius:0;
+    background:rgba(0,255,204,0.1); border:2px solid #00ffcc; color:#00ffcc; cursor:pointer; border-radius:0;
     letter-spacing:1px;
   }
   .confirmBox button:hover { background:rgba(0,255,204,0.22); }
   .confirmBox button.danger { background:transparent; border-color:#ff4444; color:#ff4444; }
+
+  /* Top-bar delete page as minimal X glyph */
+  #delPageBtn.xGlyph {
+    background:transparent !important; border:none !important;
+    color:#e6ffff !important; font-size:26px !important;
+    padding:0 6px !important; min-width:44px; min-height:44px;
+    text-shadow:0 0 8px rgba(0,255,204,0.7);
+    line-height:1;
+  }
+  #delPageBtn.xGlyph:disabled { opacity:0.25; }
 
   /* delete page btn */
   #delPageBtn { margin-left:4px; }
@@ -399,8 +422,8 @@
       <button id="pageNextBtn" aria-label="Next page">▶</button>
     </div>
     <div style="display:flex;gap:4px;">
-      <button id="addPageBtn" aria-label="Add page">+</button>
-      <button id="delPageBtn" aria-label="Delete page" style="border-color:#662222;color:#ff4444;">X</button>
+      <button id="addPageBtn" aria-label="Add page" style="font-size:28px;line-height:1;">+</button>
+      <button id="delPageBtn" class="xGlyph" aria-label="Delete page">×</button>
     </div>
   </div>
   <div id="pageContainer">
@@ -3977,10 +4000,17 @@ requestAnimationFrame(() => {
 
         const barHeader = el('div','mobileBarHeader');
 
-        const actions = el('div','barActions');
-        const delBarBtn = el('button','danger','X BAR');
+        attachBarReorder(barHeader, pIdx, bIdx);
+
+        barEl.appendChild(barHeader);
+
+        // Minimal X-glyph delete button, pinned top-right of bar
+        const delBarBtn = el('button','barDelX');
+        delBarBtn.setAttribute('aria-label','Delete bar');
+        delBarBtn.textContent = '×';
         delBarBtn.disabled = page.bars.length <= 1;
-        delBarBtn.onclick = ()=>{
+        delBarBtn.onclick = (ev)=>{
+          ev.stopPropagation();
           confirmPopup('Remove this bar?', ()=>{
             saveHistory();
             bar.cols.forEach(id=>{ if(id != null){ delete mobile.mobileNodes[id]; delete mobile.expanded[id]; } });
@@ -3988,12 +4018,7 @@ requestAnimationFrame(() => {
             renderMobilePages();
           });
         };
-        actions.append(delBarBtn);
-        barHeader.appendChild(actions);
-
-        attachBarReorder(barHeader, pIdx, bIdx);
-
-        barEl.appendChild(barHeader);
+        barEl.appendChild(delBarBtn);
 
         const colsRow = el('div','mobileBarCols');
         bar.cols.forEach((nodeId, cIdx)=>{
@@ -4038,7 +4063,7 @@ requestAnimationFrame(() => {
       });
 
       const addBarBtn = el('button',null,'+ BAR');
-      addBarBtn.style.cssText = 'align-self:center;margin-top:4px;padding:10px 22px;background:#111;border:1px solid #00ffcc66;color:#00ffcc;font-family:inherit;font-size:10px;border-radius:4px;letter-spacing:2px;cursor:pointer;';
+      addBarBtn.style.cssText = 'align-self:center;margin-top:8px;min-height:50px;padding:12px 32px;background:#111;border:2px solid #00ffcc;color:#00ffcc;font-family:inherit;font-size:18px;border-radius:4px;letter-spacing:3px;cursor:pointer;';
       addBarBtn.onclick = ()=>{
         saveHistory();
         page.bars.push({ cols: [null] });
