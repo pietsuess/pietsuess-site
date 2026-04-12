@@ -141,149 +141,65 @@
   <button id="blurMuteBtn" style="border-color:#00ffcc44;color:#00ffcc;font-size:8px;">BLUR: MUTE</button>
   <button id="helpBtn" style="border-color:#ffe00044;color:#ffe000;font-size:8px;">?</button>
 </div>
-<div id="helpOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:10000;overflow-y:auto;padding:40px;font-family:inherit;color:#ccc;font-size:11px;letter-spacing:0.5px;line-height:1.6;">
-  <div style="max-width:700px;margin:0 auto;">
+<div id="helpOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);z-index:10000;overflow-y:auto;padding:40px;font-family:inherit;color:#ccc;font-size:11px;letter-spacing:0.5px;line-height:1.6;">
+  <div style="max-width:900px;margin:0 auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
       <span style="color:#ffe000;font-size:14px;letter-spacing:2px;">CONTROLS</span>
       <span id="helpClose" style="color:#ff4444;cursor:pointer;font-size:18px;">X</span>
     </div>
-    <!-- Annotated module diagram -->
-    <svg viewBox="0 0 700 340" style="width:100%;max-width:700px;margin:0 auto 24px;display:block;" xmlns="http://www.w3.org/2000/svg">
-      <!-- Module body -->
-      <rect x="200" y="60" width="260" height="200" rx="2" fill="rgba(40,10,20,0.8)" stroke="#ff69b466" stroke-width="1"/>
-      <!-- Title bar -->
-      <rect x="200" y="60" width="260" height="24" rx="2" fill="rgba(255,105,180,0.08)"/>
-      <text x="212" y="77" fill="#ff69b4" font-size="11" font-family="inherit" letter-spacing="2">OSCILLATOR</text>
-      <!-- Bypass button -->
-      <circle cx="446" cy="72" r="6" fill="#00ffcc22" stroke="#00ffcc66" stroke-width="1"/>
-      <!-- Output selector row -->
-      <rect x="260" y="90" width="20" height="14" rx="1" fill="rgba(255,224,0,0.15)" stroke="#ffe000" stroke-width="1"/>
-      <text x="266" y="101" fill="#ffe000" font-size="8" font-family="inherit">1</text>
-      <rect x="283" y="90" width="20" height="14" rx="1" fill="#111" stroke="#555" stroke-width="1"/>
-      <text x="289" y="101" fill="#888" font-size="8" font-family="inherit">2</text>
-      <rect x="306" y="90" width="20" height="14" rx="1" fill="#111" stroke="#555" stroke-width="1"/>
-      <text x="312" y="101" fill="#888" font-size="8" font-family="inherit">3</text>
-      <rect x="329" y="90" width="20" height="14" rx="1" fill="#111" stroke="#555" stroke-width="1"/>
-      <text x="335" y="101" fill="#888" font-size="8" font-family="inherit">4</text>
-      <!-- Knobs -->
-      <circle cx="250" cy="150" r="22" fill="none" stroke="#00ffcc44" stroke-width="2"/>
-      <circle cx="250" cy="150" r="2" fill="#ffe000"/>
-      <text x="250" y="182" fill="#ffe000" font-size="9" font-family="inherit" text-anchor="middle">48</text>
-      <text x="250" y="194" fill="#00ffcc" font-size="8" font-family="inherit" text-anchor="middle">PITCH Hz</text>
-      <circle cx="340" cy="150" r="22" fill="none" stroke="#00ffcc44" stroke-width="2"/>
-      <circle cx="340" cy="150" r="2" fill="#ffe000"/>
-      <text x="340" y="182" fill="#ffe000" font-size="9" font-family="inherit" text-anchor="middle">1.50</text>
-      <text x="340" y="194" fill="#00ffcc" font-size="8" font-family="inherit" text-anchor="middle">H.SPREAD</text>
-      <circle cx="415" cy="150" r="22" fill="none" stroke="#00ffcc44" stroke-width="2"/>
-      <circle cx="415" cy="150" r="2" fill="#ffe000"/>
-      <text x="415" y="182" fill="#ffe000" font-size="9" font-family="inherit" text-anchor="middle">0.55</text>
-      <text x="415" y="194" fill="#00ffcc" font-size="8" font-family="inherit" text-anchor="middle">HARM 2</text>
-      <!-- Input jacks (left) -->
-      <rect x="191" y="105" width="8" height="10" rx="1" fill="#111" stroke="#00ffcc55" stroke-width="1"/>
-      <rect x="191" y="140" width="8" height="10" rx="1" fill="#00ffcc44" stroke="#00ffcc" stroke-width="1"/>
-      <rect x="191" y="175" width="8" height="10" rx="1" fill="#111" stroke="#00ffcc55" stroke-width="1"/>
-      <rect x="191" y="210" width="8" height="10" rx="1" fill="#111" stroke="#00ffcc55" stroke-width="1"/>
-      <!-- Output jacks (right) -->
-      <rect x="461" y="105" width="8" height="10" rx="1" fill="#ff69b444" stroke="#ff69b4" stroke-width="1"/>
-      <rect x="461" y="140" width="8" height="10" rx="1" fill="#111" stroke="#ff69b455" stroke-width="1"/>
-      <rect x="461" y="175" width="8" height="10" rx="1" fill="#111" stroke="#ff69b455" stroke-width="1"/>
-      <rect x="461" y="210" width="8" height="10" rx="1" fill="#111" stroke="#ff69b455" stroke-width="1"/>
-      <!-- Orient button -->
-      <rect x="444" y="244" width="14" height="14" rx="1" fill="transparent" stroke="#555" stroke-width="1"/>
-      <text x="448" y="254" fill="#555" font-size="8" font-family="inherit">&#x2195;</text>
-      <!-- Solo buttons next to input jacks -->
-      <rect x="182" y="118" width="6" height="6" rx="1" fill="#111" stroke="#555" stroke-width="0.5"/>
-
-      <!-- ANNOTATION LINES -->
-      <style>
-        .ann-line { stroke:#666; stroke-width:0.5; stroke-dasharray:3,2; }
-        .ann-text { fill:#aaa; font-size:9px; font-family:inherit; letter-spacing:0.5px; }
-        .ann-head { fill:#ffe000; font-size:9px; font-family:inherit; letter-spacing:0.5px; }
-      </style>
-
-      <!-- Title bar annotation -->
-      <line x1="330" y1="60" x2="330" y2="30" class="ann-line"/>
-      <line x1="330" y1="30" x2="520" y2="30" class="ann-line"/>
-      <text x="524" y="33" class="ann-head">TITLE BAR</text>
-      <text x="524" y="44" class="ann-text">Drag to move. Double-click to collapse.</text>
-
-      <!-- Bypass button annotation -->
-      <line x1="452" y1="72" x2="540" y2="72" class="ann-line"/>
-      <line x1="540" y1="72" x2="600" y2="72" class="ann-line"/>
-      <text x="604" y="68" class="ann-head">BYPASS</text>
-      <text x="604" y="79" class="ann-text">Click to mute/bypass module.</text>
-
-      <!-- Output selector annotation -->
-      <line x1="350" y1="97" x2="540" y2="97" class="ann-line"/>
-      <line x1="540" y1="97" x2="600" y2="97" class="ann-line"/>
-      <text x="604" y="93" class="ann-head">OUTPUT SELECT (1-4)</text>
-      <text x="604" y="104" class="ann-text">Switch which output's</text>
-      <text x="604" y="114" class="ann-text">knob values you edit.</text>
-
-      <!-- Input jacks annotation -->
-      <line x1="191" y1="145" x2="130" y2="145" class="ann-line"/>
-      <line x1="130" y1="145" x2="60" y2="145" class="ann-line"/>
-      <text x="8" y="133" class="ann-head">INPUT JACKS</text>
-      <text x="8" y="144" class="ann-text">Receive signal.</text>
-      <text x="8" y="155" class="ann-text">Click to disconnect.</text>
-
-      <!-- Output jacks annotation -->
-      <line x1="469" y1="110" x2="540" y2="110" class="ann-line"/>
-      <line x1="540" y1="110" x2="600" y2="135" class="ann-line"/>
-      <text x="604" y="131" class="ann-head">OUTPUT JACKS</text>
-      <text x="604" y="142" class="ann-text">Drag to start cable.</text>
-      <text x="604" y="153" class="ann-text">4 jacks = 4 outputs.</text>
-
-      <!-- Knob annotation -->
-      <line x1="250" y1="128" x2="130" y2="80" class="ann-line"/>
-      <line x1="130" y1="80" x2="60" y2="80" class="ann-line"/>
-      <text x="8" y="70" class="ann-head">KNOBS</text>
-      <text x="8" y="81" class="ann-text">Drag up/down to adjust.</text>
-      <text x="8" y="92" class="ann-text">Shift+drag for fine control.</text>
-
-      <!-- Value annotation -->
-      <line x1="250" y1="182" x2="130" y2="210" class="ann-line"/>
-      <line x1="130" y1="210" x2="60" y2="210" class="ann-line"/>
-      <text x="8" y="206" class="ann-head">VALUE</text>
-      <text x="8" y="217" class="ann-text">Click to type exact number.</text>
-      <text x="8" y="228" class="ann-text">Double-click knob to reset.</text>
-
-      <!-- Orient button annotation -->
-      <line x1="451" y1="258" x2="540" y2="280" class="ann-line"/>
-      <line x1="540" y1="280" x2="600" y2="280" class="ann-line"/>
-      <text x="604" y="276" class="ann-head">ORIENT</text>
-      <text x="604" y="287" class="ann-text">Toggle jacks between</text>
-      <text x="604" y="297" class="ann-text">left/right or top/bottom.</text>
-
-      <!-- Solo button annotation -->
-      <line x1="182" y1="121" x2="130" y2="121" class="ann-line"/>
-      <line x1="130" y1="121" x2="60" y2="170" class="ann-line"/>
-      <text x="8" y="166" class="ann-head">SOLO</text>
-      <text x="8" y="177" class="ann-text">Solo one input to hear</text>
-      <text x="8" y="188" class="ann-text">it in isolation.</text>
-
-      <!-- Connected jack indicator -->
-      <circle cx="195" cy="145" r="3" fill="none" stroke="#00ffcc" stroke-width="0.5"/>
-      <circle cx="465" cy="110" r="3" fill="none" stroke="#ff69b4" stroke-width="0.5"/>
-
-      <!-- Color legend at bottom -->
-      <rect x="200" y="280" width="10" height="10" rx="1" fill="rgba(40,10,20,0.6)" stroke="#ff69b444"/>
-      <text x="214" y="289" class="ann-text" fill="#ff69b4">GENERATOR</text>
-      <rect x="300" y="280" width="10" height="10" rx="1" fill="rgba(0,0,0,0.6)" stroke="#00ffcc33"/>
-      <text x="314" y="289" class="ann-text" fill="#00ffcc">EFFECT</text>
-      <rect x="375" y="280" width="10" height="10" rx="1" fill="rgba(40,20,10,0.6)" stroke="#ff994444"/>
-      <text x="389" y="289" class="ann-text" fill="#ff9944">MIX</text>
-      <rect x="430" y="280" width="10" height="10" rx="1" fill="rgba(25,10,40,0.6)" stroke="#aa66ff44"/>
-      <text x="444" y="289" class="ann-text" fill="#aa66ff">PATTERN</text>
-      <rect x="516" y="280" width="10" height="10" rx="1" fill="rgba(30,25,0,0.6)" stroke="#ffe00044"/>
-      <text x="530" y="289" class="ann-text" fill="#ffe000">OUTPUT</text>
-
-      <!-- Keyboard shortcuts -->
-      <text x="200" y="315" class="ann-text">SPACE = Play/Stop</text>
-      <text x="350" y="315" class="ann-text">SHIFT+drag = Fine knob</text>
-      <text x="200" y="330" class="ann-text">SHIFT+click = Multi-select</text>
-      <text x="350" y="330" class="ann-text">CTRL/CMD+click through = Pop off</text>
-    </svg>
+    <!-- Annotated module diagram using real screenshot -->
+    <div style="position:relative;max-width:900px;margin:0 auto 24px;display:flex;gap:0;align-items:stretch;">
+      <!-- Left annotations -->
+      <div style="width:200px;flex-shrink:0;position:relative;font-size:9px;padding-right:12px;">
+        <div style="position:absolute;top:8%;right:0;text-align:right;"><span style="color:#ffe000;">SOLO BUTTONS</span><br><span style="color:#aaa;">Solo one input to<br>hear it in isolation.</span><br><span style="color:#aaa;font-size:8px;">Click S next to input jack.</span></div>
+        <div style="position:absolute;top:28%;right:0;text-align:right;"><span style="color:#ffe000;">INPUT JACKS</span><br><span style="color:#aaa;">Receive signal from<br>other modules.<br>Click to disconnect.</span></div>
+        <div style="position:absolute;top:58%;right:0;text-align:right;"><span style="color:#ffe000;">KNOBS</span><br><span style="color:#aaa;">Drag up/down to adjust.<br>Shift+drag = fine control.<br>Double-click to reset.</span></div>
+        <div style="position:absolute;top:82%;right:0;text-align:right;"><span style="color:#ffe000;">VALUE</span><br><span style="color:#aaa;">Click number to type<br>an exact value.</span></div>
+      </div>
+      <!-- Annotation lines left -->
+      <div style="width:20px;flex-shrink:0;position:relative;">
+        <svg style="position:absolute;top:0;left:0;width:100%;height:100%;" preserveAspectRatio="none">
+          <line x1="20" y1="12%" x2="0" y2="12%" stroke="#555" stroke-width="0.5" stroke-dasharray="3,2"/>
+          <line x1="20" y1="35%" x2="0" y2="35%" stroke="#555" stroke-width="0.5" stroke-dasharray="3,2"/>
+          <line x1="20" y1="55%" x2="0" y2="62%" stroke="#555" stroke-width="0.5" stroke-dasharray="3,2"/>
+          <line x1="20" y1="78%" x2="0" y2="86%" stroke="#555" stroke-width="0.5" stroke-dasharray="3,2"/>
+        </svg>
+      </div>
+      <!-- Screenshot -->
+      <img src="images/sfx-module-ref.png" style="width:320px;height:auto;display:block;border:1px solid #333;flex-shrink:0;" alt="FM OSC module">
+      <!-- Annotation lines right -->
+      <div style="width:20px;flex-shrink:0;position:relative;">
+        <svg style="position:absolute;top:0;left:0;width:100%;height:100%;" preserveAspectRatio="none">
+          <line x1="0" y1="10%" x2="20" y2="8%" stroke="#555" stroke-width="0.5" stroke-dasharray="3,2"/>
+          <line x1="0" y1="22%" x2="20" y2="20%" stroke="#555" stroke-width="0.5" stroke-dasharray="3,2"/>
+          <line x1="0" y1="12%" x2="20" y2="38%" stroke="#555" stroke-width="0.5" stroke-dasharray="3,2"/>
+          <line x1="0" y1="92%" x2="20" y2="70%" stroke="#555" stroke-width="0.5" stroke-dasharray="3,2"/>
+        </svg>
+      </div>
+      <!-- Right annotations -->
+      <div style="width:200px;flex-shrink:0;position:relative;font-size:9px;padding-left:12px;">
+        <div style="position:absolute;top:4%;"><span style="color:#ffe000;">TITLE BAR</span><br><span style="color:#aaa;">Drag to move module.<br>Double-click to collapse.</span></div>
+        <div style="position:absolute;top:16%;"><span style="color:#ffe000;">BYPASS</span><br><span style="color:#aaa;">Circle top-right.<br>Click to mute module.</span></div>
+        <div style="position:absolute;top:32%;"><span style="color:#ffe000;">OUTPUT SELECT (1-4)</span><br><span style="color:#aaa;">Each output has its own<br>knob values. Click to switch.</span></div>
+        <div style="position:absolute;top:50%;"><span style="color:#ffe000;">OUTPUT JACKS</span><br><span style="color:#aaa;">Right edge. Drag to<br>start a cable.<br>4 jacks = 4 outputs.</span></div>
+        <div style="position:absolute;top:68%;"><span style="color:#ffe000;">ORIENT</span><br><span style="color:#aaa;">Bottom-right arrow.<br>Toggle jacks between<br>left/right or top/bottom.</span></div>
+      </div>
+    </div>
+    <!-- Color legend + shortcuts -->
+    <div style="display:flex;gap:16px;justify-content:center;margin-bottom:16px;font-size:9px;flex-wrap:wrap;">
+      <span><span style="display:inline-block;width:10px;height:10px;background:rgba(40,10,20,0.6);border:1px solid #ff69b444;vertical-align:middle;margin-right:4px;"></span><span style="color:#ff69b4;">GENERATOR</span></span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:rgba(0,0,0,0.6);border:1px solid #00ffcc33;vertical-align:middle;margin-right:4px;"></span><span style="color:#00ffcc;">EFFECT</span></span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:rgba(40,20,10,0.6);border:1px solid #ff994444;vertical-align:middle;margin-right:4px;"></span><span style="color:#ff9944;">MIX</span></span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:rgba(25,10,40,0.6);border:1px solid #aa66ff44;vertical-align:middle;margin-right:4px;"></span><span style="color:#aa66ff;">PATTERN</span></span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:rgba(30,25,0,0.6);border:1px solid #ffe00044;vertical-align:middle;margin-right:4px;"></span><span style="color:#ffe000;">OUTPUT</span></span>
+    </div>
+    <div style="display:flex;gap:24px;justify-content:center;margin-bottom:20px;font-size:9px;color:#aaa;flex-wrap:wrap;">
+      <span>SPACE = Play/Stop</span>
+      <span>SHIFT+drag = Fine knob</span>
+      <span>SHIFT+click = Multi-select</span>
+      <span>CTRL/CMD+click through = Pop off</span>
+      <span>ESC = Close help</span>
+    </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
       <div>
@@ -2304,6 +2220,9 @@ document.getElementById('helpClose').addEventListener('click', () => {
 document.getElementById('helpOverlay').addEventListener('click', e => {
   if(e.target.id === 'helpOverlay') e.target.style.display = 'none';
 });
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') document.getElementById('helpOverlay').style.display = 'none';
+});
 
 // Visualizer collapse toggle — shrinks the whole output module
 document.getElementById('vizToggle').addEventListener('click', () => {
@@ -2467,7 +2386,7 @@ document.querySelectorAll('.module').forEach((mod, modIdx) => {
         j.dataset.jackType = 'input';
         j.title = `IN ${i+1}`;
         inRow.appendChild(j);
-        if(isFx && !isThrough){
+        if(!isThrough){
           const s = document.createElement('div');
           s.className = 'solo-btn';
           s.textContent = 'S';
