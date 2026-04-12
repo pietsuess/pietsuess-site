@@ -131,9 +131,8 @@
     <button id="presetToggle" style="background:rgba(255,105,180,0.08);color:#ffe000;border:1px solid #ff69b488;font-family:inherit;font-size:9px;padding:5px 12px;cursor:pointer;letter-spacing:1px;">PRESETS</button>
     <div id="presetList" style="display:none;position:absolute;top:100%;left:0;background:#111;border:1px solid #ff69b488;min-width:200px;max-height:300px;overflow-y:auto;z-index:100;"></div>
   </div>
-  <select id="jsonDropdown" style="background:#111;color:#88ffcc;border:1px solid #00ffcc44;font-family:inherit;font-size:8px;padding:5px 8px;cursor:pointer;max-width:300px;"><option value="">JSON</option></select>
-  <button id="copyJsonBtn">COPY JSON</button>
-  <button id="importJsonBtn">IMPORT JSON</button>
+  <button id="exportFileBtn">EXPORT</button>
+  <button id="importFileBtn">IMPORT</button>
   <button id="autoPatchBtn">AUTO PATCH</button>
   <select id="cableStyle" style="background:#111;color:#ffe000;border:1px solid #ffe00044;font-family:inherit;font-size:8px;padding:5px 6px;cursor:pointer;"><option value="bezier">BEZIER</option><option value="catenary">CATENARY</option><option value="straight">STRAIGHT</option><option value="step" selected>STEP</option><option value="arc">ARC</option></select>
   <button id="clearPatchBtn" style="border-color:#ff4444;color:#ff4444;">CLEAR</button>
@@ -1200,6 +1199,7 @@ document.querySelectorAll('.pat-grid').forEach(grid => {
       const out = parseInt(grid.dataset.activeOut) || 0;
       patternStates[id][out][i] = patternStates[id][out][i] ? 0 : 1;
       btn.classList.toggle('on', !!patternStates[id][out][i]);
+      rebuildIfPlaying();
     });
     grid.appendChild(btn);
   }
@@ -1760,8 +1760,8 @@ function buildModule(name, modIdx, patternInfo){
     // Find the right knob IDs based on module name
     const prefixMap = {'MIX 1':'mix','MIX 2':'mix2','MIX 3':'mix3','MIX 4':'mix4','MIX 5':'mix5'};
     const prefix = prefixMap[name] || 'mix';
-    const lvl=audioCtx.createGain();lvl.gain.value=p[prefix+'Level']||1;
-    const amp=audioCtx.createGain();amp.gain.value=p[prefix+'Amp']||1;
+    const lvl=audioCtx.createGain();lvl.gain.value=p[prefix+'Level']!==undefined?p[prefix+'Level']:1;
+    const amp=audioCtx.createGain();amp.gain.value=p[prefix+'Amp']!==undefined?p[prefix+'Amp']:1;
     ins.forEach(inp => inp.connect(lvl));
     lvl.connect(amp);amp.connect(outs[0]);
     return { ins, outs, sources: allSources };
@@ -1981,6 +1981,14 @@ function startWaveform(){
 // ── Presets ──────────────────────────────────────────────────────────
 let presets = JSON.parse(localStorage.getItem('sfxPresets') || '[]');
 
+// ── Hardcoded sample presets ────────────────────────────────────────
+const SAMPLE_PRESETS = [
+{"name":"distant patterns","params":{"pitch":48,"harmSpread":1.5,"harm2":0.55,"harm3":0.4,"subFreq":24,"subGain":0,"tremRate":0.5,"tremDepth":1,"wobRate":3.8,"wobDepth":0,"rumFreq":28,"rumGain":0.12,"hissCut":3500,"hissGain":0.025,"distDrive":0,"filtCut":8000,"filtQ":0.7,"detune":0,"stereoPan":0,"ringFreq":0,"ringMix":0,"noiseGain":0,"noiseFilt":2000,"fmFreq":0,"fmDepth":0,"pwmFreq":80,"pwmRate":2,"pwmGain":0,"impFreq":200,"impSweep":0.8,"impDecay":0.3,"impRate":2,"impGain":0,"crkDensity":5,"crkTone":1450,"crkGain":0.2,"metFreq":300,"metInharm":1.94,"metDecay":1.88,"metRate":0,"metGain":0.14,"formFreq":120,"formGain":0,"drnFreq":130,"drnLayers":7,"drnSpread":27,"drnGain":0.28,"wndCut":1000,"wndMod":2,"wndDepth":500,"wndGain":0,"envAtk":0.01,"envDec":0.1,"envSus":1,"envRel":0.15,"delTime":0,"delFeed":0,"delMix":0,"phRate":0,"phDepth":0,"phMix":0,"rvbSize":0.5,"rvbDecay":2,"rvbDamp":3000,"rvbMix":0.3,"cmpThresh":-24,"cmpRatio":4,"cmpAtk":0.01,"cmpRel":0.1,"eqFreq":16000,"eqGainDb":0,"eqQ":20,"bcBits":8,"bcRate":0.5,"flRate":0.5,"flDepth":0.003,"flFeed":0.5,"flMix":0.5,"gtThresh":0.01,"gtRate":4,"gtSmooth":0.01,"panRate":1,"panWidth":1,"plkFreq":440,"plkDecay":1,"plkBright":0.5,"plkRate":1,"plkGain":0,"belFreq":254,"belDecay":4.91,"belRate":0,"belGain":0.11,"malFreq":89,"malHard":1,"malDecay":2.63,"malRate":0,"malGain":0.13,"swpFrom":545,"swpTo":511,"swpTime":3.32,"swpRate":0,"swpGain":0.09,"arpRoot":951,"arpSteps":4,"arpRate":0,"arpGain":0.04,"shmFreq":352,"shmLayers":3,"shmDrift":5.3,"shmGain":0.17,"bowFreq":220,"bowPress":0.5,"bowBright":0.5,"bowGain":0,"pat1Bpm":60,"pat2Bpm":120,"pat3Bpm":90,"mixBlend":0.5,"mixLevel":1.01,"mixAmp":1,"mix2Level":1,"mix2Amp":1,"mix3Level":1,"mix3Amp":1,"mix4Level":1,"mix4Amp":1,"mix5Level":1,"mix5Amp":1,"masterGain":0.74,"inLvl0":0.68,"inLvl1":1,"inLvl2":0.97,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1,"waveform":"triangle","tremShape":"sine","noiseType":"white","filtType":"lowpass","pwmWave":"square","formVowel":"a","subOct":"0.5","eqType":"peaking","modOutputState":[[{"pitch":48,"harmSpread":1.5,"harm2":0.55,"harm3":0.4,"_waveform":"sine"},{"pitch":48,"harmSpread":1.5,"harm2":0.55,"harm3":0.4},{"pitch":48,"harmSpread":1.5,"harm2":0.55,"harm3":0.4},{"pitch":48,"harmSpread":1.5,"harm2":0.55,"harm3":0.4}],[{"subFreq":24,"subGain":0},{"subFreq":24,"subGain":0},{"subFreq":24,"subGain":0},{"subFreq":24,"subGain":0}],[{"rumFreq":28,"rumGain":0.12},{"rumFreq":28,"rumGain":0.12},{"rumFreq":28,"rumGain":0.12},{"rumFreq":28,"rumGain":0.12}],[{"noiseGain":0,"noiseFilt":2000},{"noiseGain":0,"noiseFilt":2000},{"noiseGain":0,"noiseFilt":2000},{"noiseGain":0,"noiseFilt":2000}],[{"fmFreq":0,"fmDepth":0},{"fmFreq":0,"fmDepth":0},{"fmFreq":0,"fmDepth":0},{"fmFreq":0,"fmDepth":0}],[{"pwmFreq":80,"pwmRate":2,"pwmGain":0},{"pwmFreq":80,"pwmRate":2,"pwmGain":0},{"pwmFreq":80,"pwmRate":2,"pwmGain":0},{"pwmFreq":80,"pwmRate":2,"pwmGain":0}],[{"impFreq":200,"impSweep":0.8,"impDecay":0.3,"impRate":2,"impGain":0},{"impFreq":200,"impSweep":0.8,"impDecay":0.3,"impRate":2,"impGain":0},{"impFreq":200,"impSweep":0.8,"impDecay":0.3,"impRate":2,"impGain":0},{"impFreq":200,"impSweep":0.8,"impDecay":0.3,"impRate":2,"impGain":0}],[{"crkDensity":5,"crkTone":1450,"crkGain":0.2},{"crkDensity":10,"crkTone":4000,"crkGain":0},{"crkDensity":10,"crkTone":4000,"crkGain":0},{"crkDensity":10,"crkTone":4000,"crkGain":0}],[{"metFreq":300,"metInharm":1.94,"metDecay":1.88,"metRate":0,"metGain":0.14},{"metFreq":180,"metInharm":2.93,"metDecay":1.63,"metRate":0,"metGain":0.11},{"metFreq":800,"metInharm":1.41,"metDecay":0.5,"metRate":1,"metGain":0},{"metFreq":800,"metInharm":1.41,"metDecay":0.5,"metRate":1,"metGain":0}],[{"formFreq":120,"formGain":0},{"formFreq":120,"formGain":0},{"formFreq":120,"formGain":0},{"formFreq":120,"formGain":0}],[{"drnFreq":130,"drnLayers":7,"drnSpread":27,"drnGain":0.28},{"drnFreq":60,"drnLayers":4,"drnSpread":5,"drnGain":0},{"drnFreq":60,"drnLayers":4,"drnSpread":5,"drnGain":0},{"drnFreq":60,"drnLayers":4,"drnSpread":5,"drnGain":0}],[{"wndCut":1000,"wndMod":2,"wndDepth":500,"wndGain":0},{"wndCut":1000,"wndMod":2,"wndDepth":500,"wndGain":0},{"wndCut":1000,"wndMod":2,"wndDepth":500,"wndGain":0},{"wndCut":1000,"wndMod":2,"wndDepth":500,"wndGain":0}],[{"plkFreq":440,"plkDecay":1,"plkBright":0.5,"plkRate":1,"plkGain":0},{"plkFreq":440,"plkDecay":1,"plkBright":0.5,"plkRate":1,"plkGain":0},{"plkFreq":440,"plkDecay":1,"plkBright":0.5,"plkRate":1,"plkGain":0},{"plkFreq":440,"plkDecay":1,"plkBright":0.5,"plkRate":1,"plkGain":0}],[{"belFreq":254,"belDecay":4.91,"belRate":0,"belGain":0.11},{"belFreq":878,"belDecay":2,"belRate":0,"belGain":0.1},{"belFreq":774,"belDecay":5.59,"belRate":0,"belGain":0.09},{"belFreq":800,"belDecay":2,"belRate":0.5,"belGain":0}],[{"malFreq":89,"malHard":1,"malDecay":2.63,"malRate":0,"malGain":0.13},{"malFreq":70,"malHard":0.33,"malDecay":3,"malRate":0,"malGain":0.22},{"malFreq":108,"malHard":0.89,"malDecay":2.9,"malRate":0,"malGain":0.14},{"malFreq":520,"malHard":0.5,"malDecay":0.8,"malRate":1,"malGain":0}],[{"swpFrom":545,"swpTo":511,"swpTime":3.32,"swpRate":0,"swpGain":0.09},{"swpFrom":438,"swpTo":244,"swpTime":0.28,"swpRate":0,"swpGain":0.05},{"swpFrom":200,"swpTo":2000,"swpTime":1,"swpRate":0.5,"swpGain":0},{"swpFrom":200,"swpTo":2000,"swpTime":1,"swpRate":0.5,"swpGain":0}],[{"arpRoot":951,"arpSteps":4,"arpRate":0,"arpGain":0.04},{"arpRoot":220,"arpSteps":4,"arpRate":4,"arpGain":0},{"arpRoot":220,"arpSteps":4,"arpRate":4,"arpGain":0},{"arpRoot":220,"arpSteps":4,"arpRate":4,"arpGain":0}],[{"shmFreq":352,"shmLayers":3,"shmDrift":5.3,"shmGain":0.17},{"shmFreq":300,"shmLayers":5,"shmDrift":3,"shmGain":0},{"shmFreq":300,"shmLayers":5,"shmDrift":3,"shmGain":0},{"shmFreq":300,"shmLayers":5,"shmDrift":3,"shmGain":0}],[{"bowFreq":220,"bowPress":0.5,"bowBright":0.5,"bowGain":0},{"bowFreq":220,"bowPress":0.5,"bowBright":0.5,"bowGain":0},{"bowFreq":220,"bowPress":0.5,"bowBright":0.5,"bowGain":0},{"bowFreq":220,"bowPress":0.5,"bowBright":0.5,"bowGain":0}],[{"tremRate":0.5,"tremDepth":100,"_tremShape":"sine"},{"tremRate":20,"tremDepth":55,"_tremShape":"sine"},{"tremRate":20,"tremDepth":55},{"tremRate":20,"tremDepth":55}],[{"wobRate":3.8,"wobDepth":0},{"wobRate":1.2,"wobDepth":13.5},{"wobRate":1.6,"wobDepth":2},{"wobRate":8,"wobDepth":4}],[{"ringFreq":0,"ringMix":0},{"ringFreq":0,"ringMix":0},{"ringFreq":0,"ringMix":0},{"ringFreq":0,"ringMix":0}],[{"distDrive":0},{"distDrive":0},{"distDrive":0},{"distDrive":0}],[{"filtCut":8000,"filtQ":0.7},{"filtCut":8000,"filtQ":0.7},{"filtCut":8000,"filtQ":0.7},{"filtCut":8000,"filtQ":0.7}],[{"detune":0,"stereoPan":0},{"detune":0,"stereoPan":0},{"detune":0,"stereoPan":0},{"detune":0,"stereoPan":0}],[{"phRate":0,"phDepth":0,"phMix":0},{"phRate":0,"phDepth":0,"phMix":0},{"phRate":0,"phDepth":0,"phMix":0},{"phRate":0,"phDepth":0,"phMix":0}],[{"delTime":0,"delFeed":0,"delMix":0},{"delTime":0,"delFeed":0,"delMix":0},{"delTime":0,"delFeed":0,"delMix":0},{"delTime":0,"delFeed":0,"delMix":0}],[{"envAtk":0.01,"envDec":0.1,"envSus":1,"envRel":0.15},{"envAtk":0.01,"envDec":0.1,"envSus":1,"envRel":0.15},{"envAtk":0.01,"envDec":0.1,"envSus":1,"envRel":0.15},{"envAtk":0.01,"envDec":0.1,"envSus":1,"envRel":0.15}],[{"rvbSize":0.5,"rvbDecay":2,"rvbDamp":3000,"rvbMix":0.3},{"rvbSize":0.5,"rvbDecay":2,"rvbDamp":3000,"rvbMix":0.3},{"rvbSize":0.5,"rvbDecay":2,"rvbDamp":3000,"rvbMix":0.3},{"rvbSize":0.5,"rvbDecay":2,"rvbDamp":3000,"rvbMix":0.3}],[{"cmpThresh":-24,"cmpRatio":4,"cmpAtk":0.01,"cmpRel":0.1},{"cmpThresh":-24,"cmpRatio":4,"cmpAtk":0.01,"cmpRel":0.1},{"cmpThresh":-24,"cmpRatio":4,"cmpAtk":0.01,"cmpRel":0.1},{"cmpThresh":-24,"cmpRatio":4,"cmpAtk":0.01,"cmpRel":0.1}],[{"eqFreq":16000,"eqGainDb":0,"eqQ":20,"_eqType":"lowshelf"},{"eqFreq":80,"eqGainDb":-20.5,"eqQ":4.3,"_eqType":"lowshelf"},{"eqFreq":3340,"eqGainDb":-20.5,"eqQ":5.1,"_eqType":"highshelf"},{"eqFreq":6430,"eqGainDb":-19.5,"eqQ":2.9,"_eqType":"peaking"}],[{"bcBits":8,"bcRate":0.5},{"bcBits":8,"bcRate":0.5},{"bcBits":8,"bcRate":0.5},{"bcBits":8,"bcRate":0.5}],[{"flRate":0.5,"flDepth":0.003,"flFeed":0.5,"flMix":0.5},{"flRate":0.5,"flDepth":0.003,"flFeed":0.5,"flMix":0.5},{"flRate":0.5,"flDepth":0.003,"flFeed":0.5,"flMix":0.5},{"flRate":0.5,"flDepth":0.003,"flFeed":0.5,"flMix":0.5}],[{"gtThresh":0.01,"gtRate":4,"gtSmooth":0.01},{"gtThresh":0.01,"gtRate":4,"gtSmooth":0.01},{"gtThresh":0.01,"gtRate":4,"gtSmooth":0.01},{"gtThresh":0.01,"gtRate":4,"gtSmooth":0.01}],[{"panRate":1,"panWidth":1},{"panRate":1,"panWidth":1},{"panRate":1,"panWidth":1},{"panRate":1,"panWidth":1}],[{"mixLevel":1.01,"mixAmp":1},{"mixLevel":0.63,"mixAmp":1},{"mixLevel":0.65,"mixAmp":1},{"mixLevel":0.68,"mixAmp":1}],[{"mix2Level":1,"mix2Amp":1},{"mix2Level":1,"mix2Amp":1},{"mix2Level":1,"mix2Amp":1},{"mix2Level":1,"mix2Amp":1}],[{"mix3Level":1,"mix3Amp":1},{"mix3Level":1,"mix3Amp":1},{"mix3Level":1,"mix3Amp":1},{"mix3Level":1,"mix3Amp":1}],[{"inLvl0":0,"inLvl1":1,"inLvl2":0,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":0.48,"inLvl7":1,"masterGain":0.6},{"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1,"masterGain":0.6},{"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1,"masterGain":0.6},{"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1,"masterGain":0.6}],[{},{},{},{}],[{"mix4Level":1,"mix4Amp":1},{"mix4Level":1,"mix4Amp":1},{"mix4Level":1,"mix4Amp":1},{"mix4Level":1,"mix4Amp":1}],[{"mix5Level":1,"mix5Amp":1},{"mix5Level":1,"mix5Amp":1},{"mix5Level":1,"mix5Amp":1},{"mix5Level":1,"mix5Amp":1}],[{"mix4Level":1,"mix4Amp":1,"inLvl0":1,"inLvl1":0.67,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1,"masterGain":0.35},{"mix4Level":1,"mix4Amp":1,"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1,"masterGain":0.6},{"mix4Level":1,"mix4Amp":1,"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1,"masterGain":0.6},{"mix4Level":1,"mix4Amp":1,"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1,"masterGain":0.6}],[{"mix5Level":1,"mix5Amp":1},{"mix5Level":1,"mix5Amp":1},{"mix5Level":1,"mix5Amp":1},{"mix5Level":1,"mix5Amp":1}],[{"pat1Bpm":60},{"pat1Bpm":60},{"pat1Bpm":60},{"pat1Bpm":60}],[{"pat2Bpm":120,"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":0.67,"inLvl5":1,"inLvl6":1,"inLvl7":1},{"pat2Bpm":120,"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1},{"pat2Bpm":120,"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1},{"pat2Bpm":120,"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1}],[{"pat3Bpm":90,"masterGain":0.44},{"pat3Bpm":120,"masterGain":0.6},{"pat3Bpm":120,"masterGain":0.6},{"pat3Bpm":120,"masterGain":0.6}],[{"inLvl0":0.68,"inLvl1":1,"inLvl2":0.97,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1},{"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1},{"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1},{"inLvl0":1,"inLvl1":1,"inLvl2":1,"inLvl3":1,"inLvl4":1,"inLvl5":1,"inLvl6":1,"inLvl7":1}],[{"masterGain":0.74},{"masterGain":0.6},{"masterGain":0.6},{"masterGain":0.6}]]},"cables":[{"fromMod":14,"fromIdx":0,"toMod":37,"toIdx":0,"color":"#ff4444"},{"fromMod":44,"fromIdx":1,"toMod":14,"toIdx":1,"color":"#44aaff"},{"fromMod":14,"fromIdx":1,"toMod":37,"toIdx":1,"color":"#aa44ff"},{"fromMod":44,"fromIdx":0,"toMod":14,"toIdx":0,"color":"#ff8800"},{"fromMod":44,"fromIdx":2,"toMod":14,"toIdx":2,"color":"#88ff44"},{"fromMod":14,"fromIdx":2,"toMod":37,"toIdx":2,"color":"#ff69b4"},{"fromMod":44,"fromIdx":1,"toMod":8,"toIdx":0,"color":"#ff69b4"},{"fromMod":44,"fromIdx":1,"toMod":8,"toIdx":1,"color":"#00ffcc"},{"fromMod":8,"fromIdx":0,"toMod":36,"toIdx":0,"color":"#44aaff"},{"fromMod":8,"fromIdx":1,"toMod":36,"toIdx":1,"color":"#aa44ff"},{"fromMod":8,"fromIdx":2,"toMod":36,"toIdx":2,"color":"#ff8800"},{"fromMod":17,"fromIdx":0,"toMod":44,"toIdx":3,"color":"#44aaff"},{"fromMod":44,"fromIdx":3,"toMod":45,"toIdx":6,"color":"#aa44ff"},{"fromMod":37,"fromIdx":0,"toMod":45,"toIdx":5,"color":"#ff8800"},{"fromMod":36,"fromIdx":0,"toMod":45,"toIdx":7,"color":"#88ff44"},{"fromMod":16,"fromIdx":0,"toMod":35,"toIdx":0,"color":"#ff69b4"},{"fromMod":44,"fromIdx":0,"toMod":16,"toIdx":0,"color":"#ffe000"},{"fromMod":10,"fromIdx":0,"toMod":19,"toIdx":0,"color":"#ffe000"},{"fromMod":19,"fromIdx":0,"toMod":20,"toIdx":0,"color":"#ff69b4"},{"fromMod":20,"fromIdx":0,"toMod":45,"toIdx":4,"color":"#00ffcc"},{"fromMod":44,"fromIdx":0,"toMod":13,"toIdx":0,"color":"#44aaff"},{"fromMod":44,"fromIdx":1,"toMod":13,"toIdx":1,"color":"#ff8800"},{"fromMod":44,"fromIdx":2,"toMod":13,"toIdx":2,"color":"#88ff44"},{"fromMod":13,"fromIdx":0,"toMod":35,"toIdx":1,"color":"#ff69b4"},{"fromMod":13,"fromIdx":1,"toMod":35,"toIdx":2,"color":"#00ffcc"},{"fromMod":13,"fromIdx":2,"toMod":35,"toIdx":3,"color":"#ffe000"},{"fromMod":30,"fromIdx":1,"toMod":30,"toIdx":2,"color":"#ff69b4"},{"fromMod":30,"fromIdx":2,"toMod":30,"toIdx":3,"color":"#00ffcc"},{"fromMod":30,"fromIdx":3,"toMod":48,"toIdx":0,"color":"#88ff44"},{"fromMod":47,"fromIdx":0,"toMod":30,"toIdx":1,"color":"#ff69b4"},{"fromMod":35,"fromIdx":0,"toMod":47,"toIdx":0,"color":"#00ffcc"},{"fromMod":20,"fromIdx":0,"toMod":47,"toIdx":7,"color":"#44aaff"},{"fromMod":36,"fromIdx":0,"toMod":47,"toIdx":1,"color":"#aa44ff"},{"fromMod":37,"fromIdx":0,"toMod":47,"toIdx":2,"color":"#ff8800"}],"layout":[{"left":"32px","top":"38px","w":"184px","tb":0},{"left":"32px","top":"84px","w":"184px","tb":0},{"left":"37px","top":"190px","w":"184px","tb":0},{"left":"36px","top":"144px","w":"184px","tb":0},{"left":"33px","top":"234px","w":"184px","tb":0},{"left":"261px","top":"41px","w":"184px","tb":0},{"left":"263px","top":"225px","w":"184px","tb":0},{"left":"265px","top":"174px","w":"184px","tb":0},{"left":"881px","top":"950px","w":"184px","tb":1},{"left":"262px","top":"88px","w":"184px","tb":0},{"left":"1146px","top":"1045px","w":"184px","tb":1},{"left":"261px","top":"271px","w":"184px","tb":0},{"left":"495px","top":"41px","w":"184px","tb":0},{"left":"261px","top":"972px","w":"184px","tb":1},{"left":"517px","top":"938px","w":"184px","tb":1},{"left":"72px","top":"470px","w":"184px","tb":0},{"left":"30px","top":"913px","w":"184px","tb":1},{"left":"543px","top":"646px","w":"184px","tb":1},{"left":"33px","top":"326px","w":"184px","tb":0},{"left":"1145px","top":"1154px","w":"184px","tb":1},{"left":"1145px","top":"1301px","w":"184px","tb":1},{"left":"780px","top":"130px","w":"184px","tb":0},{"left":"780px","top":"176px","w":"142px","tb":0},{"left":"780px","top":"222px","w":"184px","tb":0},{"left":"780px","top":"268px","w":"184px","tb":0},{"left":"1100px","top":"38px","w":"266px","tb":0},{"left":"1100px","top":"84px","w":"266px","tb":0},{"left":"1020px","top":"130px","w":"348px","tb":0},{"left":"1020px","top":"176px","w":"184px","tb":0},{"left":"1020px","top":"222px","w":"184px","tb":0},{"left":"692px","top":"1683px","w":"184px","tb":1},{"left":"1020px","top":"314px","w":"184px","tb":0},{"left":"780px","top":"314px","w":"184px","tb":0},{"left":"780px","top":"360px","w":"184px","tb":0},{"left":"1020px","top":"360px","w":"184px","tb":0},{"left":"59px","top":"1122px","w":"184px","tb":1},{"left":"881px","top":"1153px","w":"184px","tb":1},{"left":"517px","top":"1100px","w":"184px","tb":1},{"left":"78px","top":"372px","w":"","tb":0},{"left":"37px","top":"372px","w":"","tb":0},{"left":"120px","top":"372px","w":"","tb":0},{"left":"160px","top":"372px","w":"","tb":0},{"left":"1219px","top":"446px","w":"184px","tb":1},{"left":"1218px","top":"497px","w":"184px","tb":1},{"left":"405px","top":"767px","w":"184px","tb":1},{"left":"1470px","top":"432px","w":"","tb":1},{"left":"1469px","top":"509px","w":"","tb":1},{"left":"380px","top":"1477px","w":"","tb":1},{"left":"596px","top":"1825px","w":"","tb":1}],"patterns":{"patGrid1":[[1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0],[0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0],[0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1],[0,1,0,0,1,0,1,0,0,1,0,0,1,0,1,0]],"patGrid2":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],"patGrid3":[[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]}}
+];
+// Merge samples into presets if not already present
+SAMPLE_PRESETS.forEach(sp => { if(!presets.find(p => p.name === sp.name)) presets.push(sp); });
+savePresets();
+
 function renderPresets(){
   // Preset toggle button
   document.getElementById('presetToggle').textContent = 'PRESETS (' + presets.length + ')';
@@ -2025,14 +2033,6 @@ function renderPresets(){
     empty.textContent = 'No presets saved';
     pl.appendChild(empty);
   }
-  // JSON dropdown
-  const jd = document.getElementById('jsonDropdown');
-  const jsonStr = JSON.stringify(presets, null, 2);
-  jd.innerHTML = '<option value="">JSON (' + presets.length + ' presets)</option>';
-  const opt = document.createElement('option');
-  opt.value = 'json'; opt.textContent = jsonStr.substring(0, 80) + '...';
-  jd.appendChild(opt);
-  jd.dataset.fullJson = jsonStr;
 }
 
 // Toggle preset list
@@ -2102,62 +2102,57 @@ function loadPreset(idx){
   if(live && live.playing) rebuildIfPlaying();
 }
 
-// Copy JSON
-document.getElementById('copyJsonBtn').addEventListener('click', () => {
-  const jd = document.getElementById('jsonDropdown');
-  const json = jd.dataset.fullJson || JSON.stringify(presets, null, 2);
-  navigator.clipboard.writeText(json).then(() => {
-    const btn = document.getElementById('copyJsonBtn');
-    btn.textContent = 'COPIED'; setTimeout(() => { btn.textContent = 'COPY JSON'; }, 1200);
-  });
+// Export current preset as downloadable .json file
+document.getElementById('exportFileBtn').addEventListener('click', () => {
+  const nameInput = document.getElementById('presetName');
+  const name = nameInput.value.trim() || 'sfx-preset';
+  const params = getParams();
+  const entry = { name, params, cables: JSON.parse(JSON.stringify(cables)), layout: getModPositions(), patterns: JSON.parse(JSON.stringify(patternStates)) };
+  const blob = new Blob([JSON.stringify(entry, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name.replace(/[^a-z0-9_-]/gi, '-') + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  const btn = document.getElementById('exportFileBtn');
+  btn.textContent = 'SAVED'; setTimeout(() => { btn.textContent = 'EXPORT'; }, 1200);
 });
 
-// Import presets from JSON
-document.getElementById('importJsonBtn').addEventListener('click', () => {
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;';
-  const box = document.createElement('div');
-  box.style.cssText = 'background:#111;border:1px solid #00ffcc;padding:16px;width:500px;max-width:90vw;font-family:inherit;';
-  box.innerHTML = '<div style="color:#ffe000;font-size:10px;margin-bottom:8px;letter-spacing:1px;">PASTE PRESET JSON</div>';
-  const ta = document.createElement('textarea');
-  ta.style.cssText = 'width:100%;height:200px;background:#0a0a14;color:#00ffcc;border:1px solid #00ffcc33;font-family:inherit;font-size:9px;padding:8px;resize:vertical;';
-  ta.placeholder = 'Paste preset JSON array here...';
-  box.appendChild(ta);
-  const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex;gap:8px;margin-top:8px;';
-  const loadBtn = document.createElement('button');
-  loadBtn.style.cssText = 'padding:6px 16px;background:rgba(0,255,204,0.1);color:#00ffcc;border:1px solid #00ffcc;font-family:inherit;font-size:9px;cursor:pointer;letter-spacing:1px;';
-  loadBtn.textContent = 'LOAD';
-  const mergeBtn = document.createElement('button');
-  mergeBtn.style.cssText = 'padding:6px 16px;background:rgba(255,224,0,0.1);color:#ffe000;border:1px solid #ffe000;font-family:inherit;font-size:9px;cursor:pointer;letter-spacing:1px;';
-  mergeBtn.textContent = 'MERGE';
-  const cancelBtn = document.createElement('button');
-  cancelBtn.style.cssText = 'padding:6px 16px;background:rgba(255,68,68,0.1);color:#ff4444;border:1px solid #ff4444;font-family:inherit;font-size:9px;cursor:pointer;letter-spacing:1px;margin-left:auto;';
-  cancelBtn.textContent = 'CANCEL';
-  btnRow.appendChild(loadBtn);
-  btnRow.appendChild(mergeBtn);
-  btnRow.appendChild(cancelBtn);
-  box.appendChild(btnRow);
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-  ta.focus();
-  function doImport(replace){
-    try {
-      const data = JSON.parse(ta.value.trim());
-      if(!Array.isArray(data)) throw new Error('Not an array');
-      if(replace) presets.length = 0;
-      data.forEach(p => {
-        const idx = presets.findIndex(e => e.name === p.name);
-        if(idx >= 0) presets[idx] = p; else presets.push(p);
-      });
-      savePresets(); renderPresets();
-      overlay.remove();
-    } catch(e){ ta.style.borderColor = '#ff4444'; ta.placeholder = 'Invalid JSON: ' + e.message; }
-  }
-  loadBtn.addEventListener('click', () => doImport(true));
-  mergeBtn.addEventListener('click', () => doImport(false));
-  cancelBtn.addEventListener('click', () => overlay.remove());
-  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+// Import preset from .json file
+document.getElementById('importFileBtn').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        // Support single preset or array of presets
+        const items = Array.isArray(data) ? data : [data];
+        items.forEach(p => {
+          if(!p.name || !p.params) return;
+          const idx = presets.findIndex(e => e.name === p.name);
+          if(idx >= 0) presets[idx] = p; else presets.push(p);
+        });
+        savePresets(); renderPresets();
+        // Auto-load the first imported preset
+        if(items.length === 1 && items[0].name){
+          const li = presets.findIndex(e => e.name === items[0].name);
+          if(li >= 0) loadPreset(li);
+        }
+        const btn = document.getElementById('importFileBtn');
+        btn.textContent = 'LOADED'; setTimeout(() => { btn.textContent = 'IMPORT'; }, 1200);
+      } catch(e){
+        const btn = document.getElementById('importFileBtn');
+        btn.textContent = 'ERROR'; btn.style.color = '#ff4444';
+        setTimeout(() => { btn.textContent = 'IMPORT'; btn.style.color = ''; }, 2000);
+      }
+    };
+    reader.readAsText(file);
+  });
+  input.click();
 });
 
 let blurMuteEnabled = true;
@@ -2713,19 +2708,35 @@ document.addEventListener('keydown', e => {
 // Auto-patch: sources -> effect chain -> output
 document.getElementById('autoPatchBtn').addEventListener('click', () => {
   pushUndo();
-  cables.length = 0;
+
+  // Spatial auto-patch: column-aware chaining
+  // Only modules below MIX 5's Y position are "deployed" to the workspace
+  const mods = document.querySelectorAll('.module');
+  const mix5Idx = MOD_NAMES.indexOf('MIX 5');
+  const mix5Top = mix5Idx >= 0 ? parseFloat(mods[mix5Idx].style.top) || 600 : 600;
+  const deployed = [];
+  mods.forEach((mod, i) => {
+    if(mod.classList.contains('through') || mod.classList.contains('out')) return;
+    const top = parseFloat(mod.style.top);
+    const left = parseFloat(mod.style.left);
+    if(isNaN(top) || isNaN(left) || top <= mix5Top) return;
+    deployed.push({ idx: i, top, left, name: MOD_NAMES[i] });
+  });
+
+  // Remove only cables between deployed modules, leave everything else
+  const deployedSet = new Set(deployed.map(d => d.idx));
+  for(let i = cables.length - 1; i >= 0; i--){
+    if(deployedSet.has(cables[i].fromMod) && deployedSet.has(cables[i].toMod)){
+      cables.splice(i, 1);
+    }
+  }
   document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
-  cableColorIdx = 0;
-
-  const byName = {};
-  MOD_NAMES.forEach((n, i) => { byName[n] = i; });
-
-  // Effect chain order
-  const effectChain = ['TREMOLO','RING MOD','DISTORTION','FILTER','PHASER','DELAY','DETUNE / CHORUS','ENVELOPE','OUTPUT'];
-  // Sources all feed into first effect
-  const sources = ['OSCILLATOR','SUB OCTAVE','SUB RUMBLE','NOISE GEN','FM OSC','PWM OSC','IMPACT','CRACKLE','METALLIC','FORMANT','DRONE','WIND','PLUCK','BELL','MALLET','SWEEP','ARPEGGIO','SHIMMER','BOW'];
-  const firstEffect = effectChain[0];
-  const firstIdx = byName[firstEffect];
+  cables.forEach(c => {
+    const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
+    const te = findJackEl(c.toMod, c.toIdx, 'input');
+    if(fe) fe.classList.add('connected');
+    if(te) te.classList.add('connected');
+  });
 
   function addCable(from, fromOut, to, toIn){
     if(from === undefined || to === undefined) return;
@@ -2738,19 +2749,31 @@ document.getElementById('autoPatchBtn').addEventListener('click', () => {
     if(te) te.classList.add('connected');
   }
 
-  // Wire sources to first effect (each on a different input)
-  sources.forEach((name, i) => {
-    if(byName[name] !== undefined && firstIdx !== undefined){
-      addCable(byName[name], 0, firstIdx, Math.min(i, 3));
+  // Cluster deployed modules into columns by X proximity (92px = half module width)
+  const COL_THRESH = 92;
+  deployed.sort((a, b) => a.left - b.left);
+  const columns = [];
+  deployed.forEach(m => {
+    let best = null, bestDist = Infinity;
+    for(const col of columns){
+      const dist = Math.abs(col.avgX - m.left);
+      if(dist < COL_THRESH && dist < bestDist){ best = col; bestDist = dist; }
+    }
+    if(best){
+      best.mods.push(m);
+      best.avgX = best.mods.reduce((s, c) => s + c.left, 0) / best.mods.length;
+    } else {
+      columns.push({ mods: [m], avgX: m.left });
     }
   });
 
-  // Chain effects in order
-  for(let i = 0; i < effectChain.length - 1; i++){
-    const from = byName[effectChain[i]];
-    const to = byName[effectChain[i + 1]];
-    if(from !== undefined && to !== undefined) addCable(from, 0, to, 0);
-  }
+  // Chain each column top-to-bottom: out 0 -> in 0
+  columns.forEach(col => {
+    col.mods.sort((a, b) => a.top - b.top);
+    for(let i = 0; i < col.mods.length - 1; i++){
+      addCable(col.mods[i].idx, 0, col.mods[i + 1].idx, 0);
+    }
+  });
 
   drawAllCables();
   rebuildIfPlaying();
