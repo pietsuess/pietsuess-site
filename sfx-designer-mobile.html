@@ -132,6 +132,193 @@
   .preset-item .preset-name { flex:1; }
   .preset-item .preset-del { color:#ff4444; font-size:12px; padding:0 4px; cursor:pointer; opacity:0.5; }
   .preset-item .preset-del:hover { opacity:1; }
+
+  /* ===== MOBILE PAGE / BAR / COLUMN / NODE STYLES ===== */
+  .mobilePage { scroll-snap-align:start; align-items:stretch !important; justify-content:flex-start !important; }
+  .mobilePage .pageInner { width:100%; display:flex; flex-direction:column; gap:12px; }
+  .mobileBar {
+    background:rgba(255,255,255,0.03);
+    border:1px solid #333; border-radius:6px;
+    padding:8px; display:flex; flex-direction:column; gap:6px;
+  }
+  .mobileBarHeader {
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:10px; letter-spacing:1.5px; color:#888;
+    padding:2px 2px 4px 2px; border-bottom:1px solid #222;
+    touch-action:none; user-select:none;
+  }
+  .mobileBarHeader.dragging { background:rgba(255,224,0,0.1); }
+  .mobileBarHeader .barActions { display:flex; gap:4px; }
+  .mobileBarHeader button {
+    background:#111; border:1px solid #555; color:#ccc;
+    font-family:inherit; font-size:9px; padding:4px 7px; border-radius:3px;
+    cursor:pointer; min-height:28px; letter-spacing:1px;
+  }
+  .mobileBarHeader button:disabled { opacity:0.3; }
+  .mobileBarHeader button.danger { color:#ff4444; border-color:#662222; }
+  .mobileBarCols { display:flex; gap:6px; align-items:stretch; min-height:70px; }
+  .mobileCol { flex:1 1 0; min-width:0; display:flex; flex-direction:column; }
+  .mobileCol.empty {
+    border:1px dashed #444; border-radius:4px;
+    background:rgba(255,255,255,0.02);
+    display:flex; align-items:center; justify-content:center;
+    color:#555; font-size:24px; min-height:60px;
+    cursor:pointer;
+  }
+  .mobileCol.empty:active { background:rgba(255,224,0,0.05); border-color:#ffe00044; }
+
+  .mobileNode {
+    border-radius:5px; padding:6px 6px 4px 6px;
+    font-size:10px; position:relative;
+    display:flex; flex-direction:column; gap:4px;
+    min-height:60px; overflow:hidden;
+  }
+  .mobileNode.gen { background:rgba(40,10,20,0.85); border:1px solid #ff69b488; color:#ff69b4; }
+  .mobileNode.fx  { background:rgba(0,30,35,0.85); border:1px solid #00ffcc66; color:#00ffcc; }
+  .mobileNode.mix { background:rgba(40,20,10,0.85); border:1px solid #ff994488; color:#ff9944; }
+  .mobileNode.pat { background:rgba(25,10,40,0.85); border:1px solid #aa66ff88; color:#aa66ff; }
+
+  .mobileNode .nodeHeader {
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:9px; letter-spacing:1px; text-transform:uppercase;
+    min-height:18px;
+  }
+  .mobileNode .nodeTitle { flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; padding-right:4px; }
+  .mobileNode .nodeDeleteBtn {
+    width:22px; height:22px; border:1px solid #ff4444; background:transparent;
+    color:#ff4444; font-family:inherit; font-size:11px; cursor:pointer; border-radius:3px;
+    line-height:1; padding:0;
+  }
+  .mobileNode .nodeExpandBtn {
+    width:24px; height:18px; border:1px solid #444; background:#111;
+    color:#aaa; font-family:inherit; font-size:10px; cursor:pointer;
+    border-radius:2px; padding:0; line-height:1;
+    align-self:flex-start;
+  }
+  .mobileNode .nodeJacks {
+    display:flex; gap:4px; margin-top:auto; padding-top:2px;
+  }
+  .mobileNode .nodeJack {
+    width:8px; height:8px; border-radius:50%;
+    background:#111; border:1px solid currentColor; opacity:0.6;
+  }
+
+  .mobileNode .nodeExpanded { display:flex; flex-direction:column; gap:6px; padding-top:4px; }
+  .mobileNode .mobOutSel { display:flex; gap:3px; justify-content:center; }
+  .mobileNode .mobOutBtn {
+    width:26px; height:20px; border:1px solid #555; background:#111; color:#888;
+    font-family:inherit; font-size:9px; cursor:pointer; border-radius:2px; padding:0;
+  }
+  .mobileNode .mobOutBtn.active { border-color:#ffe000; color:#ffe000; background:rgba(255,224,0,0.12); }
+  .mobileNode .mobKnobGrid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(72px,1fr));
+    gap:6px; justify-items:center;
+  }
+  .mobileNode .mobKnobWrap {
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    width:72px;
+  }
+  .mobileNode .mobKnobCanvas {
+    width:64px; height:64px; cursor:pointer;
+    touch-action:manipulation;
+  }
+  .mobileNode .mobKnobVal { font-size:10px; color:#ffe000; height:12px; }
+  .mobileNode .mobKnobLabel { font-size:8px; color:inherit; opacity:0.8; letter-spacing:0.5px; text-align:center; }
+
+  .mobPatGrid { display:grid; grid-template-columns:repeat(4,44px); gap:3px; justify-content:center; margin-top:4px; }
+  .mobPatStep {
+    width:44px; height:44px; border:1px solid #aa66ff55; background:#aa66ff15;
+    border-radius:3px; cursor:pointer;
+  }
+  .mobPatStep.on { background:#aa66ff; border-color:#aa66ff; }
+
+  /* ===== MODAL OVERLAY ===== */
+  .modalOverlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.88);
+    z-index:9999; display:flex; align-items:center; justify-content:center;
+    padding:16px;
+  }
+  .modalBox {
+    background:#0d0d18; border:1px solid #ffe00044; border-radius:8px;
+    max-width:340px; width:100%; max-height:85vh; overflow-y:auto;
+    display:flex; flex-direction:column;
+  }
+  .modalHeader {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 12px; border-bottom:1px solid #222;
+    color:#ffe000; font-size:11px; letter-spacing:2px;
+  }
+  .modalClose {
+    width:28px; height:28px; border:1px solid #ff4444; background:transparent;
+    color:#ff4444; font-family:inherit; font-size:14px; cursor:pointer; border-radius:4px;
+    line-height:1;
+  }
+  .modalBody { padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+  .modalTabs { display:flex; gap:2px; padding:6px 10px 0; }
+  .modalTab {
+    flex:1; padding:8px 4px; background:#111; border:1px solid #333; border-bottom:none;
+    color:#888; font-family:inherit; font-size:9px; letter-spacing:1px;
+    cursor:pointer; border-radius:4px 4px 0 0;
+  }
+  .modalTab.active { color:#ffe000; border-color:#ffe000; background:#1a1a1a; }
+  .pickerRow {
+    padding:10px 12px; border:1px solid #222; background:#111; border-radius:4px;
+    font-size:11px; letter-spacing:1px; cursor:pointer;
+    min-height:40px; display:flex; align-items:center;
+  }
+  .pickerRow:active { background:#1f1f2a; }
+  .pickerRow.gen { color:#ff69b4; border-color:#ff69b433; }
+  .pickerRow.fx  { color:#00ffcc; border-color:#00ffcc33; }
+  .pickerRow.mix { color:#ff9944; border-color:#ff994433; }
+  .pickerRow.pat { color:#aa66ff; border-color:#aa66ff33; }
+
+  /* Knob Modal */
+  .knobModalRotary {
+    width:240px; height:240px; margin:0 auto; position:relative;
+    border-radius:50%; background:#0a0a14; border:2px solid #ffe00066;
+    display:flex; align-items:center; justify-content:center;
+    touch-action:none;
+  }
+  .knobModalValue {
+    font-size:28px; color:#ffe000; text-align:center; min-height:36px;
+  }
+  .knobModalLabel {
+    font-size:10px; color:#00ffcc; text-align:center; letter-spacing:2px;
+  }
+  .knobModalInput {
+    width:100%; background:#0a0a14; color:#ffe000; border:1px solid #ffe00066;
+    font-family:inherit; font-size:14px; padding:8px; text-align:center; border-radius:4px;
+    box-sizing:border-box;
+  }
+  .knobModalButtons {
+    display:flex; gap:8px; margin-top:8px;
+  }
+  .knobModalButtons button {
+    flex:1; padding:12px; font-family:inherit; font-size:11px;
+    background:#111; border:1px solid #555; color:#ccc; cursor:pointer; border-radius:4px;
+    letter-spacing:2px;
+  }
+  .knobModalButtons button.primary { border-color:#00ff66; color:#00ff66; }
+
+  /* confirm popup */
+  .confirmPop {
+    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .confirmBox {
+    background:#0d0d18; border:1px solid #ff4444; border-radius:6px;
+    padding:16px; max-width:300px; width:100%;
+    color:#ccc; font-size:11px; letter-spacing:1px; line-height:1.5;
+  }
+  .confirmBox .confirmBtns { display:flex; gap:8px; margin-top:14px; }
+  .confirmBox button {
+    flex:1; padding:10px; font-family:inherit; font-size:10px;
+    background:#111; border:1px solid #555; color:#ccc; cursor:pointer; border-radius:3px;
+  }
+  .confirmBox button.danger { border-color:#ff4444; color:#ff4444; }
+
+  /* delete page btn */
+  #delPageBtn { margin-left:4px; }
 </style>
 </head>
 <body>
@@ -140,7 +327,10 @@
   <div id="mobileTopBar">
     <button id="hamburgerBtn" aria-label="Menu">☰</button>
     <span id="pageIndicator">PAGE 1 / 1</span>
-    <button id="addPageBtn" aria-label="Add page">+</button>
+    <div style="display:flex;gap:4px;">
+      <button id="addPageBtn" aria-label="Add page">+</button>
+      <button id="delPageBtn" aria-label="Delete page" style="border-color:#662222;color:#ff4444;">X</button>
+    </div>
   </div>
   <div id="pageContainer">
     <div class="mobilePage" data-page="0">
@@ -3308,6 +3498,595 @@ requestAnimationFrame(() => {
   drawAllCables();
 });
 
+// ============================================================
+// MOBILE UI — Phases 2, 3, 4
+// ============================================================
+(function(){
+  'use strict';
+
+  // Node catalog: [name, category, [knobIds], isPattern]
+  const MOBILE_NODE_CATALOG = [
+    // GENERATORS
+    ['OSCILLATOR',   'gen', ['pitch','harmSpread','harm2','harm3']],
+    ['SUB OCTAVE',   'gen', ['subFreq','subGain']],
+    ['SUB RUMBLE',   'gen', ['rumFreq','rumGain']],
+    ['NOISE GEN',    'gen', ['noiseGain','noiseFilt']],
+    ['FM OSC',       'gen', ['fmFreq','fmDepth']],
+    ['PWM OSC',      'gen', ['pwmFreq','pwmRate','pwmGain']],
+    ['IMPACT',       'gen', ['impFreq','impSweep','impDecay','impRate','impGain']],
+    ['CRACKLE',      'gen', ['crkDensity','crkTone','crkGain']],
+    ['METALLIC',     'gen', ['metFreq','metInharm','metDecay','metRate','metGain']],
+    ['FORMANT',      'gen', ['formFreq','formGain']],
+    ['DRONE',        'gen', ['drnFreq','drnLayers','drnSpread','drnGain']],
+    ['WIND',         'gen', ['wndCut','wndMod','wndDepth','wndGain']],
+    ['PLUCK',        'gen', ['plkFreq','plkDecay','plkBright','plkRate','plkGain']],
+    ['BELL',         'gen', ['belFreq','belDecay','belRate','belGain']],
+    ['MALLET',       'gen', ['malFreq','malHard','malDecay','malRate','malGain']],
+    ['SWEEP',        'gen', ['swpFrom','swpTo','swpTime','swpRate','swpGain']],
+    ['ARPEGGIO',     'gen', ['arpRoot','arpSteps','arpRate','arpGain']],
+    ['SHIMMER',      'gen', ['shmFreq','shmLayers','shmDrift','shmGain']],
+    ['BOW',          'gen', ['bowFreq','bowPress','bowBright','bowGain']],
+    // EFFECTS
+    ['TREMOLO',      'fx', ['tremRate','tremDepth']],
+    ['PITCH WOBBLE', 'fx', ['wobRate','wobDepth']],
+    ['RING MOD',     'fx', ['ringFreq','ringMix']],
+    ['DISTORTION',   'fx', ['distDrive']],
+    ['FILTER',       'fx', ['filtCut','filtQ']],
+    ['DETUNE/CHORUS','fx', ['detune','stereoPan']],
+    ['PHASER',       'fx', ['phRate','phDepth','phMix']],
+    ['DELAY',        'fx', ['delTime','delFeed','delMix']],
+    ['ENVELOPE',     'fx', ['envAtk','envDec','envSus','envRel']],
+    ['REVERB',       'fx', ['rvbSize','rvbDecay','rvbDamp','rvbMix']],
+    ['COMPRESSOR',   'fx', ['cmpThresh','cmpRatio','cmpAtk','cmpRel']],
+    ['EQ',           'fx', ['eqFreq','eqGainDb','eqQ']],
+    ['BITCRUSHER',   'fx', ['bcBits','bcRate']],
+    ['FLANGER',      'fx', ['flRate','flDepth','flFeed','flMix']],
+    ['GATE',         'fx', ['gtThresh','gtRate','gtSmooth']],
+    ['PANNER',       'fx', ['panRate','panWidth']],
+    // MIXES
+    ['MIX 1',        'mix', ['mixLevel','mixAmp']],
+    ['MIX 2',        'mix', ['mix2Level','mix2Amp']],
+    ['MIX 3',        'mix', ['mix3Level','mix3Amp']],
+    ['MIX 4',        'mix', ['mix4Level','mix4Amp']],
+    ['MIX 5',        'mix', ['mix5Level','mix5Amp']],
+    // PATTERNS
+    ['PATTERN 1',    'pat', ['pat1Bpm'], true],
+    ['PATTERN 2',    'pat', ['pat2Bpm'], true],
+    ['PATTERN 3',    'pat', ['pat3Bpm'], true],
+  ];
+  const CATALOG_BY_NAME = {};
+  MOBILE_NODE_CATALOG.forEach(n => CATALOG_BY_NAME[n[0]] = n);
+
+  // Reference KNOB_DEFS from desktop script (global)
+  const KD = (typeof KNOB_DEFS !== 'undefined') ? KNOB_DEFS : {};
+
+  const mobile = {
+    pages: [{ bars: [ { cols: [ null ] } ] }],
+    currentPage: 0,
+    mobileNodes: {},
+    nextNodeId: 1,
+    history: [],
+    redoStack: [],
+    expanded: {},
+    currentOut: {},
+  };
+  window.mobile = mobile;
+
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function el(tag, cls, text){
+    const e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(text != null) e.textContent = text;
+    return e;
+  }
+  function saveHistory(){
+    try {
+      mobile.history.push(JSON.stringify({
+        pages: mobile.pages,
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,state:v.state}]))
+      }));
+      if(mobile.history.length > 50) mobile.history.shift();
+      mobile.redoStack.length = 0;
+    } catch(e){}
+  }
+
+  function confirmPopup(msg, cb){
+    const pop = el('div','confirmPop');
+    const box = el('div','confirmBox');
+    box.appendChild(el('div',null,msg));
+    const btns = el('div','confirmBtns');
+    const cancel = el('button',null,'CANCEL');
+    const ok = el('button','danger','YES');
+    cancel.onclick = ()=>{ pop.remove(); };
+    ok.onclick = ()=>{ pop.remove(); cb(); };
+    btns.append(cancel, ok);
+    box.appendChild(btns);
+    pop.appendChild(box);
+    document.body.appendChild(pop);
+  }
+
+  function drawMobKnob(canvas, def, val){
+    const w = canvas.width, h = canvas.height;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+    const cx = w/2, cy = h/2, r = Math.min(w,h)/2 - 6;
+    const startA = Math.PI * 0.75, endA = Math.PI * 2.25;
+    ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.strokeStyle = '#222';
+    ctx.beginPath(); ctx.arc(cx,cy,r,startA,endA); ctx.stroke();
+    const t = (val - def.min) / (def.max - def.min);
+    const curA = startA + (endA - startA) * Math.max(0,Math.min(1,t));
+    ctx.strokeStyle = '#00ffcc';
+    ctx.beginPath(); ctx.arc(cx,cy,r,startA,curA); ctx.stroke();
+    ctx.fillStyle = '#ffe000';
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(curA)*(r-2), cy + Math.sin(curA)*(r-2), 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.strokeStyle = '#00ffcc66'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  }
+
+  function openNodePicker(pageIdx, barIdx, colIdx){
+    const overlay = el('div','modalOverlay');
+    const box = el('div','modalBox');
+    const header = el('div','modalHeader');
+    header.append(el('span', null, 'SELECT NODE'));
+    const close = el('button','modalClose','X');
+    close.onclick = ()=> overlay.remove();
+    header.appendChild(close);
+    box.appendChild(header);
+
+    const tabs = el('div','modalTabs');
+    const categories = [['gen','GENERATORS'],['fx','EFFECTS'],['mix','MIXES'],['pat','PATTERNS']];
+    const body = el('div','modalBody');
+    const tabBtns = {};
+    categories.forEach(([cat,label])=>{
+      const t = el('button','modalTab',label);
+      t.onclick = ()=> renderTab(cat);
+      tabBtns[cat] = t;
+      tabs.appendChild(t);
+    });
+    box.appendChild(tabs);
+    box.appendChild(body);
+
+    function renderTab(cat){
+      Object.entries(tabBtns).forEach(([c,b])=> b.classList.toggle('active', c===cat));
+      body.innerHTML = '';
+      MOBILE_NODE_CATALOG.filter(n=>n[1]===cat).forEach(n=>{
+        const row = el('div','pickerRow '+cat, n[0]);
+        row.onclick = ()=>{
+          overlay.remove();
+          createMobileNode(n[0], pageIdx, barIdx, colIdx);
+        };
+        body.appendChild(row);
+      });
+    }
+    renderTab('gen');
+
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  function createMobileNode(typeName, pageIdx, barIdx, colIdx){
+    const cat = CATALOG_BY_NAME[typeName];
+    if(!cat) return;
+    saveHistory();
+    const id = mobile.nextNodeId++;
+    const state = {};
+    cat[2].forEach(k=>{ if(KD[k]) state[k] = KD[k].val; });
+    const patternSteps = cat[3] ? Array(16).fill(false) : null;
+    mobile.mobileNodes[id] = {
+      type: typeName,
+      cat: cat[1],
+      knobs: cat[2],
+      isPattern: !!cat[3],
+      state,
+      patternSteps,
+    };
+    mobile.pages[pageIdx].bars[barIdx].cols[colIdx] = id;
+    mobile.currentOut[id] = 0;
+    renderMobilePages();
+  }
+
+  function deleteNode(nodeId){
+    saveHistory();
+    mobile.pages.forEach(p => p.bars.forEach(b => {
+      b.cols = b.cols.map(c => c === nodeId ? null : c);
+    }));
+    delete mobile.mobileNodes[nodeId];
+    delete mobile.expanded[nodeId];
+    delete mobile.currentOut[nodeId];
+    renderMobilePages();
+  }
+
+  function buildNodeEl(nodeId){
+    const node = mobile.mobileNodes[nodeId];
+    if(!node) return null;
+    const nodeEl = el('div','mobileNode '+node.cat);
+    nodeEl.dataset.nodeId = nodeId;
+
+    const header = el('div','nodeHeader');
+    header.append(el('div','nodeTitle', node.type));
+    const delBtn = el('button','nodeDeleteBtn','X');
+    delBtn.setAttribute('aria-label','Delete');
+    delBtn.onclick = (e)=>{
+      e.stopPropagation();
+      confirmPopup('Delete '+node.type+'?', ()=> deleteNode(nodeId));
+    };
+    header.appendChild(delBtn);
+    nodeEl.appendChild(header);
+
+    const expanded = !!mobile.expanded[nodeId];
+    const expBtn = el('button','nodeExpandBtn', expanded ? '▲' : '▼');
+    expBtn.onclick = (e)=>{
+      e.stopPropagation();
+      mobile.expanded[nodeId] = !expanded;
+      renderMobilePages();
+    };
+    nodeEl.appendChild(expBtn);
+
+    if(expanded){
+      const ex = el('div','nodeExpanded');
+      const outs = (node.cat === 'mix') ? 1 : 4;
+      if(outs > 1){
+        const outRow = el('div','mobOutSel');
+        for(let i=0;i<outs;i++){
+          const b = el('button','mobOutBtn', String(i+1));
+          if((mobile.currentOut[nodeId]||0) === i) b.classList.add('active');
+          b.onclick = ()=>{ mobile.currentOut[nodeId] = i; renderMobilePages(); };
+          outRow.appendChild(b);
+        }
+        ex.appendChild(outRow);
+      }
+      const grid = el('div','mobKnobGrid');
+      node.knobs.forEach(kid=>{
+        const def = KD[kid]; if(!def) return;
+        const wrap = el('div','mobKnobWrap');
+        const canvas = document.createElement('canvas');
+        canvas.className = 'mobKnobCanvas';
+        canvas.width = 64; canvas.height = 64;
+        const val = node.state[kid] != null ? node.state[kid] : def.val;
+        drawMobKnob(canvas, def, val);
+        canvas.onclick = ()=> openKnobModal(nodeId, kid);
+        const valEl = el('div','mobKnobVal', def.fmt ? def.fmt(val) : String(val));
+        const labelEl = el('div','mobKnobLabel', kid);
+        wrap.append(canvas, valEl, labelEl);
+        grid.appendChild(wrap);
+      });
+      ex.appendChild(grid);
+      if(node.isPattern && node.patternSteps){
+        const pg = el('div','mobPatGrid');
+        node.patternSteps.forEach((on,i)=>{
+          const s = el('div','mobPatStep');
+          if(on) s.classList.add('on');
+          s.onclick = ()=>{
+            node.patternSteps[i] = !node.patternSteps[i];
+            s.classList.toggle('on', node.patternSteps[i]);
+          };
+          pg.appendChild(s);
+        });
+        ex.appendChild(pg);
+      }
+      nodeEl.appendChild(ex);
+    } else {
+      const jacks = el('div','nodeJacks');
+      const jackCount = (node.cat === 'mix') ? 1 : 4;
+      for(let i=0;i<jackCount;i++) jacks.appendChild(el('div','nodeJack'));
+      nodeEl.appendChild(jacks);
+    }
+    return nodeEl;
+  }
+
+  function renderMobilePages(){
+    const container = $('#pageContainer');
+    if(!container) return;
+    container.innerHTML = '';
+
+    mobile.pages.forEach((page, pIdx)=>{
+      const pageEl = el('div','mobilePage');
+      pageEl.dataset.page = pIdx;
+      const inner = el('div','pageInner');
+
+      page.bars.forEach((bar, bIdx)=>{
+        const barEl = el('div','mobileBar');
+        barEl.dataset.bar = bIdx;
+
+        const barHeader = el('div','mobileBarHeader');
+        barHeader.appendChild(el('span',null,'BAR '+(bIdx+1)));
+
+        const actions = el('div','barActions');
+        const addColBtn = el('button',null,'+ COL');
+        addColBtn.disabled = bar.cols.length >= 4;
+        addColBtn.onclick = ()=>{
+          if(bar.cols.length < 4){ saveHistory(); bar.cols.push(null); renderMobilePages(); }
+        };
+        const delColBtn = el('button',null,'X COL');
+        delColBtn.disabled = bar.cols.length <= 1 || !bar.cols.some(c=>c===null);
+        delColBtn.onclick = ()=>{
+          confirmPopup('Remove empty column?', ()=>{
+            saveHistory();
+            for(let i=bar.cols.length-1;i>=0;i--){
+              if(bar.cols[i] === null){ bar.cols.splice(i,1); break; }
+            }
+            renderMobilePages();
+          });
+        };
+        const delBarBtn = el('button','danger','X BAR');
+        delBarBtn.disabled = page.bars.length <= 1;
+        delBarBtn.onclick = ()=>{
+          confirmPopup('Remove BAR '+(bIdx+1)+'?', ()=>{
+            saveHistory();
+            bar.cols.forEach(id=>{ if(id != null){ delete mobile.mobileNodes[id]; delete mobile.expanded[id]; } });
+            page.bars.splice(bIdx,1);
+            renderMobilePages();
+          });
+        };
+        actions.append(addColBtn, delColBtn, delBarBtn);
+        barHeader.appendChild(actions);
+
+        attachBarReorder(barHeader, pIdx, bIdx);
+
+        barEl.appendChild(barHeader);
+
+        const colsRow = el('div','mobileBarCols');
+        bar.cols.forEach((nodeId, cIdx)=>{
+          const colEl = el('div','mobileCol');
+          if(nodeId == null){
+            colEl.classList.add('empty');
+            colEl.textContent = '+';
+            colEl.onclick = ()=> openNodePicker(pIdx, bIdx, cIdx);
+          } else {
+            const nEl = buildNodeEl(nodeId);
+            if(nEl) colEl.appendChild(nEl); else colEl.textContent = '?';
+          }
+          colsRow.appendChild(colEl);
+        });
+        barEl.appendChild(colsRow);
+
+        inner.appendChild(barEl);
+      });
+
+      const addBarBtn = el('button',null,'+ BAR');
+      addBarBtn.style.cssText = 'align-self:center;margin-top:4px;padding:10px 22px;background:#111;border:1px solid #00ffcc66;color:#00ffcc;font-family:inherit;font-size:10px;border-radius:4px;letter-spacing:2px;cursor:pointer;';
+      addBarBtn.onclick = ()=>{
+        saveHistory();
+        page.bars.push({ cols: [null] });
+        renderMobilePages();
+      };
+      inner.appendChild(addBarBtn);
+
+      pageEl.appendChild(inner);
+      container.appendChild(pageEl);
+    });
+
+    updatePageIndicator();
+    requestAnimationFrame(()=>{
+      const pages = container.querySelectorAll('.mobilePage');
+      if(pages[mobile.currentPage]){
+        container.scrollLeft = pages[mobile.currentPage].offsetLeft;
+      }
+    });
+    const delBtn = $('#delPageBtn');
+    if(delBtn) delBtn.disabled = mobile.pages.length <= 1;
+  }
+
+  function updatePageIndicator(){
+    const ind = $('#pageIndicator');
+    if(ind) ind.textContent = 'PAGE '+(mobile.currentPage+1)+' / '+mobile.pages.length;
+  }
+
+  function attachBarReorder(headerEl, pIdx, bIdx){
+    let holdTimer = null;
+    let dragging = false;
+    let startY = 0;
+    let barEl = null;
+
+    headerEl.addEventListener('pointerdown', e=>{
+      if(e.target.tagName === 'BUTTON') return;
+      startY = e.clientY;
+      barEl = headerEl.parentElement;
+      holdTimer = setTimeout(()=>{
+        dragging = true;
+        headerEl.classList.add('dragging');
+        if(navigator.vibrate) navigator.vibrate(30);
+      }, 500);
+    });
+    headerEl.addEventListener('pointermove', e=>{
+      if(!dragging) {
+        if(holdTimer && Math.abs(e.clientY - startY) > 10){ clearTimeout(holdTimer); holdTimer=null; }
+        return;
+      }
+      const pageEl = barEl.closest('.mobilePage');
+      if(!pageEl) return;
+      const bars = Array.from(pageEl.querySelectorAll('.mobileBar'));
+      let targetIdx = bars.indexOf(barEl);
+      bars.forEach((b,i)=>{
+        const r = b.getBoundingClientRect();
+        if(e.clientY > r.top && e.clientY < r.bottom && b !== barEl) targetIdx = i;
+      });
+      if(targetIdx !== bIdx && targetIdx >= 0){
+        saveHistory();
+        const page = mobile.pages[pIdx];
+        const moved = page.bars.splice(bIdx,1)[0];
+        page.bars.splice(targetIdx,0,moved);
+        dragging = false;
+        clearTimeout(holdTimer);
+        renderMobilePages();
+      }
+    });
+    const onUp = ()=>{
+      clearTimeout(holdTimer); holdTimer=null;
+      if(dragging){ headerEl.classList.remove('dragging'); dragging=false; }
+    };
+    headerEl.addEventListener('pointerup', onUp);
+    headerEl.addEventListener('pointercancel', onUp);
+  }
+
+  function openKnobModal(nodeId, knobId){
+    const node = mobile.mobileNodes[nodeId]; if(!node) return;
+    const def = KD[knobId]; if(!def) return;
+    const current = node.state[knobId] != null ? node.state[knobId] : def.val;
+    let value = current;
+
+    const overlay = el('div','modalOverlay');
+    const box = el('div','modalBox');
+    box.style.maxWidth = '320px';
+
+    const header = el('div','modalHeader');
+    header.append(el('span',null, node.type + ' : ' + knobId));
+    const closeBtn = el('button','modalClose','X');
+    closeBtn.onclick = ()=> overlay.remove();
+    header.append(closeBtn);
+    box.appendChild(header);
+
+    const body = el('div','modalBody');
+    const rotary = el('div','knobModalRotary');
+    const valueEl = el('div','knobModalValue', def.fmt ? def.fmt(value) : String(value));
+    rotary.appendChild(valueEl);
+
+    const labelEl = el('div','knobModalLabel', knobId + '  ('+def.min+' – '+def.max+')');
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'knobModalInput';
+    input.min = def.min; input.max = def.max; input.step = def.step;
+    input.value = value;
+
+    function render(){
+      valueEl.textContent = def.fmt ? def.fmt(value) : String(value);
+      input.value = (Math.round(value / def.step) * def.step).toFixed(def.step < 1 ? (def.step < 0.01 ? 3 : 2) : 0);
+    }
+    input.oninput = ()=>{
+      const v = parseFloat(input.value);
+      if(!isNaN(v)){
+        value = Math.max(def.min, Math.min(def.max, v));
+        valueEl.textContent = def.fmt ? def.fmt(value) : String(value);
+      }
+    };
+
+    let dragging = false;
+    let lastAngle = null;
+    rotary.addEventListener('pointerdown', e=>{
+      dragging = true;
+      try { rotary.setPointerCapture(e.pointerId); } catch(_){}
+      const r = rotary.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      lastAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+    });
+    rotary.addEventListener('pointermove', e=>{
+      if(!dragging) return;
+      const r = rotary.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const a = Math.atan2(e.clientY - cy, e.clientX - cx);
+      let delta = a - lastAngle;
+      if(delta > Math.PI) delta -= Math.PI*2;
+      if(delta < -Math.PI) delta += Math.PI*2;
+      lastAngle = a;
+      const range = def.max - def.min;
+      value += (delta / (Math.PI*2)) * range;
+      value = Math.max(def.min, Math.min(def.max, value));
+      value = Math.round(value / def.step) * def.step;
+      render();
+    });
+    rotary.addEventListener('pointerup', ()=>{ dragging=false; });
+    rotary.addEventListener('pointercancel', ()=>{ dragging=false; });
+
+    const btns = el('div','knobModalButtons');
+    const cancelB = el('button',null,'CANCEL');
+    cancelB.onclick = ()=> overlay.remove();
+    const doneB = el('button','primary','DONE');
+    doneB.onclick = ()=>{
+      node.state[knobId] = value;
+      overlay.remove();
+      renderMobilePages();
+    };
+    btns.append(cancelB, doneB);
+
+    body.append(rotary, labelEl, input, btns);
+    box.appendChild(body);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  function setupSwipeNav(){
+    const container = $('#pageContainer');
+    if(!container) return;
+    let startX=0, startY=0, startT=0, edgeSwipe=false;
+    container.addEventListener('pointerdown', e=>{
+      const w = window.innerWidth;
+      edgeSwipe = (e.clientX < 20) || (e.clientX > w - 20);
+      if(edgeSwipe){
+        startX = e.clientX; startY = e.clientY; startT = Date.now();
+      }
+    });
+    container.addEventListener('pointerup', e=>{
+      if(!edgeSwipe) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const dt = Date.now() - startT;
+      edgeSwipe = false;
+      if(dt > 600) return;
+      if(Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+      if(dx < 0 && mobile.currentPage < mobile.pages.length-1){
+        mobile.currentPage++;
+        scrollToCurrentPage();
+      } else if(dx > 0 && mobile.currentPage > 0){
+        mobile.currentPage--;
+        scrollToCurrentPage();
+      }
+    });
+    container.addEventListener('scroll', ()=>{
+      const w = container.clientWidth;
+      const idx = Math.round(container.scrollLeft / w);
+      if(idx !== mobile.currentPage && idx >= 0 && idx < mobile.pages.length){
+        mobile.currentPage = idx;
+        updatePageIndicator();
+      }
+    }, { passive:true });
+  }
+  function scrollToCurrentPage(){
+    const container = $('#pageContainer');
+    const pages = container.querySelectorAll('.mobilePage');
+    const target = pages[mobile.currentPage];
+    if(target){
+      container.scrollTo({ left: target.offsetLeft, behavior:'smooth' });
+    }
+    updatePageIndicator();
+  }
+
+  function wireTopBar(){
+    const addBtn = $('#addPageBtn');
+    if(addBtn) addBtn.onclick = ()=>{
+      saveHistory();
+      mobile.pages.push({ bars: [ { cols:[null] } ] });
+      mobile.currentPage = mobile.pages.length - 1;
+      renderMobilePages();
+    };
+    const delBtn = $('#delPageBtn');
+    if(delBtn) delBtn.onclick = ()=>{
+      if(mobile.pages.length <= 1) return;
+      confirmPopup('Delete PAGE '+(mobile.currentPage+1)+'?', ()=>{
+        saveHistory();
+        const p = mobile.pages[mobile.currentPage];
+        p.bars.forEach(b => b.cols.forEach(id => { if(id!=null) delete mobile.mobileNodes[id]; }));
+        mobile.pages.splice(mobile.currentPage,1);
+        if(mobile.currentPage >= mobile.pages.length) mobile.currentPage = mobile.pages.length-1;
+        renderMobilePages();
+      });
+    };
+  }
+
+  function init(){
+    wireTopBar();
+    setupSwipeNav();
+    renderMobilePages();
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 </script>
 
 </body>
