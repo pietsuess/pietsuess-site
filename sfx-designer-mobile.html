@@ -51,32 +51,37 @@
   .module.through { min-width:20px !important; width:20px; height:20px; padding:0 !important; border:1px solid #00ffcc55; background:#00ffcc22; cursor:grab; }
 
   /* ===== MOBILE SHELL ===== */
-  #mobileShell { display:flex; flex-direction:column; height:100vh; width:100vw; background:#000; font-family:'Courier New',monospace; color:#fff; overflow:hidden; }
-  #mobileTopBar { display:flex; align-items:center; justify-content:space-between; height:50px; padding:0 12px; background:#111; border-bottom:1px solid #555; flex-shrink:0; }
-  #mobileTopBar button { background:none; border:1px solid #888; color:#ffe000; width:36px; height:36px; border-radius:4px; font-size:16px; cursor:pointer; }
+  #mobileShell { display:flex; flex-direction:column; height:100vh; width:100vw; background:#0a0a14; color:#00ffcc; font-family:'Press Start 2P',monospace,sans-serif; font-size:10px; overflow:hidden; }
+  #mobileTopBar { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:4px 12px 6px; background:transparent; border-bottom:1px solid #00ffcc33; flex-shrink:0; }
+  #mobileTopBar button {
+    padding:6px 12px; background:rgba(0,255,204,0.1); color:#00ffcc;
+    border:1px solid #00ffcc; font-family:inherit; font-size:9px;
+    cursor:pointer; letter-spacing:1px; min-width:36px; min-height:36px;
+  }
+  #mobileTopBar button:hover { background:rgba(0,255,204,0.22); }
   #mobileTopBar button:disabled { opacity:0.3; cursor:default; }
-  #pageIndicator { color:#ffe000; font-size:14px; letter-spacing:2px; min-width:92px; text-align:center; }
-  #pagePrevBtn, #pageNextBtn { font-size:14px; }
+  #pageIndicator { color:#ffe000; font-size:9px; letter-spacing:2px; min-width:92px; text-align:center; }
+  #pagePrevBtn, #pageNextBtn { font-size:10px; }
   #pageContainer { flex:1; overflow-x:auto; overflow-y:hidden; scroll-snap-type: x mandatory; display:flex; -webkit-overflow-scrolling:touch; }
   .mobilePage { flex:0 0 100%; scroll-snap-align:start; overflow-y:auto; padding:12px; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .pageLabel { color:#888; font-size:16px; letter-spacing:3px; }
+  .pageLabel { color:#888; font-size:10px; letter-spacing:3px; }
   #mobileBottomBar {
     display:flex; flex-direction:column; align-items:stretch;
-    height:72px; padding:4px 12px 8px; background:#111;
-    border-top:1px solid #555; flex-shrink:0;
+    height:72px; padding:4px 12px 8px; background:transparent;
+    border-top:1px solid #00ffcc33; flex-shrink:0;
     touch-action:none; cursor:pointer; position:relative;
   }
   #bottomBarHandle {
-    width:44px; height:4px; background:#888; border-radius:2px;
-    margin:2px auto 4px; flex-shrink:0; opacity:0.85;
+    width:44px; height:3px; background:#00ffcc55; border-radius:1px;
+    margin:2px auto 4px; flex-shrink:0;
   }
   #bottomBarContent {
     display:flex; align-items:center; justify-content:space-between;
     flex:1; pointer-events:none;
   }
   #miniInputMix { display:flex; gap:4px; flex:1; }
-  .miniChan { width:12px; height:30px; background:#222; border:1.5px solid #ff9944aa; border-radius:2px; }
-  #miniMasterKnob { width:40px; height:40px; border:2px solid #ffe000; border-radius:50%; background:#111; margin:0 10px; }
+  .miniChan { width:12px; height:30px; background:#111; border:1px solid #ff994444; border-radius:1px; }
+  #miniMasterKnob { width:40px; height:40px; border:1px solid #ffe00044; border-radius:50%; background:#111; margin:0 10px; }
   .module.through .mod-title { display:none; }
   .module.through .jack-row { display:none; }
   .module.through .bypass-btn { display:none; }
@@ -151,111 +156,122 @@
   .mobilePage { scroll-snap-align:start; align-items:stretch !important; justify-content:flex-start !important; }
   .mobilePage .pageInner { width:100%; display:flex; flex-direction:column; gap:12px; }
   .mobileBar {
-    background:rgba(255,255,255,0.05);
-    border:1.5px solid #666; border-radius:6px;
-    padding:8px; display:flex; flex-direction:column; gap:6px;
+    background:rgba(0,0,0,0.6);
+    border:1px solid #00ffcc33;
+    padding:6px 10px; display:flex; flex-direction:column; gap:6px;
   }
   .mobileBarHeader {
     display:flex; justify-content:space-between; align-items:center;
-    font-size:12px; letter-spacing:1.5px; color:#bbb;
-    padding:2px 2px 4px 2px; border-bottom:1px solid #444;
+    font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#00ffcc;
+    padding:2px 2px 6px 2px; border-bottom:1px solid #00ffcc33;
     touch-action:none; user-select:none;
   }
   .mobileBarHeader.dragging { background:rgba(255,224,0,0.15); }
   .mobileBarHeader .barActions { display:flex; gap:4px; }
   .mobileBarHeader button {
-    background:#111; border:1px solid #888; color:#ddd;
-    font-family:inherit; font-size:11px; padding:5px 8px; border-radius:3px;
-    cursor:pointer; min-height:30px; letter-spacing:1px;
+    padding:5px 8px; background:rgba(0,255,204,0.1); color:#00ffcc;
+    border:1px solid #00ffcc; font-family:inherit; font-size:9px;
+    cursor:pointer; letter-spacing:1px; min-height:30px;
   }
+  .mobileBarHeader button:hover { background:rgba(0,255,204,0.22); }
   .mobileBarHeader button:disabled { opacity:0.3; }
-  .mobileBarHeader button.danger { color:#ff6666; border-color:#993333; }
+  .mobileBarHeader button.danger { color:#ff4444; border-color:#ff4444; background:transparent; }
   .mobileBarCols { display:flex; gap:6px; align-items:stretch; min-height:70px; }
   .mobileCol { flex:1 1 0; min-width:0; display:flex; flex-direction:column; }
   .mobileCol.empty {
-    border:1.5px dashed #777; border-radius:4px;
-    background:rgba(255,255,255,0.03);
+    border:1px dashed #00ffcc33;
+    background:rgba(0,0,0,0.3);
     display:flex; align-items:center; justify-content:center;
-    color:#aaa; font-size:28px; min-height:60px;
+    color:#555; font-size:16px; min-height:60px;
     cursor:pointer;
   }
-  .mobileCol.empty:active { background:rgba(255,224,0,0.08); border-color:#ffe00088; }
+  .mobileCol.empty:active { background:rgba(255,224,0,0.08); border-color:#ffe00066; }
 
   .mobileNode {
-    border-radius:5px; padding:6px 6px 4px 6px;
+    padding:6px 10px 6px 10px;
     font-size:10px; position:relative;
     display:flex; flex-direction:column; gap:4px;
-    min-height:60px; overflow:hidden;
+    min-height:60px;
   }
-  .mobileNode.gen { background:rgba(50,15,25,0.92); border:1.5px solid #ff69b4; color:#ff99cc; }
-  .mobileNode.fx  { background:rgba(0,35,40,0.92); border:1.5px solid #00ffcc; color:#66ffdd; }
-  .mobileNode.mix { background:rgba(50,25,10,0.92); border:1.5px solid #ff9944; color:#ffbb77; }
-  .mobileNode.pat { background:rgba(30,12,48,0.92); border:1.5px solid #aa66ff; color:#cc99ff; }
+  .mobileNode.gen { background:rgba(40,10,20,0.6); border:1px solid #ff69b444; color:#00ffcc; }
+  .mobileNode.fx  { background:rgba(0,0,0,0.6); border:1px solid #00ffcc33; color:#00ffcc; }
+  .mobileNode.mix { background:rgba(40,20,10,0.6); border:1px solid #ff994444; color:#00ffcc; }
+  .mobileNode.pat { background:rgba(25,10,40,0.6); border:1px solid #aa66ff44; color:#00ffcc; }
 
   .mobileNode .nodeHeader {
     display:flex; justify-content:space-between; align-items:center;
-    font-size:12px; letter-spacing:1px; text-transform:uppercase;
-    min-height:22px; font-weight:bold;
+    font-size:12px; letter-spacing:2px; text-transform:uppercase;
+    min-height:22px;
   }
-  .mobileNode .nodeTitle { flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; padding-right:4px; color:currentColor; }
+  .mobileNode .nodeTitle { flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; padding-right:4px; }
   .mobileNode.gen .nodeTitle { color:#ff69b4; }
   .mobileNode.fx  .nodeTitle { color:#00ffcc; }
   .mobileNode.mix .nodeTitle { color:#ff9944; }
   .mobileNode.pat .nodeTitle { color:#aa66ff; }
   .mobileNode .nodeDeleteBtn {
-    width:24px; height:24px; border:1.5px solid #ff4444; background:transparent;
-    color:#ff6666; font-family:inherit; font-size:13px; cursor:pointer; border-radius:3px;
+    width:20px; height:20px; border:1px solid #ff4444; background:transparent;
+    color:#ff4444; font-family:inherit; font-size:10px; cursor:pointer; border-radius:0;
     line-height:1; padding:0;
   }
   .mobileNode .nodeExpandBtn {
-    width:26px; height:20px; border:1.5px solid #888; background:#1a1a1a;
-    color:#ccc; font-family:inherit; font-size:12px; cursor:pointer;
-    border-radius:2px; padding:0; line-height:1;
-    align-self:flex-start;
+    padding:4px 8px; background:rgba(0,255,204,0.1); color:#00ffcc;
+    border:1px solid #00ffcc; font-family:inherit; font-size:9px;
+    cursor:pointer; letter-spacing:1px; line-height:1;
+    align-self:flex-start; min-height:24px;
   }
   .mobileNode .nodeJacks {
     display:flex; gap:6px; margin-top:auto; padding-top:4px;
     justify-content:flex-start; align-items:center;
   }
   .mobileNode .nodeJack {
-    width:12px; height:16px; border-radius:2px;
-    background:#0a0a14; border:1.5px solid currentColor;
-    position:relative;
+    width:8px; height:10px; border-radius:1px;
+    background:#111; border:1px solid #555;
+    position:relative; cursor:pointer;
   }
-  .mobileNode .nodeJack.input { border-color:#00ffcc; background:#00ffcc22; }
-  .mobileNode .nodeJack.output { border-color:#ff69b4; background:#ff69b422; }
+  .mobileNode .nodeJack.input { border-color:#00ffcc55; }
+  .mobileNode .nodeJack.output { border-color:#ff69b455; }
+  .mobileNode .nodeJack.connected { background:#00ffcc44; border-color:#00ffcc; }
+  .mobileNode .nodeJack.output.connected { background:#ff69b444; border-color:#ff69b4; }
   .mobileNode .nodeJack::before {
-    content:""; position:absolute; inset:-14px; /* 44px hit zone */
+    content:""; position:absolute; inset:-17px; /* 44px hit zone (8+34=42, 10+34=44) */
   }
 
   .mobileNode .nodeExpanded { display:flex; flex-direction:column; gap:6px; padding-top:4px; }
   .mobileNode .mobOutSel { display:flex; gap:3px; justify-content:center; }
   .mobileNode .mobOutBtn {
-    width:28px; height:22px; border:1.5px solid #888; background:#111; color:#ccc;
-    font-family:inherit; font-size:11px; cursor:pointer; border-radius:2px; padding:0;
+    width:20px; height:16px; border:1px solid #555; background:#111; color:#888;
+    font-family:inherit; font-size:8px; cursor:pointer; text-align:center; line-height:16px;
+    padding:0; position:relative;
   }
-  .mobileNode .mobOutBtn.active { border-color:#ffe000; color:#ffe000; background:rgba(255,224,0,0.18); }
+  .mobileNode .mobOutBtn::before {
+    content:""; position:absolute; inset:-14px; /* 44px hit zone */
+  }
+  .mobileNode .mobOutBtn.active { border-color:#ffe000; color:#ffe000; background:rgba(255,224,0,0.15); }
+  .mobileNode .mobOutBtn:hover { border-color:#ffe000; }
   .mobileNode .mobKnobGrid {
-    display:grid; grid-template-columns:repeat(auto-fit,minmax(72px,1fr));
-    gap:6px; justify-items:center;
+    display:flex; flex-wrap:wrap; gap:2px; justify-content:center;
   }
   .mobileNode .mobKnobWrap {
     display:flex; flex-direction:column; align-items:center; gap:2px;
-    width:72px;
+    width:80px;
   }
   .mobileNode .mobKnobCanvas {
-    width:64px; height:64px; cursor:pointer;
+    width:72px; height:72px; cursor:pointer;
     touch-action:manipulation;
   }
-  .mobileNode .mobKnobVal { font-size:11px; color:#ffe000; height:14px; }
-  .mobileNode .mobKnobLabel { font-size:10px; color:inherit; opacity:0.95; letter-spacing:0.5px; text-align:center; }
+  .mobileNode .mobKnobVal { font-size:12px; color:#ffe000; text-align:center; height:16px; cursor:pointer; }
+  .mobileNode .mobKnobLabel { font-size:10px; color:#00ffcc; text-align:center; white-space:nowrap; }
 
-  .mobPatGrid { display:grid; grid-template-columns:repeat(4,44px); gap:3px; justify-content:center; margin-top:4px; }
+  .mobPatGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; width:68px; margin:4px auto 0; }
   .mobPatStep {
-    width:44px; height:44px; border:1px solid #aa66ff55; background:#aa66ff15;
-    border-radius:3px; cursor:pointer;
+    width:15px; height:15px; border:1px solid #aa66ff55; background:#aa66ff11;
+    border-radius:2px; cursor:pointer; position:relative;
+  }
+  .mobPatStep::before {
+    content:""; position:absolute; inset:-14px; /* 44px hit zone */
   }
   .mobPatStep.on { background:#aa66ff; border-color:#aa66ff; }
+  .mobPatStep.current { box-shadow:0 0 6px #ffe000; border-color:#ffe000; }
 
   /* ===== MODAL OVERLAY ===== */
   .modalOverlay {
@@ -287,15 +303,15 @@
   }
   .modalTab.active { color:#ffe000; border-color:#ffe000; background:#1a1a1a; }
   .pickerRow {
-    padding:12px 14px; border:1.5px solid #555; background:#141418; border-radius:4px;
-    font-size:13px; letter-spacing:1px; cursor:pointer;
+    padding:10px 12px; border:1px solid #00ffcc33; background:rgba(0,0,0,0.6); border-radius:0;
+    font-size:10px; letter-spacing:2px; text-transform:uppercase; cursor:pointer;
     min-height:44px; display:flex; align-items:center;
   }
-  .pickerRow:active { background:#1f1f2a; }
-  .pickerRow.gen { color:#ff99cc; border-color:#ff69b4aa; }
-  .pickerRow.fx  { color:#66ffdd; border-color:#00ffccaa; }
-  .pickerRow.mix { color:#ffbb77; border-color:#ff9944aa; }
-  .pickerRow.pat { color:#cc99ff; border-color:#aa66ffaa; }
+  .pickerRow:active { background:rgba(255,224,0,0.08); }
+  .pickerRow.gen { color:#ff69b4; border-color:#ff69b444; background:rgba(40,10,20,0.6); }
+  .pickerRow.fx  { color:#00ffcc; border-color:#00ffcc33; background:rgba(0,0,0,0.6); }
+  .pickerRow.mix { color:#ff9944; border-color:#ff994444; background:rgba(40,20,10,0.6); }
+  .pickerRow.pat { color:#aa66ff; border-color:#aa66ff44; background:rgba(25,10,40,0.6); }
 
   /* Knob Modal */
   .knobModalRotary {
@@ -319,11 +335,12 @@
     display:flex; gap:8px; margin-top:8px;
   }
   .knobModalButtons button {
-    flex:1; padding:12px; font-family:inherit; font-size:11px;
-    background:#111; border:1px solid #555; color:#ccc; cursor:pointer; border-radius:4px;
+    flex:1; padding:10px; font-family:inherit; font-size:9px;
+    background:rgba(0,255,204,0.1); border:1px solid #00ffcc; color:#00ffcc; cursor:pointer; border-radius:0;
     letter-spacing:2px;
   }
-  .knobModalButtons button.primary { border-color:#00ff66; color:#00ff66; }
+  .knobModalButtons button:hover { background:rgba(0,255,204,0.22); }
+  .knobModalButtons button.primary { background:rgba(0,255,0,0.14); border-color:#00ff66; color:#00ff66; }
 
   /* confirm popup */
   .confirmPop {
@@ -337,10 +354,12 @@
   }
   .confirmBox .confirmBtns { display:flex; gap:8px; margin-top:14px; }
   .confirmBox button {
-    flex:1; padding:10px; font-family:inherit; font-size:10px;
-    background:#111; border:1px solid #555; color:#ccc; cursor:pointer; border-radius:3px;
+    flex:1; padding:8px; font-family:inherit; font-size:9px;
+    background:rgba(0,255,204,0.1); border:1px solid #00ffcc; color:#00ffcc; cursor:pointer; border-radius:0;
+    letter-spacing:1px;
   }
-  .confirmBox button.danger { border-color:#ff4444; color:#ff4444; }
+  .confirmBox button:hover { background:rgba(0,255,204,0.22); }
+  .confirmBox button.danger { background:transparent; border-color:#ff4444; color:#ff4444; }
 
   /* delete page btn */
   #delPageBtn { margin-left:4px; }
@@ -3775,7 +3794,7 @@ requestAnimationFrame(() => {
         const wrap = el('div','mobKnobWrap');
         const canvas = document.createElement('canvas');
         canvas.className = 'mobKnobCanvas';
-        canvas.width = 64; canvas.height = 64;
+        canvas.width = 72; canvas.height = 72;
         const val = node.state[kid] != null ? node.state[kid] : def.val;
         drawMobKnob(canvas, def, val);
         canvas.onclick = ()=> openKnobModal(nodeId, kid);
