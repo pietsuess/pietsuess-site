@@ -256,10 +256,17 @@
     width:80px;
   }
   .mobileNode .mobKnobCanvas {
-    width:72px; height:72px; cursor:pointer;
-    touch-action:manipulation;
+    width:72px; height:72px; cursor:ns-resize;
+    touch-action:none;
+    user-select:none; -webkit-user-select:none;
   }
+  .mobileNode .mobKnobCanvas.dragging { filter:brightness(1.25); }
   .mobileNode .mobKnobVal { font-size:12px; color:#ffe000; text-align:center; height:16px; cursor:pointer; }
+  .mobileNode .mobKnobValInput {
+    width:64px; height:18px; background:#0a0a14; color:#ffe000;
+    border:1px solid #ffe00088; font-family:inherit; font-size:11px;
+    text-align:center; padding:0; box-sizing:border-box; border-radius:2px;
+  }
   .mobileNode .mobKnobLabel { font-size:10px; color:#00ffcc; text-align:center; white-space:nowrap; }
 
   .mobPatGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; width:68px; margin:4px auto 0; }
@@ -3795,11 +3802,113 @@ requestAnimationFrame(() => {
         const canvas = document.createElement('canvas');
         canvas.className = 'mobKnobCanvas';
         canvas.width = 72; canvas.height = 72;
-        const val = node.state[kid] != null ? node.state[kid] : def.val;
-        drawMobKnob(canvas, def, val);
-        canvas.onclick = ()=> openKnobModal(nodeId, kid);
-        const valEl = el('div','mobKnobVal', def.fmt ? def.fmt(val) : String(val));
+        const initVal = node.state[kid] != null ? node.state[kid] : def.val;
+        drawMobKnob(canvas, def, initVal);
+        const valEl = el('div','mobKnobVal', def.fmt ? def.fmt(initVal) : String(initVal));
         const labelEl = el('div','mobKnobLabel', kid);
+
+        // In-place drag: finger up = value up. ~150px for full range (like desktop).
+        let dragging = false, startY = 0, startVal = 0, moved = false, didSaveHistory = false;
+        let lastTap = 0;
+        const fmtVal = v => def.fmt ? def.fmt(v) : String(v);
+        function clampSnap(v){
+          v = Math.max(def.min, Math.min(def.max, v));
+          if(def.step) v = Math.round(v / def.step) * def.step;
+          // clean floating point
+          if(def.step && def.step < 1){
+            const d = (def.step < 0.01) ? 3 : 2;
+            v = parseFloat(v.toFixed(d));
+          }
+          return v;
+        }
+        canvas.addEventListener('pointerdown', e=>{
+          e.preventDefault();
+          const now = Date.now();
+          // Double-tap reset
+          if(now - lastTap < 300){
+            lastTap = 0;
+            saveHistory();
+            const resetVal = def.val;
+            node.state[kid] = resetVal;
+            drawMobKnob(canvas, def, resetVal);
+            valEl.textContent = fmtVal(resetVal);
+            return;
+          }
+          lastTap = now;
+          dragging = true;
+          moved = false;
+          didSaveHistory = false;
+          startY = e.clientY;
+          startVal = node.state[kid] != null ? node.state[kid] : def.val;
+          try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+          canvas.classList.add('dragging');
+        });
+        canvas.addEventListener('pointermove', e=>{
+          if(!dragging) return;
+          const dy = startY - e.clientY;
+          if(!moved && Math.abs(dy) < 3) return; // tiny threshold to allow tap
+          if(!moved){
+            moved = true;
+            if(!didSaveHistory){ saveHistory(); didSaveHistory = true; }
+          }
+          const range = def.max - def.min;
+          const sensitivity = 150; // px for full range, matches desktop
+          let v = startVal + (dy / sensitivity) * range;
+          v = clampSnap(v);
+          node.state[kid] = v;
+          drawMobKnob(canvas, def, v);
+          valEl.textContent = fmtVal(v);
+        });
+        function endDrag(e){
+          if(!dragging) return;
+          dragging = false;
+          canvas.classList.remove('dragging');
+          try { canvas.releasePointerCapture(e.pointerId); } catch(_){}
+          // value already written live; nothing more to persist
+        }
+        canvas.addEventListener('pointerup', endDrag);
+        canvas.addEventListener('pointercancel', endDrag);
+
+        // Tap value to type exact number (small inline input)
+        valEl.addEventListener('click', e=>{
+          e.stopPropagation();
+          if(valEl.querySelector('input')) return;
+          const curV = node.state[kid] != null ? node.state[kid] : def.val;
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'mobKnobValInput';
+          input.min = def.min; input.max = def.max; input.step = def.step || 'any';
+          input.value = curV;
+          const prevText = valEl.textContent;
+          valEl.textContent = '';
+          valEl.appendChild(input);
+          input.focus();
+          input.select();
+          let done = false;
+          const commit = ()=>{
+            if(done) return; done = true;
+            const raw = parseFloat(input.value);
+            if(!isNaN(raw)){
+              const v = clampSnap(raw);
+              saveHistory();
+              node.state[kid] = v;
+              drawMobKnob(canvas, def, v);
+              valEl.textContent = fmtVal(v);
+            } else {
+              valEl.textContent = prevText;
+            }
+          };
+          const cancel = ()=>{
+            if(done) return; done = true;
+            valEl.textContent = prevText;
+          };
+          input.addEventListener('keydown', ev=>{
+            if(ev.key === 'Enter'){ ev.preventDefault(); commit(); input.blur(); }
+            else if(ev.key === 'Escape'){ ev.preventDefault(); cancel(); input.blur(); }
+          });
+          input.addEventListener('blur', ()=>{ commit(); });
+        });
+
         wrap.append(canvas, valEl, labelEl);
         grid.appendChild(wrap);
       });
