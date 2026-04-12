@@ -147,44 +147,169 @@
       <span style="color:#ffe000;font-size:14px;letter-spacing:2px;">CONTROLS</span>
       <span id="helpClose" style="color:#ff4444;cursor:pointer;font-size:18px;">X</span>
     </div>
+    <!-- Annotated module diagram -->
+    <svg viewBox="0 0 700 340" style="width:100%;max-width:700px;margin:0 auto 24px;display:block;" xmlns="http://www.w3.org/2000/svg">
+      <!-- Module body -->
+      <rect x="200" y="60" width="260" height="200" rx="2" fill="rgba(40,10,20,0.8)" stroke="#ff69b466" stroke-width="1"/>
+      <!-- Title bar -->
+      <rect x="200" y="60" width="260" height="24" rx="2" fill="rgba(255,105,180,0.08)"/>
+      <text x="212" y="77" fill="#ff69b4" font-size="11" font-family="inherit" letter-spacing="2">OSCILLATOR</text>
+      <!-- Bypass button -->
+      <circle cx="446" cy="72" r="6" fill="#00ffcc22" stroke="#00ffcc66" stroke-width="1"/>
+      <!-- Output selector row -->
+      <rect x="260" y="90" width="20" height="14" rx="1" fill="rgba(255,224,0,0.15)" stroke="#ffe000" stroke-width="1"/>
+      <text x="266" y="101" fill="#ffe000" font-size="8" font-family="inherit">1</text>
+      <rect x="283" y="90" width="20" height="14" rx="1" fill="#111" stroke="#555" stroke-width="1"/>
+      <text x="289" y="101" fill="#888" font-size="8" font-family="inherit">2</text>
+      <rect x="306" y="90" width="20" height="14" rx="1" fill="#111" stroke="#555" stroke-width="1"/>
+      <text x="312" y="101" fill="#888" font-size="8" font-family="inherit">3</text>
+      <rect x="329" y="90" width="20" height="14" rx="1" fill="#111" stroke="#555" stroke-width="1"/>
+      <text x="335" y="101" fill="#888" font-size="8" font-family="inherit">4</text>
+      <!-- Knobs -->
+      <circle cx="250" cy="150" r="22" fill="none" stroke="#00ffcc44" stroke-width="2"/>
+      <circle cx="250" cy="150" r="2" fill="#ffe000"/>
+      <text x="250" y="182" fill="#ffe000" font-size="9" font-family="inherit" text-anchor="middle">48</text>
+      <text x="250" y="194" fill="#00ffcc" font-size="8" font-family="inherit" text-anchor="middle">PITCH Hz</text>
+      <circle cx="340" cy="150" r="22" fill="none" stroke="#00ffcc44" stroke-width="2"/>
+      <circle cx="340" cy="150" r="2" fill="#ffe000"/>
+      <text x="340" y="182" fill="#ffe000" font-size="9" font-family="inherit" text-anchor="middle">1.50</text>
+      <text x="340" y="194" fill="#00ffcc" font-size="8" font-family="inherit" text-anchor="middle">H.SPREAD</text>
+      <circle cx="415" cy="150" r="22" fill="none" stroke="#00ffcc44" stroke-width="2"/>
+      <circle cx="415" cy="150" r="2" fill="#ffe000"/>
+      <text x="415" y="182" fill="#ffe000" font-size="9" font-family="inherit" text-anchor="middle">0.55</text>
+      <text x="415" y="194" fill="#00ffcc" font-size="8" font-family="inherit" text-anchor="middle">HARM 2</text>
+      <!-- Input jacks (left) -->
+      <rect x="191" y="105" width="8" height="10" rx="1" fill="#111" stroke="#00ffcc55" stroke-width="1"/>
+      <rect x="191" y="140" width="8" height="10" rx="1" fill="#00ffcc44" stroke="#00ffcc" stroke-width="1"/>
+      <rect x="191" y="175" width="8" height="10" rx="1" fill="#111" stroke="#00ffcc55" stroke-width="1"/>
+      <rect x="191" y="210" width="8" height="10" rx="1" fill="#111" stroke="#00ffcc55" stroke-width="1"/>
+      <!-- Output jacks (right) -->
+      <rect x="461" y="105" width="8" height="10" rx="1" fill="#ff69b444" stroke="#ff69b4" stroke-width="1"/>
+      <rect x="461" y="140" width="8" height="10" rx="1" fill="#111" stroke="#ff69b455" stroke-width="1"/>
+      <rect x="461" y="175" width="8" height="10" rx="1" fill="#111" stroke="#ff69b455" stroke-width="1"/>
+      <rect x="461" y="210" width="8" height="10" rx="1" fill="#111" stroke="#ff69b455" stroke-width="1"/>
+      <!-- Orient button -->
+      <rect x="444" y="244" width="14" height="14" rx="1" fill="transparent" stroke="#555" stroke-width="1"/>
+      <text x="448" y="254" fill="#555" font-size="8" font-family="inherit">&#x2195;</text>
+      <!-- Solo buttons next to input jacks -->
+      <rect x="182" y="118" width="6" height="6" rx="1" fill="#111" stroke="#555" stroke-width="0.5"/>
+
+      <!-- ANNOTATION LINES -->
+      <style>
+        .ann-line { stroke:#666; stroke-width:0.5; stroke-dasharray:3,2; }
+        .ann-text { fill:#aaa; font-size:9px; font-family:inherit; letter-spacing:0.5px; }
+        .ann-head { fill:#ffe000; font-size:9px; font-family:inherit; letter-spacing:0.5px; }
+      </style>
+
+      <!-- Title bar annotation -->
+      <line x1="330" y1="60" x2="330" y2="30" class="ann-line"/>
+      <line x1="330" y1="30" x2="520" y2="30" class="ann-line"/>
+      <text x="524" y="33" class="ann-head">TITLE BAR</text>
+      <text x="524" y="44" class="ann-text">Drag to move. Double-click to collapse.</text>
+
+      <!-- Bypass button annotation -->
+      <line x1="452" y1="72" x2="540" y2="72" class="ann-line"/>
+      <line x1="540" y1="72" x2="600" y2="72" class="ann-line"/>
+      <text x="604" y="68" class="ann-head">BYPASS</text>
+      <text x="604" y="79" class="ann-text">Click to mute/bypass module.</text>
+
+      <!-- Output selector annotation -->
+      <line x1="350" y1="97" x2="540" y2="97" class="ann-line"/>
+      <line x1="540" y1="97" x2="600" y2="97" class="ann-line"/>
+      <text x="604" y="93" class="ann-head">OUTPUT SELECT (1-4)</text>
+      <text x="604" y="104" class="ann-text">Switch which output's</text>
+      <text x="604" y="114" class="ann-text">knob values you edit.</text>
+
+      <!-- Input jacks annotation -->
+      <line x1="191" y1="145" x2="130" y2="145" class="ann-line"/>
+      <line x1="130" y1="145" x2="60" y2="145" class="ann-line"/>
+      <text x="8" y="133" class="ann-head">INPUT JACKS</text>
+      <text x="8" y="144" class="ann-text">Receive signal.</text>
+      <text x="8" y="155" class="ann-text">Click to disconnect.</text>
+
+      <!-- Output jacks annotation -->
+      <line x1="469" y1="110" x2="540" y2="110" class="ann-line"/>
+      <line x1="540" y1="110" x2="600" y2="135" class="ann-line"/>
+      <text x="604" y="131" class="ann-head">OUTPUT JACKS</text>
+      <text x="604" y="142" class="ann-text">Drag to start cable.</text>
+      <text x="604" y="153" class="ann-text">4 jacks = 4 outputs.</text>
+
+      <!-- Knob annotation -->
+      <line x1="250" y1="128" x2="130" y2="80" class="ann-line"/>
+      <line x1="130" y1="80" x2="60" y2="80" class="ann-line"/>
+      <text x="8" y="70" class="ann-head">KNOBS</text>
+      <text x="8" y="81" class="ann-text">Drag up/down to adjust.</text>
+      <text x="8" y="92" class="ann-text">Shift+drag for fine control.</text>
+
+      <!-- Value annotation -->
+      <line x1="250" y1="182" x2="130" y2="210" class="ann-line"/>
+      <line x1="130" y1="210" x2="60" y2="210" class="ann-line"/>
+      <text x="8" y="206" class="ann-head">VALUE</text>
+      <text x="8" y="217" class="ann-text">Click to type exact number.</text>
+      <text x="8" y="228" class="ann-text">Double-click knob to reset.</text>
+
+      <!-- Orient button annotation -->
+      <line x1="451" y1="258" x2="540" y2="280" class="ann-line"/>
+      <line x1="540" y1="280" x2="600" y2="280" class="ann-line"/>
+      <text x="604" y="276" class="ann-head">ORIENT</text>
+      <text x="604" y="287" class="ann-text">Toggle jacks between</text>
+      <text x="604" y="297" class="ann-text">left/right or top/bottom.</text>
+
+      <!-- Solo button annotation -->
+      <line x1="182" y1="121" x2="130" y2="121" class="ann-line"/>
+      <line x1="130" y1="121" x2="60" y2="170" class="ann-line"/>
+      <text x="8" y="166" class="ann-head">SOLO</text>
+      <text x="8" y="177" class="ann-text">Solo one input to hear</text>
+      <text x="8" y="188" class="ann-text">it in isolation.</text>
+
+      <!-- Connected jack indicator -->
+      <circle cx="195" cy="145" r="3" fill="none" stroke="#00ffcc" stroke-width="0.5"/>
+      <circle cx="465" cy="110" r="3" fill="none" stroke="#ff69b4" stroke-width="0.5"/>
+
+      <!-- Color legend at bottom -->
+      <rect x="200" y="280" width="10" height="10" rx="1" fill="rgba(40,10,20,0.6)" stroke="#ff69b444"/>
+      <text x="214" y="289" class="ann-text" fill="#ff69b4">GENERATOR</text>
+      <rect x="300" y="280" width="10" height="10" rx="1" fill="rgba(0,0,0,0.6)" stroke="#00ffcc33"/>
+      <text x="314" y="289" class="ann-text" fill="#00ffcc">EFFECT</text>
+      <rect x="375" y="280" width="10" height="10" rx="1" fill="rgba(40,20,10,0.6)" stroke="#ff994444"/>
+      <text x="389" y="289" class="ann-text" fill="#ff9944">MIX</text>
+      <rect x="430" y="280" width="10" height="10" rx="1" fill="rgba(25,10,40,0.6)" stroke="#aa66ff44"/>
+      <text x="444" y="289" class="ann-text" fill="#aa66ff">PATTERN</text>
+      <rect x="516" y="280" width="10" height="10" rx="1" fill="rgba(30,25,0,0.6)" stroke="#ffe00044"/>
+      <text x="530" y="289" class="ann-text" fill="#ffe000">OUTPUT</text>
+
+      <!-- Keyboard shortcuts -->
+      <text x="200" y="315" class="ann-text">SPACE = Play/Stop</text>
+      <text x="350" y="315" class="ann-text">SHIFT+drag = Fine knob</text>
+      <text x="200" y="330" class="ann-text">SHIFT+click = Multi-select</text>
+      <text x="350" y="330" class="ann-text">CTRL/CMD+click through = Pop off</text>
+    </svg>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
       <div>
-        <div style="color:#ff69b4;margin-bottom:6px;letter-spacing:1px;">MODULES</div>
-        <div>Drag title bar to move</div>
-        <div>Double-click title to expand/collapse knobs</div>
-        <div>Click module to bring to front</div>
-        <div>Shift-click to multi-select, drag to move group</div>
-        <div>Drag empty space to box-select</div>
-        <div style="color:#00ffcc;margin:10px 0 6px;letter-spacing:1px;">CABLES</div>
+        <div style="color:#00ffcc;margin-bottom:6px;letter-spacing:1px;">CABLES</div>
         <div>Drag from output jack to start cable</div>
         <div>Drop on module or input jack to connect</div>
         <div>Click input jack to disconnect</div>
         <div>Cable style selector in top bar</div>
-        <div style="color:#ff9944;margin:10px 0 6px;letter-spacing:1px;">OUTPUT SELECTOR (1 2 3 4)</div>
-        <div>Each module has 4 independent outputs</div>
-        <div>Click 1/2/3/4 to switch which output's knobs you edit</div>
-        <div>Output 1 mixes all inputs, 2-4 match their input</div>
-        <div>Drag from specific output jacks on right edge</div>
-      </div>
-      <div>
-        <div style="color:#00ffcc;margin-bottom:6px;letter-spacing:1px;">THROUGH NODES</div>
+        <div style="color:#00ffcc;margin:10px 0 6px;letter-spacing:1px;">THROUGH NODES</div>
         <div>Drag onto a cable to insert inline</div>
         <div>Alt+drag to start cable from output</div>
         <div>Ctrl/Cmd+click to pop off (reconnects cable)</div>
         <div>Double-click to toggle horizontal/vertical</div>
-        <div style="color:#aa66ff;margin:10px 0 6px;letter-spacing:1px;">PATTERN BOARDS</div>
+      </div>
+      <div>
+        <div style="color:#aa66ff;margin-bottom:6px;letter-spacing:1px;">PATTERN BOARDS</div>
         <div>4x4 grid = 16-step sequencer</div>
         <div>Click squares to toggle steps on/off</div>
         <div>Each output (1/2/3/4) has its own pattern + BPM</div>
         <div>As effect: Generator > Pattern > Mix (gates audio)</div>
         <div>As trigger: Pattern out > Generator in (triggers hits)</div>
         <div>Set generator RATE to OFF when using pattern trigger</div>
-        <div style="color:#ffe000;margin:10px 0 6px;letter-spacing:1px;">KNOBS</div>
-        <div>Drag up/down to adjust value</div>
-        <div>Click yellow number to type exact value</div>
-        <div style="color:#ffe000;margin:10px 0 6px;letter-spacing:1px;">PLAYBACK</div>
-        <div>Spacebar or PLAY button to toggle play/stop</div>
-        <div>BLUR: MUTE stops playback when tab loses focus</div>
+        <div style="color:#ff9944;margin:10px 0 6px;letter-spacing:1px;">AUTO PATCH</div>
+        <div>Drag modules below the shelf into columns</div>
+        <div>AUTO PATCH chains each column top-to-bottom</div>
+        <div>Columns detected by X proximity</div>
       </div>
     </div>
   </div>
@@ -1755,15 +1880,19 @@ function buildModule(name, modIdx, patternInfo){
   }
 
   if(name.startsWith('MIX')){
-    // Simple mixer: all 4 inputs sum, level + amp control gain
-    const p = getModOutParams(modIdx, 0);
-    // Find the right knob IDs based on module name
+    // Per-channel mixer: each output selector (1-4) controls that input's gain
     const prefixMap = {'MIX 1':'mix','MIX 2':'mix2','MIX 3':'mix3','MIX 4':'mix4','MIX 5':'mix5'};
     const prefix = prefixMap[name] || 'mix';
-    const lvl=audioCtx.createGain();lvl.gain.value=p[prefix+'Level']!==undefined?p[prefix+'Level']:1;
-    const amp=audioCtx.createGain();amp.gain.value=p[prefix+'Amp']!==undefined?p[prefix+'Amp']:1;
-    ins.forEach(inp => inp.connect(lvl));
-    lvl.connect(amp);amp.connect(outs[0]);
+    const sum = audioCtx.createGain(); sum.gain.value = 1;
+    for(let ch = 0; ch < 4; ch++){
+      const cp = getModOutParams(modIdx, ch);
+      const lvl = audioCtx.createGain();
+      lvl.gain.value = cp[prefix+'Level'] !== undefined ? cp[prefix+'Level'] : 1;
+      const amp = audioCtx.createGain();
+      amp.gain.value = cp[prefix+'Amp'] !== undefined ? cp[prefix+'Amp'] : 1;
+      ins[ch].connect(lvl); lvl.connect(amp); amp.connect(sum);
+    }
+    sum.connect(outs[0]);
     return { ins, outs, sources: allSources };
   }
 
