@@ -100,10 +100,11 @@
     width:6px; height:38px; background:rgba(30,25,0,0.6);
     border:1px solid #ffe00088; border-radius:1px;
     position:relative; overflow:hidden;
+    --level:0;
   }
   .miniChan::after {
     content:""; position:absolute; left:0; right:0; bottom:0;
-    height:40%; background:linear-gradient(to top,#ffe00055,#ffe00022);
+    height:calc(var(--level) * 100%); background:linear-gradient(to top,#ffe000dd,#ffe00044);
   }
   #miniMixLabel { font-size:9px; letter-spacing:2px; color:#ffe00088; }
   #miniPlayBtn {
@@ -2462,9 +2463,18 @@ function startWaveform(){
   const sctx = sc.getContext('2d');
   const timeBuf = new Float32Array(analyser ? analyser.fftSize : 512);
   const freqBuf = new Uint8Array(analyser ? analyser.frequencyBinCount : 256);
+  const miniChans = document.querySelectorAll('#miniInputMix .miniChan');
+  const miniLevels = new Array(miniChans.length).fill(0);
   function draw(){
     waveAnimId = requestAnimationFrame(draw);
-    if(!analyser) return;
+    if(!analyser){
+      // Decay mini meters to zero when no analyser
+      for(let i = 0; i < miniChans.length; i++){
+        miniLevels[i] *= 0.9;
+        miniChans[i].style.setProperty('--level', miniLevels[i].toFixed(3));
+      }
+      return;
+    }
     // Waveform
     analyser.getFloatTimeDomainData(timeBuf);
     wctx.clearRect(0, 0, wc.width, wc.height);
@@ -2489,6 +2499,20 @@ function startWaveform(){
       const hue = 180 - v * 180; // cyan -> red
       sctx.fillStyle = `hsl(${hue},100%,${40+v*30}%)`;
       sctx.fillRect(i * barW, sc.height - h, Math.max(1, barW - 0.5), h);
+    }
+    // Mini IN MIX meters: split frequencyBinCount into 8 groups, average each
+    const nBars = miniChans.length;
+    const binsPerBar = Math.floor(freqBuf.length / nBars);
+    for(let b = 0; b < nBars; b++){
+      let sum = 0;
+      const start = b * binsPerBar;
+      const end = start + binsPerBar;
+      for(let j = start; j < end; j++) sum += freqBuf[j];
+      const target = (sum / binsPerBar) / 255;
+      // Smoothing: fast attack, slower release for natural VU feel
+      const rate = target > miniLevels[b] ? 0.3 : 0.1;
+      miniLevels[b] += (target - miniLevels[b]) * rate;
+      miniChans[b].style.setProperty('--level', miniLevels[b].toFixed(3));
     }
   }
   draw();
