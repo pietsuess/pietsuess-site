@@ -94,10 +94,10 @@
   #bottomBarContent > #miniMixGroup { justify-self:start; }
   #bottomBarContent > #miniPlayBtn { justify-self:center; }
   #bottomBarContent > #bottomBarRight { justify-self:end; }
-  #miniMixGroup { display:flex; flex-direction:column; align-items:flex-start; gap:3px; pointer-events:none; }
-  #miniInputMix { display:flex; gap:3px; align-items:flex-end; height:45px; }
+  #miniMixGroup { display:flex; flex-direction:column; align-items:flex-start; gap:3px; pointer-events:auto; }
+  #miniInputMix { display:flex; gap:3px; align-items:flex-end; height:28px; }
   .miniChan {
-    width:7px; height:45px; background:rgba(30,25,0,0.6);
+    width:22px; height:28px; background:rgba(30,25,0,0.6);
     border:1px solid #ffe00088; border-radius:1px;
     position:relative; overflow:hidden;
     --level:0;
@@ -564,20 +564,59 @@
     font-family:inherit; font-size:16px; border-radius:4px;
     letter-spacing:3px; cursor:pointer; margin-top:4px;
   }
-  /* Bottom-bar collapsed INPUT MIX jacks overlay (8 tappable jacks) */
+  /* Bottom-bar collapsed INPUT MIX jacks (8 tappable, labeled 1-8, aligned under meters) */
   #bottomBarJacks {
-    position:absolute; left:12px; bottom:56px;
     display:flex; gap:3px; pointer-events:auto; z-index:3;
+    justify-content:flex-start;
+  }
+  #bottomBarJacks .jackCell {
+    flex:0 0 auto;
+    display:flex; flex-direction:column; align-items:center; gap:1px;
+    width:24px;
+  }
+  #bottomBarJacks .jackCell .jackNum {
+    color:#ffe000; font-size:9px; letter-spacing:0; line-height:1;
+    text-shadow:0 0 3px #ffe00088;
   }
   #bottomBarJacks .nodeJack {
-    flex:0 0 auto; width:10px; height:14px; border-radius:2px;
+    flex:0 0 auto; width:22px; height:22px; border-radius:3px;
     background:rgba(0,255,204,0.15); border:2px solid #00ffcc;
     position:relative; cursor:pointer; box-sizing:border-box;
+    pointer-events:auto;
   }
   #bottomBarJacks .nodeJack::before {
-    content:""; position:absolute; inset:-14px;
+    content:""; position:absolute; inset:-10px;
   }
   #bottomBarJacks .nodeJack.connected { background:#00ffcc44; box-shadow:0 0 6px #00ffcc; }
+  /* Prominent INPUT MIX in drawer — 8 large full-width jacks at top edge */
+  .mobileNode.inputMixDrawer { padding:0; overflow:hidden; }
+  .mobileNode.inputMixDrawer .nodeJacks.top {
+    display:flex; gap:2px; margin:0 0 6px 0;
+    padding:0; width:100%;
+  }
+  .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack {
+    flex:1 1 0; min-width:0; max-width:none;
+    height:46px; border-radius:0;
+    border:2px solid #00ffcc; background:rgba(0,255,204,0.18);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:12px; color:#ffe000; letter-spacing:1px;
+    text-shadow:0 0 4px #ffe00088;
+  }
+  .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack.connected {
+    background:rgba(0,255,204,0.45); box-shadow:0 0 10px #00ffcc;
+  }
+  .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack .jackNum {
+    font-size:14px; color:#ffe000; letter-spacing:1px; line-height:1;
+    pointer-events:none;
+  }
+  .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack .jackPages {
+    font-size:10px; color:#ffe000aa; letter-spacing:0; line-height:1;
+    margin-top:2px; pointer-events:none; white-space:nowrap;
+    max-width:100%; overflow:hidden; text-overflow:ellipsis;
+  }
+  .mobileNode.inputMixDrawer .nodeHeader { padding:4px 8px; }
+  /* Make sure bottom bar jacks/content are visible on collapsed bar */
+  #bottomBarContent { min-height:0; }
 
 </style>
 </head>
@@ -610,11 +649,11 @@
           <span class="miniChan"></span><span class="miniChan"></span>
           <span class="miniChan"></span><span class="miniChan"></span>
         </div>
+        <div id="bottomBarJacks" aria-label="Input mix jacks"></div>
       </div>
       <button id="miniPlayBtn" aria-label="Play"></button>
       <div id="bottomBarRight"></div>
     </div>
-    <div id="bottomBarJacks" aria-label="Input mix jacks"></div>
   </div>
   <div id="masterDrawer" aria-hidden="true">
     <div id="masterDrawerHeader">
@@ -4136,6 +4175,7 @@ requestAnimationFrame(() => {
     const row = el('div','nodeJacks '+side);
     const kind = (side === 'top') ? 'input' : 'output';
     const nodeId = node._renderId;
+    const isInputMix = (node.type === 'INPUT MIX');
     for(let i=0;i<count;i++){
       const j = el('div','nodeJack '+kind);
       j.dataset.jack = kind;
@@ -4151,6 +4191,25 @@ requestAnimationFrame(() => {
       // Armed-source highlight
       if(mobile.armed && mobile.armed.nodeId === nodeId && mobile.armed.idx === i && kind === 'output'){
         j.classList.add('armed-source');
+      }
+      // INPUT MIX inputs: display 1-8 number, and (for drawer render) the page(s)
+      // whose nodes have cables into this jack.
+      if(isInputMix && kind === 'input'){
+        const num = el('div','jackNum', String(i+1));
+        j.appendChild(num);
+        // Collect page numbers (1-based) of source nodes targeting this jack
+        const pages = new Set();
+        (mobile.cables||[]).forEach(c=>{
+          if(c.toNodeId === nodeId && c.toIdx === i){
+            const p = nodePageIdx(c.fromNodeId);
+            if(p >= 0) pages.add(p + 1);
+          }
+        });
+        if(pages.size){
+          const arr = Array.from(pages).sort((a,b)=>a-b);
+          const plbl = el('div','jackPages', arr.join(','));
+          j.appendChild(plbl);
+        }
       }
       row.appendChild(j);
     }
@@ -5128,8 +5187,13 @@ requestAnimationFrame(() => {
   window.addEventListener('resize', () => { sizeMobCanvas(); mobile.cableDirty = true; });
 
   function jackCenter(nodeId, idx, type){
+    // Prefer jacks in a currently-rendered mobileNode (drawer or page).
     const sel = '.mobileNode[data-node-id="'+nodeId+'"] .nodeJack.'+type+'[data-jack-idx="'+idx+'"]';
-    const j = document.querySelector(sel);
+    let j = document.querySelector(sel);
+    // Fallback: bottom-bar INPUT MIX jacks (only active when drawer is closed)
+    if(!j && type === 'input' && Number(nodeId) === mobile.inputMixId){
+      j = document.querySelector('#bottomBarJacks .nodeJack[data-node-id="'+nodeId+'"][data-jack-idx="'+idx+'"]');
+    }
     if(!j) return null;
     const r = j.getBoundingClientRect();
     return { x: r.left + r.width/2, y: r.top + r.height/2, el: j };
@@ -5197,14 +5261,45 @@ requestAnimationFrame(() => {
       // Drawer nodes (INPUT MIX, MASTER, inserts) use sentinel 'm' so they share a "location".
       const fromIsDrawer = isDrawerNode(c.fromNodeId);
       const toIsDrawer = isDrawerNode(c.toNodeId);
+      // Special case: cables targeting INPUT MIX are always drawable — they terminate
+      // at the bottom-bar jacks when the drawer is closed, and at the prominent top-edge
+      // jacks inside the drawer when open. Same for cables sourced from INPUT MIX.
+      const toIsInputMix = (Number(c.toNodeId) === mobile.inputMixId);
+      const fromIsInputMix = (Number(c.fromNodeId) === mobile.inputMixId);
+      const inputMixCable = toIsInputMix || fromIsInputMix;
       const fromPage = fromIsDrawer ? 'm' : nodePageIdx(c.fromNodeId);
       const toPage = toIsDrawer ? 'm' : nodePageIdx(c.toNodeId);
       if(fromPage === -1 || toPage === -1) return;
-      // Drawer cables only draw when drawer is open
-      if((fromIsDrawer || toIsDrawer) && !mobile.drawerOpen) return;
+      // Drawer cables only draw when drawer is open — unless it's an INPUT MIX cable
+      // (those render via bottom-bar jacks when the drawer is closed)
+      if((fromIsDrawer || toIsDrawer) && !mobile.drawerOpen && !inputMixCable) return;
       // Non-drawer cables: hide while drawer is open (drawer covers the page)
       if(!fromIsDrawer && !toIsDrawer && mobile.drawerOpen) return;
       const color = c.color || '#ff69b4';
+      // INPUT MIX cables: when drawer is closed, terminate at the bottom-bar jack.
+      // The source (page node) must be on the current page to have a valid DOM jack,
+      // but the bottom-bar target jack exists regardless of page.
+      if(inputMixCable && !mobile.drawerOpen){
+        if(toIsInputMix){
+          // source is on a page — only draw when its page is visible
+          const srcPage = nodePageIdx(c.fromNodeId);
+          if(srcPage !== curPage) return;
+          const from = jackCenter(c.fromNodeId, c.fromIdx, 'output');
+          const to = jackCenter(c.toNodeId, c.toIdx, 'input');
+          if(!from || !to) return;
+          drawBezier(mobCableCtx, from.x, from.y, to.x, to.y, color);
+          _cableSegments.push({ x1:from.x, y1:from.y, x2:to.x, y2:to.y, cableIdx:idx });
+        } else if(fromIsInputMix){
+          const dstPage = nodePageIdx(c.toNodeId);
+          if(dstPage !== curPage) return;
+          const from = jackCenter(c.fromNodeId, c.fromIdx, 'output');
+          const to = jackCenter(c.toNodeId, c.toIdx, 'input');
+          if(!from || !to) return;
+          drawBezier(mobCableCtx, from.x, from.y, to.x, to.y, color);
+          _cableSegments.push({ x1:from.x, y1:from.y, x2:to.x, y2:to.y, cableIdx:idx });
+        }
+        return;
+      }
       if(fromPage === toPage){
         if(fromPage !== curPage) return; // only draw when on that page
         const from = jackCenter(c.fromNodeId, c.fromIdx, 'output');
@@ -5501,10 +5596,13 @@ requestAnimationFrame(() => {
     if(!imHost || !mHost || !insertsHost) return;
     ensurePinnedNodes();
 
-    // INPUT MIX pinned top
+    // INPUT MIX pinned top — with prominent large top-edge jacks
     imHost.innerHTML = '';
     const imEl = buildNodeEl(mobile.inputMixId);
-    if(imEl) imHost.appendChild(imEl);
+    if(imEl){
+      imEl.classList.add('inputMixDrawer');
+      imHost.appendChild(imEl);
+    }
 
     // MASTER pinned bottom
     mHost.innerHTML = '';
@@ -5734,6 +5832,7 @@ requestAnimationFrame(() => {
   }
 
   // Render tappable INPUT MIX jacks on the bottom bar (mirrors the pinned INPUT MIX inputs).
+  // Each cell: a number 1-8 label above a tappable jack square.
   function renderBottomBarJacks(){
     const host = document.getElementById('bottomBarJacks');
     if(!host) return;
@@ -5741,6 +5840,8 @@ requestAnimationFrame(() => {
     host.innerHTML = '';
     const nid = mobile.inputMixId;
     for(let i=0;i<8;i++){
+      const cell = el('div','jackCell');
+      const num = el('div','jackNum', String(i+1));
       const j = el('div','nodeJack input');
       j.dataset.jack = 'input';
       j.dataset.jackType = 'input';
@@ -5748,32 +5849,47 @@ requestAnimationFrame(() => {
       j.dataset.jackIdx = i;
       j.dataset.nodeId = nid;
       if(mobile.cables && mobile.cables.some(c => c.toNodeId === nid && c.toIdx === i)) j.classList.add('connected');
-      host.appendChild(j);
+      cell.appendChild(num);
+      cell.appendChild(j);
+      host.appendChild(cell);
     }
   }
 
-  // Replace bottom-bar swipe-up handler to actually open the drawer
+  // Bottom-bar opens the drawer on tap OR swipe-up.
+  // PLAY button and jacks handle their own events via stopPropagation / dedicated listeners.
   function wireBottomBarSwipeOpenDrawer(){
     const bar = $('#mobileBottomBar');
     if(!bar) return;
-    // Remove old listeners by cloning would be safer; instead attach our own that opens drawer
-    let startY=0, t0=0, tracking=false;
+    let startY=0, startX=0, t0=0, tracking=false, moved=false;
     bar.addEventListener('pointerdown', e=>{
       // Ignore taps on play button or jacks
       if(e.target.closest('#miniPlayBtn') || e.target.closest('.nodeJack')) return;
-      startY = e.clientY; t0 = Date.now(); tracking = true;
+      startY = e.clientY; startX = e.clientX; t0 = Date.now();
+      tracking = true; moved = false;
     });
     bar.addEventListener('pointermove', e=>{
       if(!tracking) return;
       const dy = e.clientY - startY;
+      const dx = e.clientX - startX;
+      if(Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
       if(dy < -50 && (Date.now() - t0) < 600){
         tracking = false;
         openMasterDrawer();
         if(navigator.vibrate) navigator.vibrate(20);
       }
     });
+    bar.addEventListener('pointerup', e=>{
+      if(!tracking) return;
+      const wasTracking = tracking;
+      tracking = false;
+      // Tap (no significant drag) opens the drawer
+      if(wasTracking && !moved && !mobile.drawerOpen){
+        if(e.target.closest('#miniPlayBtn') || e.target.closest('.nodeJack')) return;
+        openMasterDrawer();
+        if(navigator.vibrate) navigator.vibrate(10);
+      }
+    });
     const stop = ()=>{ tracking=false; };
-    bar.addEventListener('pointerup', stop);
     bar.addEventListener('pointercancel', stop);
     bar.addEventListener('pointerleave', stop);
   }
