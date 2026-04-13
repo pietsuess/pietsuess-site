@@ -52,20 +52,20 @@
 
   /* ===== MOBILE SHELL ===== */
   #mobileShell { display:flex; flex-direction:column; height:100vh; height:100dvh; width:100vw; background:#0a0a14; color:#00ffcc; font-family:'Press Start 2P',monospace,sans-serif; font-size:10px; overflow:hidden; }
-  #mobileTopBar { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:4px 12px 6px; background:transparent; border-bottom:2px solid #00ffcc33; flex-shrink:0; }
+  #mobileTopBar { display:flex; align-items:center; justify-content:space-between; gap:3px; padding:4px 6px 6px; background:transparent; border-bottom:2px solid #00ffcc33; flex-shrink:0; }
   #mobileTopBar button {
-    padding:10px 14px; background:rgba(0,255,204,0.1); color:#00ffcc;
-    border:2px solid #00ffcc; font-family:inherit; font-size:14px;
-    cursor:pointer; letter-spacing:1px; min-width:48px; min-height:48px;
+    padding:6px 6px; background:rgba(0,255,204,0.1); color:#00ffcc;
+    border:2px solid #00ffcc; font-family:inherit; font-size:13px;
+    cursor:pointer; letter-spacing:0; min-width:34px; min-height:40px;
   }
   #mobileTopBar button:hover { background:rgba(0,255,204,0.22); }
   #mobileTopBar button:disabled { opacity:0.3; cursor:default; }
-  #pageBoxes { display:flex; align-items:center; justify-content:center; gap:6px; }
+  #pageBoxes { display:flex; align-items:center; justify-content:center; gap:3px; }
   #pageBoxes .pageBox {
-    width:36px; height:36px; min-width:36px; min-height:36px;
+    width:32px; height:32px; min-width:32px; min-height:32px;
     padding:0; display:flex; align-items:center; justify-content:center;
     background:rgba(0,255,204,0.1); color:#00ffcc;
-    border:2px solid #00ffcc; font-family:inherit; font-size:14px;
+    border:2px solid #00ffcc; font-family:inherit; font-size:13px;
     letter-spacing:0; cursor:pointer;
   }
   #pageBoxes .pageBox.active {
@@ -489,7 +489,7 @@
 <div id="mobileShell">
   <div id="mobileTopBar">
     <button id="hamburgerBtn" aria-label="Menu">☰</button>
-    <div style="display:flex;align-items:center;gap:6px;">
+    <div style="display:flex;align-items:center;gap:3px;">
       <button id="prevPageBtn" aria-label="Previous page">◀</button>
       <div id="pageBoxes" role="tablist" aria-label="Pages"></div>
       <button id="nextPageBtn" aria-label="Next page">▶</button>
