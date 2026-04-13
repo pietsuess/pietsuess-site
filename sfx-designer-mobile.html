@@ -295,13 +295,13 @@
   }
   .mobileNode .nodeJacks {
     display:flex; gap:4px;
-    justify-content:space-between; align-items:stretch;
+    justify-content:space-around; align-items:stretch;
     width:100%;
   }
   .mobileNode .nodeJacks.top { margin:0 0 6px 0; }
   .mobileNode .nodeJacks.bottom { margin:6px 0 0 0; }
   .mobileNode .nodeJack {
-    flex:1 1 0; min-width:0; height:18px; border-radius:2px;
+    flex:1 1 0; min-width:0; max-width:12.5%; height:18px; border-radius:2px;
     background:#111; border:2px solid #555;
     position:relative; cursor:pointer; box-sizing:border-box;
   }
@@ -3806,8 +3806,14 @@ requestAnimationFrame(() => {
     function renderTab(cat){
       Object.entries(tabBtns).forEach(([c,b])=> b.classList.toggle('active', c===cat));
       body.innerHTML = '';
-      MOBILE_NODE_CATALOG.filter(n=>n[1]===cat).forEach(n=>{
-        const row = el('div','pickerRow '+cat, n[0]);
+      // For mix/pat categories, collapse numbered variants into a single picker entry
+      let entries = MOBILE_NODE_CATALOG.filter(n=>n[1]===cat);
+      let displayLabel = null;
+      if(cat === 'mix'){ entries = entries.slice(0,1); displayLabel = 'MIX'; }
+      else if(cat === 'pat'){ entries = entries.slice(0,1); displayLabel = 'PATTERN'; }
+      entries.forEach(n=>{
+        const label = displayLabel || n[0];
+        const row = el('div','pickerRow '+cat, label);
         row.onclick = ()=>{
           overlay.remove();
           createMobileNode(n[0], pageIdx, barIdx, colIdx);
