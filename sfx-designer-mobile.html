@@ -711,6 +711,61 @@
   /* Make sure bottom bar jacks/content are visible on collapsed bar */
   #bottomBarContent { min-height:0; }
 
+  /* ===== SOLO BUTTONS (mobile — per-input, module-level single-solo) ===== */
+  .mobileNode .nodeJack { /* allow absolutely-positioned solo badge */ }
+  .mobileNode .mobSoloBtn {
+    position:absolute; top:-10px; right:-10px;
+    width:22px; height:22px; border-radius:50%;
+    background:#111; border:2px solid #555; color:#888;
+    font-family:inherit; font-size:10px; font-weight:bold;
+    line-height:1; padding:0; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-sizing:border-box; z-index:5;
+    letter-spacing:0;
+  }
+  .mobileNode .mobSoloBtn::before {
+    content:""; position:absolute; inset:-11px; /* 44px hit target */
+  }
+  .mobileNode .mobSoloBtn.active {
+    background:#ffe00033; border-color:#ffe000; color:#ffe000;
+    box-shadow:0 0 6px #ffe000aa;
+  }
+  .mobileNode .nodeJack.input.soloed {
+    background:#ffe00055 !important; border-color:#ffe000 !important;
+    box-shadow:0 0 8px #ffe000aa !important;
+  }
+  .mobileNode .nodeJack.input.solo-dim {
+    opacity:0.35;
+  }
+  /* Bottom-bar (INPUT MIX collapsed) solo badge — smaller, fits narrow cell */
+  #bottomBarJacks .mobSoloBtn {
+    position:absolute; top:-8px; right:-6px;
+    width:18px; height:18px; border-radius:50%;
+    background:#111; border:2px solid #555; color:#888;
+    font-family:inherit; font-size:9px; font-weight:bold;
+    line-height:1; padding:0; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-sizing:border-box; z-index:5;
+  }
+  #bottomBarJacks .mobSoloBtn::before {
+    content:""; position:absolute; inset:-13px; /* 44px hit target */
+  }
+  #bottomBarJacks .mobSoloBtn.active {
+    background:#ffe00033; border-color:#ffe000; color:#ffe000;
+    box-shadow:0 0 6px #ffe000aa;
+  }
+  #bottomBarJacks .nodeJack.soloed {
+    background:#ffe00055 !important; border-color:#ffe000 !important;
+    box-shadow:0 0 8px #ffe000aa !important;
+  }
+  #bottomBarJacks .nodeJack.solo-dim { opacity:0.35; }
+  /* Drawer INPUT MIX (large jacks) */
+  .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack.soloed {
+    background:rgba(255,224,0,0.35) !important;
+    border-color:#ffe000 !important;
+    box-shadow:0 0 10px #ffe000 !important;
+  }
+
 </style>
 </head>
 <body>
@@ -4034,7 +4089,7 @@ requestAnimationFrame(() => {
         pages: mobile.pages,
         masterBars: mobile.masterBars,
         cables: mobile.cables,
-        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
       }));
       if(mobile.history.length > 10) mobile.history.shift();
       mobile.redoStack.length = 0;
@@ -4278,6 +4333,20 @@ requestAnimationFrame(() => {
     return [0, 0];
   }
 
+  function toggleNodeSolo(nodeId, inputIdx){
+    const node = mobile.mobileNodes[nodeId];
+    if(!node) return;
+    const cur = (node.soloedInput == null) ? -1 : node.soloedInput;
+    saveHistory();
+    if(cur === inputIdx){
+      node.soloedInput = null;
+    } else {
+      node.soloedInput = inputIdx;
+    }
+    if(typeof renderMobilePages === 'function') renderMobilePages();
+    if(mobile.playing) rebuildMobileIfPlaying();
+  }
+
   function buildJackRow(node, side /* 'top' | 'bottom' */){
     const [inCount, outCount] = jackCountsFor(node);
     const count = (side === 'top') ? inCount : outCount;
@@ -4286,6 +4355,7 @@ requestAnimationFrame(() => {
     const kind = (side === 'top') ? 'input' : 'output';
     const nodeId = node._renderId;
     const isInputMix = (node.type === 'INPUT MIX');
+    const soloed = (node.soloedInput != null) ? node.soloedInput : -1;
     for(let i=0;i<count;i++){
       const j = el('div','nodeJack '+kind);
       j.dataset.jack = kind;
@@ -4301,6 +4371,24 @@ requestAnimationFrame(() => {
       // Armed-source highlight
       if(mobile.armed && mobile.armed.nodeId === nodeId && mobile.armed.idx === i && kind === 'output'){
         j.classList.add('armed-source');
+      }
+      // Solo visual state on input jacks
+      if(kind === 'input' && soloed >= 0){
+        if(i === soloed) j.classList.add('soloed');
+        else j.classList.add('solo-dim');
+      }
+      // Solo "S" badge on input jacks (per-input, module-level single-solo)
+      if(kind === 'input'){
+        const sBtn = el('button','mobSoloBtn', 'S');
+        sBtn.type = 'button';
+        sBtn.setAttribute('aria-label', 'Solo input '+(i+1));
+        if(soloed === i) sBtn.classList.add('active');
+        sBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
+        sBtn.addEventListener('click', (e)=>{
+          e.stopPropagation(); e.preventDefault();
+          toggleNodeSolo(nodeId, i);
+        });
+        j.appendChild(sBtn);
       }
       // INPUT MIX inputs: display page label(s) of nodes connected to this jack.
       // (Channel # 1-8 labels are shown only on the collapsed bottom bar, not in the drawer.)
@@ -5045,6 +5133,7 @@ requestAnimationFrame(() => {
         dropdowns: Array.isArray(v.dropdowns) ? v.dropdowns : undefined,
         selectedOutput: v.selectedOutput || 0,
         pinned: !!v.pinned,
+        soloedInput: (v.soloedInput != null && v.soloedInput >= 0) ? v.soloedInput : null,
       };
     });
     return {
@@ -5091,6 +5180,7 @@ requestAnimationFrame(() => {
           : buildInitialDropdownsArray(v.type),
         selectedOutput: v.selectedOutput || 0,
         pinned: !!v.pinned,
+        soloedInput: (v.soloedInput != null && v.soloedInput >= 0) ? v.soloedInput : null,
         _renderId: Number(id),
       };
       attachStateProxy(node);
@@ -5201,6 +5291,7 @@ requestAnimationFrame(() => {
         pinned: v.pinned === true,
         selectedOutput: v.selectedOutput || 0,
         bypass: v.bypass || false,
+        soloedInput: (v.soloedInput != null && v.soloedInput >= 0) ? v.soloedInput : null,
         states,
         dropdowns,
         layoutHints: { desktop: deskHint, mobile: mobHint || { page: 0, bar: 0, col: 0 } },
@@ -5352,6 +5443,7 @@ requestAnimationFrame(() => {
         selectedOutput: inst.selectedOutput || 0,
         pinned: !!inst.pinned,
         bypass: !!inst.bypass,
+        soloedInput: (inst.soloedInput != null && inst.soloedInput >= 0) ? inst.soloedInput : null,
         savedDeskHint,
         _renderId: nid,
       };
@@ -5591,7 +5683,7 @@ requestAnimationFrame(() => {
         pages: mobile.pages,
         masterBars: mobile.masterBars,
         cables: mobile.cables,
-        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
       }));
       if(mobile.history.length > 10) mobile.history.shift();
     } catch(_){}
@@ -5766,7 +5858,7 @@ requestAnimationFrame(() => {
             pages: mobile.pages,
             masterBars: mobile.masterBars,
             cables: mobile.cables,
-            nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
+            nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
           }));
           if(mobile.history.length > 10) mobile.history.shift();
           mobile.redoStack.length = 0;
@@ -5837,7 +5929,7 @@ requestAnimationFrame(() => {
               pages: mobile.pages,
               masterBars: mobile.masterBars,
               cables: mobile.cables,
-              nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
+              nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
             }));
             if(mobile.history.length > 10) mobile.history.shift();
             mobile.redoStack.length = 0;
@@ -5954,7 +6046,15 @@ requestAnimationFrame(() => {
     if(!node) return null;
     const [inCount, outCount] = jackCountsFor(node);
     const ins = [];
-    for(let i=0;i<inCount;i++){ const g = audioCtx.createGain(); g.gain.value = 1; ins.push(g); }
+    // Module-level solo: if node.soloedInput is set to an input index, that
+    // input passes at gain 1; all other inputs are muted (gain 0). Matches
+    // desktop behavior (solo is per-module, affects all outputs).
+    const soloIdx = (node.soloedInput != null && node.soloedInput >= 0 && node.soloedInput < inCount) ? node.soloedInput : -1;
+    for(let i=0;i<inCount;i++){
+      const g = audioCtx.createGain();
+      g.gain.value = (soloIdx >= 0 && i !== soloIdx) ? 0 : 1;
+      ins.push(g);
+    }
     const outs = [];
     for(let i=0;i<Math.max(1,outCount);i++){ const g = audioCtx.createGain(); g.gain.value = 1; outs.push(g); }
     const sources = [];
@@ -6945,6 +7045,8 @@ requestAnimationFrame(() => {
     ensurePinnedNodes();
     host.innerHTML = '';
     const nid = mobile.inputMixId;
+    const inputMixNode = (nid != null) ? mobile.mobileNodes[nid] : null;
+    const soloed = (inputMixNode && inputMixNode.soloedInput != null) ? inputMixNode.soloedInput : -1;
     for(let i=0;i<8;i++){
       const cell = el('div','jackCell');
       const num = el('div','jackNum', String(i+1));
@@ -6955,6 +7057,22 @@ requestAnimationFrame(() => {
       j.dataset.jackIdx = i;
       j.dataset.nodeId = nid;
       if(mobile.cables && mobile.cables.some(c => c.toNodeId === nid && c.toIdx === i)) j.classList.add('connected');
+      // Solo visual state on bottom-bar INPUT MIX jacks
+      if(soloed >= 0){
+        if(i === soloed) j.classList.add('soloed');
+        else j.classList.add('solo-dim');
+      }
+      // Solo "S" badge
+      const sBtn = el('button','mobSoloBtn','S');
+      sBtn.type = 'button';
+      sBtn.setAttribute('aria-label','Solo channel '+(i+1));
+      if(soloed === i) sBtn.classList.add('active');
+      sBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
+      sBtn.addEventListener('click', (e)=>{
+        e.stopPropagation(); e.preventDefault();
+        if(nid != null) toggleNodeSolo(nid, i);
+      });
+      j.appendChild(sBtn);
       // Page labels (1-based) for any source node whose cable lands on this jack
       const pages = new Set();
       (mobile.cables||[]).forEach(c=>{
