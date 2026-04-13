@@ -352,10 +352,36 @@
   }
   .mobileNode .mobKnobLabel { font-size:16px; color:#00ffcc; text-align:center; white-space:nowrap; letter-spacing:1px; }
 
-  .mobPatGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:3px; width:108px; margin:4px auto 0; }
+  .mobPatGridWrap {
+    display:flex; align-items:center; justify-content:center;
+    gap:10px; margin:6px auto 0;
+  }
+  .mobPatDimCol {
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    min-width:44px;
+  }
+  .mobPatDimLabel { font-size:14px; color:#00ffcc; letter-spacing:1px; }
+  .mobPatDimVal {
+    font-size:22px; color:#ffe000; text-align:center;
+    min-width:36px; height:28px; line-height:28px;
+    cursor:pointer; user-select:none; -webkit-user-select:none;
+  }
+  .mobPatDimInput {
+    width:48px; height:26px; background:#0a0a14; color:#ffe000;
+    border:2px solid #ffe00088; font-family:inherit; font-size:18px;
+    text-align:center; padding:0; box-sizing:border-box; border-radius:2px;
+  }
+  .mobPatGrid {
+    display:grid; gap:3px;
+    max-width:70%;
+    flex: 0 1 auto;
+  }
   .mobPatStep {
-    width:24px; height:24px; border:2px solid #aa66ffaa; background:#aa66ff22;
+    width:100%; aspect-ratio:1/1;
+    min-width:12px;
+    border:2px solid #aa66ffaa; background:#aa66ff22;
     border-radius:2px; cursor:pointer; position:relative;
+    box-sizing:border-box;
   }
   .mobPatStep::before {
     content:""; position:absolute; inset:-14px; /* 44px hit zone */
@@ -3835,14 +3861,19 @@ requestAnimationFrame(() => {
     const id = mobile.nextNodeId++;
     const state = {};
     cat[2].forEach(k=>{ if(KD[k]) state[k] = KD[k].val; });
-    const patternSteps = cat[3] ? Array(16).fill(false) : null;
+    const isPattern = !!cat[3];
+    const patternRows = isPattern ? 4 : null;
+    const patternCols = isPattern ? 4 : null;
+    const patternSteps = isPattern ? Array(patternRows * patternCols).fill(false) : null;
     mobile.mobileNodes[id] = {
       type: typeName,
       cat: cat[1],
       knobs: cat[2],
-      isPattern: !!cat[3],
+      isPattern,
       state,
       patternSteps,
+      patternRows,
+      patternCols,
     };
     mobile.pages[pageIdx].bars[barIdx].cols[colIdx] = id;
     mobile.currentOut[id] = 0;
@@ -4057,7 +4088,98 @@ requestAnimationFrame(() => {
       });
       ex.appendChild(grid);
       if(node.isPattern && node.patternSteps){
+        // Back-compat: ensure rows/cols exist; infer from length if missing
+        if(node.patternRows == null || node.patternCols == null){
+          // Default any legacy 16-step pattern to 4x4
+          node.patternRows = 4;
+          node.patternCols = 4;
+          if(node.patternSteps.length !== 16){
+            node.patternSteps = Array(16).fill(false);
+          }
+        }
+
+        const clampDim = v => {
+          v = Math.round(Number(v));
+          if(!isFinite(v)) return 4;
+          return Math.max(2, Math.min(8, v));
+        };
+        const reshape = (newRows, newCols) => {
+          const oldRows = node.patternRows;
+          const oldCols = node.patternCols;
+          const oldCells = node.patternSteps;
+          const next = Array(newRows * newCols).fill(false);
+          const r = Math.min(oldRows, newRows);
+          const c = Math.min(oldCols, newCols);
+          for(let i=0; i<r; i++){
+            for(let j=0; j<c; j++){
+              next[i * newCols + j] = !!oldCells[i * oldCols + j];
+            }
+          }
+          node.patternRows = newRows;
+          node.patternCols = newCols;
+          node.patternSteps = next;
+        };
+
+        const wrap = el('div','mobPatGridWrap');
+
+        // Shared helper to build a tap-to-type dimension column
+        function buildDimCol(labelText, which /* 'rows' | 'cols' */){
+          const col = el('div','mobPatDimCol');
+          const lbl = el('div','mobPatDimLabel', labelText);
+          const curVal = () => which === 'rows' ? node.patternRows : node.patternCols;
+          const valEl = el('div','mobPatDimVal', String(curVal()));
+          valEl.addEventListener('click', e=>{
+            e.stopPropagation();
+            if(valEl.querySelector('input')) return;
+            const prevText = valEl.textContent;
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'mobPatDimInput';
+            input.min = 2; input.max = 8; input.step = 1;
+            input.value = curVal();
+            valEl.textContent = '';
+            valEl.appendChild(input);
+            input.focus(); input.select();
+            let done = false;
+            const commit = ()=>{
+              if(done) return; done = true;
+              const raw = parseFloat(input.value);
+              if(!isNaN(raw)){
+                const v = clampDim(raw);
+                if(v !== curVal()){
+                  saveHistory();
+                  const newRows = which === 'rows' ? v : node.patternRows;
+                  const newCols = which === 'cols' ? v : node.patternCols;
+                  reshape(newRows, newCols);
+                  renderMobilePages();
+                  return;
+                }
+              }
+              valEl.textContent = prevText;
+            };
+            const cancel = ()=>{
+              if(done) return; done = true;
+              valEl.textContent = prevText;
+            };
+            input.addEventListener('keydown', ev=>{
+              if(ev.key === 'Enter'){ ev.preventDefault(); commit(); input.blur(); }
+              else if(ev.key === 'Escape'){ ev.preventDefault(); cancel(); input.blur(); }
+            });
+            input.addEventListener('blur', ()=>{ commit(); });
+          });
+          col.append(lbl, valEl);
+          return col;
+        }
+
+        wrap.appendChild(buildDimCol('ROWS', 'rows'));
+
         const pg = el('div','mobPatGrid');
+        pg.style.gridTemplateRows = `repeat(${node.patternRows}, 1fr)`;
+        pg.style.gridTemplateColumns = `repeat(${node.patternCols}, 1fr)`;
+        // Target size: ~24px cells at 4x4, scale down at larger grids.
+        const cellPx = Math.max(12, Math.round(96 / Math.max(node.patternRows, node.patternCols)));
+        pg.style.width = (cellPx * node.patternCols + 3 * (node.patternCols - 1)) + 'px';
+
         node.patternSteps.forEach((on,i)=>{
           const s = el('div','mobPatStep');
           if(on) s.classList.add('on');
@@ -4067,7 +4189,11 @@ requestAnimationFrame(() => {
           };
           pg.appendChild(s);
         });
-        ex.appendChild(pg);
+        wrap.appendChild(pg);
+
+        wrap.appendChild(buildDimCol('COLS', 'cols'));
+
+        ex.appendChild(wrap);
       }
       // CLOSE button removed — the collapse arrow in the header is the only way to collapse
       nodeEl.appendChild(ex);
