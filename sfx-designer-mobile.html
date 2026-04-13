@@ -209,9 +209,9 @@
   }
   .mobileCol.addMini:active { background:rgba(255,224,0,0.08); border-color:#ffe00088; }
   .mobileCol .colDelBtn {
-    position:absolute; top:2px; right:2px; width:22px; height:22px;
+    position:absolute; top:2px; right:2px; width:36px; height:36px;
     border:2px solid #ff444488; background:rgba(0,0,0,0.5); color:#ff4444;
-    font-family:inherit; font-size:11px; cursor:pointer; line-height:1; padding:0;
+    font-family:inherit; font-size:18px; cursor:pointer; line-height:1; padding:0;
     z-index:3;
   }
   .mobileCol .colDelBtn:hover { border-color:#ff4444; }
@@ -238,31 +238,43 @@
   .mobileNode.mix .nodeTitle { color:#ff9944; }
   .mobileNode.pat .nodeTitle { color:#aa66ff; }
   .mobileNode .nodeDeleteBtn {
-    width:32px; height:32px; border:2px solid #ff4444; background:transparent;
-    color:#ff4444; font-family:inherit; font-size:16px; cursor:pointer; border-radius:0;
+    width:36px; height:36px; border:2px solid #ff4444; background:transparent;
+    color:#ff4444; font-family:inherit; font-size:18px; cursor:pointer; border-radius:0;
     line-height:1; padding:0;
   }
   .mobileNode .nodeExpandBtn {
     padding:8px 14px; background:rgba(0,255,204,0.1); color:#00ffcc;
-    border:2px solid #00ffcc; font-family:inherit; font-size:14px;
+    border:2px solid #00ffcc; font-family:inherit; font-size:18px;
     cursor:pointer; letter-spacing:1px; line-height:1;
-    align-self:flex-start; min-height:36px;
+    min-height:40px; min-width:44px;
+  }
+  .mobileNode .nodeCloseBtn {
+    padding:8px 18px; background:rgba(255,68,68,0.12); color:#ff6666;
+    border:2px solid #ff4444; font-family:inherit; font-size:18px;
+    cursor:pointer; letter-spacing:2px; line-height:1;
+    min-height:40px; align-self:flex-end;
   }
   .mobileNode .nodeJacks {
-    display:flex; gap:6px; margin-top:auto; padding-top:4px;
-    justify-content:flex-start; align-items:center;
+    display:flex; gap:4px;
+    justify-content:space-between; align-items:stretch;
+    width:100%;
   }
+  .mobileNode .nodeJacks.top { margin:0 0 6px 0; }
+  .mobileNode .nodeJacks.bottom { margin:6px 0 0 0; }
   .mobileNode .nodeJack {
-    width:8px; height:10px; border-radius:1px;
+    flex:1 1 0; min-width:0; height:18px; border-radius:2px;
     background:#111; border:2px solid #555;
-    position:relative; cursor:pointer;
+    position:relative; cursor:pointer; box-sizing:border-box;
   }
-  .mobileNode .nodeJack.input { border-color:#00ffccaa; }
-  .mobileNode .nodeJack.output { border-color:#ff69b4aa; }
+  .mobileNode .nodeJack.input { border-color:#00ffcc; background:rgba(0,255,204,0.15); }
+  .mobileNode .nodeJack.output { border-color:#ff69b4; background:rgba(255,105,180,0.15); }
   .mobileNode .nodeJack.connected { background:#00ffcc44; border-color:#00ffcc; }
   .mobileNode .nodeJack.output.connected { background:#ff69b444; border-color:#ff69b4; }
   .mobileNode .nodeJack::before {
-    content:""; position:absolute; inset:-17px; /* 44px hit zone (8+34=42, 10+34=44) */
+    content:""; position:absolute; inset:-13px; /* 44px hit zone (18+26=44) */
+  }
+  .mobileNode.expandedFull {
+    width:100%;
   }
 
   .mobileNode .nodeExpanded { display:flex; flex-direction:column; gap:6px; padding-top:4px; }
@@ -385,14 +397,14 @@
   }
   .confirmBox {
     background:#0d0d18; border:2px solid #ff4444; border-radius:6px;
-    padding:16px; max-width:300px; width:100%;
-    color:#ccc; font-size:11px; letter-spacing:1px; line-height:1.5;
+    padding:20px; max-width:340px; width:100%;
+    color:#ccc; font-size:18px; letter-spacing:1px; line-height:1.5;
   }
-  .confirmBox .confirmBtns { display:flex; gap:8px; margin-top:14px; }
+  .confirmBox .confirmBtns { display:flex; gap:8px; margin-top:16px; }
   .confirmBox button {
-    flex:1; padding:8px; font-family:inherit; font-size:9px;
+    flex:1; padding:12px; font-family:inherit; font-size:18px;
     background:rgba(0,255,204,0.1); border:2px solid #00ffcc; color:#00ffcc; cursor:pointer; border-radius:0;
-    letter-spacing:1px;
+    letter-spacing:1px; min-height:48px;
   }
   .confirmBox button:hover { background:rgba(0,255,204,0.22); }
   .confirmBox button.danger { background:transparent; border-color:#ff4444; color:#ff4444; }
@@ -3664,6 +3676,7 @@ requestAnimationFrame(() => {
     history: [],
     redoStack: [],
     expanded: {},
+    expandedNodeId: null,
     currentOut: {},
   };
   window.mobile = mobile;
@@ -3792,34 +3805,69 @@ requestAnimationFrame(() => {
     delete mobile.mobileNodes[nodeId];
     delete mobile.expanded[nodeId];
     delete mobile.currentOut[nodeId];
+    if(mobile.expandedNodeId === nodeId) mobile.expandedNodeId = null;
     renderMobilePages();
+  }
+
+  // Jack counts per node category: [inputs, outputs]
+  function jackCountsFor(node){
+    const cat = node.cat;
+    const t = node.type;
+    if(t === 'INPUT MIX') return [8, 1];
+    if(t === 'MASTER' || cat === 'out') return [1, 0];
+    if(cat === 'gen') return [0, 4];
+    if(cat === 'mix') return [4, 1];
+    if(cat === 'fx' || cat === 'pat') return [4, 4];
+    return [0, 0];
+  }
+
+  function buildJackRow(node, side /* 'top' | 'bottom' */){
+    const [inCount, outCount] = jackCountsFor(node);
+    const count = (side === 'top') ? inCount : outCount;
+    if(count <= 0) return null;
+    const row = el('div','nodeJacks '+side);
+    const kind = (side === 'top') ? 'input' : 'output';
+    for(let i=0;i<count;i++){
+      const j = el('div','nodeJack '+kind);
+      j.dataset.jack = kind;
+      j.dataset.index = i;
+      row.appendChild(j);
+    }
+    return row;
   }
 
   function buildNodeEl(nodeId){
     const node = mobile.mobileNodes[nodeId];
     if(!node) return null;
-    const nodeEl = el('div','mobileNode '+node.cat);
+    const expanded = (mobile.expandedNodeId === nodeId);
+    const nodeEl = el('div','mobileNode '+node.cat + (expanded ? ' expandedFull' : ''));
     nodeEl.dataset.nodeId = nodeId;
+
+    // Top jack row (inputs), always shown if applicable
+    const topJacks = buildJackRow(node, 'top');
+    if(topJacks) nodeEl.appendChild(topJacks);
 
     const header = el('div','nodeHeader');
     header.append(el('div','nodeTitle', node.type));
+    const headerBtns = el('div','nodeHeaderBtns');
+    headerBtns.style.cssText = 'display:flex;gap:6px;align-items:center;';
+    const expBtn = el('button','nodeExpandBtn', expanded ? '▲' : '▼');
+    expBtn.setAttribute('aria-label', expanded ? 'Collapse' : 'Expand');
+    expBtn.onclick = (e)=>{
+      e.stopPropagation();
+      mobile.expandedNodeId = expanded ? null : nodeId;
+      renderMobilePages();
+    };
+    headerBtns.appendChild(expBtn);
     const delBtn = el('button','nodeDeleteBtn','X');
     delBtn.setAttribute('aria-label','Delete');
     delBtn.onclick = (e)=>{
       e.stopPropagation();
       confirmPopup('Delete '+node.type+'?', ()=> deleteNode(nodeId));
     };
-    header.appendChild(delBtn);
+    headerBtns.appendChild(delBtn);
+    header.appendChild(headerBtns);
     nodeEl.appendChild(header);
-
-    const expanded = !!mobile.expanded[nodeId];
-    const expBtn = el('button','nodeExpandBtn', expanded ? '▲' : '▼');
-    expBtn.onclick = (e)=>{
-      e.stopPropagation();
-      mobile.expanded[nodeId] = !expanded;
-      renderMobilePages();
-    };
-    nodeEl.appendChild(expBtn);
 
     if(expanded){
       const ex = el('div','nodeExpanded');
@@ -3965,22 +4013,19 @@ requestAnimationFrame(() => {
         });
         ex.appendChild(pg);
       }
+      // CLOSE button, prominent at the end of expanded view
+      const closeBtn = el('button','nodeCloseBtn','CLOSE');
+      closeBtn.onclick = (e)=>{
+        e.stopPropagation();
+        mobile.expandedNodeId = null;
+        renderMobilePages();
+      };
+      ex.appendChild(closeBtn);
       nodeEl.appendChild(ex);
-    } else {
-      const jacks = el('div','nodeJacks');
-      const hasInputs = (node.cat !== 'gen');
-      const hasOutputs = (node.cat !== 'out' && node.cat !== 'mix');
-      const inCount = hasInputs ? ((node.cat === 'mix') ? 4 : 2) : 0;
-      const outCount = hasOutputs ? 2 : 0;
-      for(let i=0;i<inCount;i++) jacks.appendChild(el('div','nodeJack input'));
-      if(inCount && outCount){
-        const spacer = el('div',null);
-        spacer.style.cssText = 'flex:1';
-        jacks.appendChild(spacer);
-      }
-      for(let i=0;i<outCount;i++) jacks.appendChild(el('div','nodeJack output'));
-      if(inCount || outCount) nodeEl.appendChild(jacks);
     }
+    // Bottom jack row (outputs), always shown if applicable — both collapsed AND expanded
+    const botJacks = buildJackRow(node, 'bottom');
+    if(botJacks) nodeEl.appendChild(botJacks);
     return nodeEl;
   }
 
@@ -4021,41 +4066,51 @@ requestAnimationFrame(() => {
         barEl.appendChild(delBarBtn);
 
         const colsRow = el('div','mobileBarCols');
-        bar.cols.forEach((nodeId, cIdx)=>{
+        const expandedInBar = bar.cols.some(id => id != null && id === mobile.expandedNodeId);
+        if(expandedInBar){
+          // Full-width single-column: only the expanded node
           const colEl = el('div','mobileCol');
-          if(nodeId == null){
-            colEl.classList.add('empty');
-            colEl.textContent = '+';
-            colEl.onclick = ()=> openNodePicker(pIdx, bIdx, cIdx);
-            // Delete column button (only if more than 1 col)
-            if(bar.cols.length > 1){
-              const colDel = el('button','colDelBtn','X');
-              colDel.onclick = (ev)=>{
-                ev.stopPropagation();
-                confirmPopup('Remove this column?', ()=>{
-                  saveHistory();
-                  bar.cols.splice(cIdx,1);
-                  renderMobilePages();
-                });
-              };
-              colEl.appendChild(colDel);
-            }
-          } else {
-            const nEl = buildNodeEl(nodeId);
-            if(nEl) colEl.appendChild(nEl); else colEl.textContent = '?';
-          }
+          colEl.style.flex = '1 1 100%';
+          const nEl = buildNodeEl(mobile.expandedNodeId);
+          if(nEl) colEl.appendChild(nEl);
           colsRow.appendChild(colEl);
-        });
-        // Mini add-column cell when < 4 real columns
-        if(bar.cols.length < 4){
-          const addMini = el('div','mobileCol addMini');
-          addMini.textContent = '+';
-          addMini.onclick = ()=>{
-            saveHistory();
-            bar.cols.push(null);
-            renderMobilePages();
-          };
-          colsRow.appendChild(addMini);
+        } else {
+          bar.cols.forEach((nodeId, cIdx)=>{
+            const colEl = el('div','mobileCol');
+            if(nodeId == null){
+              colEl.classList.add('empty');
+              colEl.textContent = '+';
+              colEl.onclick = ()=> openNodePicker(pIdx, bIdx, cIdx);
+              // Delete column button (only if more than 1 col)
+              if(bar.cols.length > 1){
+                const colDel = el('button','colDelBtn','X');
+                colDel.onclick = (ev)=>{
+                  ev.stopPropagation();
+                  confirmPopup('Remove this column?', ()=>{
+                    saveHistory();
+                    bar.cols.splice(cIdx,1);
+                    renderMobilePages();
+                  });
+                };
+                colEl.appendChild(colDel);
+              }
+            } else {
+              const nEl = buildNodeEl(nodeId);
+              if(nEl) colEl.appendChild(nEl); else colEl.textContent = '?';
+            }
+            colsRow.appendChild(colEl);
+          });
+          // Mini add-column cell when < 4 real columns
+          if(bar.cols.length < 4){
+            const addMini = el('div','mobileCol addMini');
+            addMini.textContent = '+';
+            addMini.onclick = ()=>{
+              saveHistory();
+              bar.cols.push(null);
+              renderMobilePages();
+            };
+            colsRow.appendChild(addMini);
+          }
         }
         barEl.appendChild(colsRow);
 
@@ -4263,6 +4318,15 @@ requestAnimationFrame(() => {
         updatePageIndicator();
       }
     }, { passive:true });
+    // Tap outside expanded node to close it
+    container.addEventListener('click', e=>{
+      if(mobile.expandedNodeId == null) return;
+      const insideNode = e.target.closest && e.target.closest('.mobileNode');
+      if(!insideNode){
+        mobile.expandedNodeId = null;
+        renderMobilePages();
+      }
+    });
   }
   function scrollToCurrentPage(){
     const container = $('#pageContainer');
