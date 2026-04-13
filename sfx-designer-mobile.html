@@ -5946,7 +5946,10 @@ requestAnimationFrame(() => {
   // Build audio for a single mobile node. Returns {ins, outs, sources}
   // For gen/fx/pat nodes, each of the 4 outputs is an INDEPENDENT audio chain
   // driven by its own channel state (node.states[i] / node.patternStates[i]).
-  function buildMobileAudio(nodeId){
+  // patternInfo (optional): [input0..input3] each null or {pattern, stepDur, totalSteps}
+  // — used to compute sample-accurate trigger times for pattern-driven generators
+  // (mirrors desktop buildModule signature).
+  function buildMobileAudio(nodeId, patternInfo){
     const node = mobile.mobileNodes[nodeId];
     if(!node) return null;
     const [inCount, outCount] = jackCountsFor(node);
@@ -5959,10 +5962,15 @@ requestAnimationFrame(() => {
     if(node.cat === 'gen'){
       // Generator: 4 independent output chains, each with its own params.
       // No inputs. buildChain needs a dummy inGain (unused by most gens).
+      // If a pattern is wired into input[o], pass sample-accurate trigger times
+      // (desktop parity). Generators that support it (IMPACT/METALLIC/PLUCK/
+      // BELL/MALLET/SWEEP/ARPEGGIO) use these instead of their RATE knob.
       for(let o=0;o<outCount;o++){
         const p = paramsForOutput(node, o);
         const dummyIn = audioCtx.createGain();
-        const srcs = buildChain(node.type, p, dummyIn, outs[o], null);
+        const pi = patternInfo ? patternInfo[o] : null;
+        const tt = pi ? getTriggerTimes(0, pi, 600) : null;
+        const srcs = buildChain(node.type, p, dummyIn, outs[o], tt);
         sources.push(...srcs);
       }
     } else if(node.cat === 'fx'){
@@ -6054,12 +6062,37 @@ requestAnimationFrame(() => {
     mobile.masterIn.gain.value = 1;
     try { mobile.masterIn.connect(masterOut); } catch(_){}
 
-    // Build audio for every placed node
+    // Pre-scan cables for pattern -> generator trigger connections (per-input).
+    // Ports desktop's patternInfoMap: pattern-driven generators get sample-
+    // accurate trigger times rather than audio-rate gating.
+    const patternInfoMap = {}; // nodeId -> [input0..input3] each null or {pattern, stepDur, totalSteps}
+    (mobile.cables || []).forEach(c => {
+      const fromNode = mobile.mobileNodes[c.fromNodeId];
+      const toNode = mobile.mobileNodes[c.toNodeId];
+      if(!fromNode || !toNode) return;
+      if(fromNode.cat !== 'pat') return;
+      if(toNode.cat !== 'gen') return;
+      const ps = (fromNode.patternStates && fromNode.patternStates[c.fromIdx])
+        ? fromNode.patternStates[c.fromIdx]
+        : null;
+      if(!ps) return;
+      const bpmKey = (fromNode.knobs || []).find(k => /Bpm$/i.test(k));
+      const state = (fromNode.states && fromNode.states[c.fromIdx]) || {};
+      const bpm = (bpmKey && state[bpmKey]) || 120;
+      const rows = ps.rows || 4;
+      const cols = ps.cols || 4;
+      const totalSteps = rows * cols;
+      const stepDur = 60 / bpm / 4;
+      if(!patternInfoMap[c.toNodeId]) patternInfoMap[c.toNodeId] = [null, null, null, null];
+      patternInfoMap[c.toNodeId][c.toIdx] = { pattern: ps.steps, stepDur, totalSteps };
+    });
+
+    // Build audio for every placed node (pass patternInfo for pattern-driven gens)
     mobile.audio = {};
     Object.keys(mobile.mobileNodes).forEach(id => {
       const node = mobile.mobileNodes[id];
       if(!node) return;
-      const a = buildMobileAudio(id);
+      const a = buildMobileAudio(id, patternInfoMap[id] || null);
       if(a){ mobile.audio[id] = a; node.audio = a; }
     });
 
