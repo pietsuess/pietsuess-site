@@ -59,11 +59,20 @@
   .module.pat .mod-title { color:#aa66ff; }
   .module.mix { border-color:#ff994444; background:rgba(40,20,10,0.6); }
   .module.mix .mod-title { color:#ff9944; }
-  .pat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; width:68px; }
+  .pat-grid { display:grid; gap:2px; }
   .pat-step { width:15px; height:15px; border:1px solid #aa66ff55; background:#aa66ff11; cursor:pointer; border-radius:2px; }
   .pat-step.on { background:#aa66ff; border-color:#aa66ff; }
   .pat-step:hover { border-color:#aa66ff; }
   .pat-step.current { box-shadow:0 0 6px #ffe000; border-color:#ffe000; }
+  .pat-wrap { display:flex; align-items:center; gap:6px; }
+  .pat-dim-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:30px; }
+  .pat-dim-label { font-size:8px; color:#aa66ff; letter-spacing:1px; }
+  .pat-dim-input { width:30px; height:18px; background:#0a0a14; color:#ffe000; border:1px solid #aa66ff88; font-family:inherit; font-size:11px; text-align:center; padding:0; box-sizing:border-box; border-radius:2px; }
+  .pat-dim-input::-webkit-inner-spin-button, .pat-dim-input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  .pat-bpm-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .pat-bpm-label { font-size:8px; color:#aa66ff; letter-spacing:1px; }
+  .pat-bpm-input { width:48px; height:22px; background:#0a0a14; color:#ffe000; border:1px solid #aa66ff88; font-family:inherit; font-size:12px; text-align:center; padding:0; box-sizing:border-box; border-radius:2px; }
+  .pat-bpm-input::-webkit-inner-spin-button, .pat-bpm-input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
   /* Jacks — left edge (inputs) and right edge (outputs) */
   .jack-row { display:flex; flex-direction:column; position:absolute; top:0; bottom:0; justify-content:space-around; z-index:10; }
   .jack-row.inputs { left:-9px; }
@@ -691,24 +700,36 @@
     <div class="module fx pat">
       <div class="mod-title">PATTERN 1</div>
       <div class="knob-row">
-        <div class="pat-grid" id="patGrid1"></div>
-        <div class="knob-wrap"><canvas class="knob-canvas" data-id="pat1Bpm" width="72" height="72"></canvas><div class="knob-val" id="pat1BpmV">120</div><div class="knob-label">BPM</div></div>
+        <div class="pat-wrap">
+          <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid1" min="2" max="8" step="1" value="4"></div>
+          <div class="pat-grid" id="patGrid1"></div>
+          <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid1" min="2" max="8" step="1" value="4"></div>
+        </div>
+        <div class="pat-bpm-wrap"><input type="number" class="pat-bpm-input" data-pat-bpm="1" min="30" max="300" step="1" value="120"><div class="pat-bpm-label">BPM</div></div>
       </div>
     </div>
 
     <div class="module fx pat">
       <div class="mod-title">PATTERN 2</div>
       <div class="knob-row">
-        <div class="pat-grid" id="patGrid2"></div>
-        <div class="knob-wrap"><canvas class="knob-canvas" data-id="pat2Bpm" width="72" height="72"></canvas><div class="knob-val" id="pat2BpmV">120</div><div class="knob-label">BPM</div></div>
+        <div class="pat-wrap">
+          <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid2" min="2" max="8" step="1" value="4"></div>
+          <div class="pat-grid" id="patGrid2"></div>
+          <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid2" min="2" max="8" step="1" value="4"></div>
+        </div>
+        <div class="pat-bpm-wrap"><input type="number" class="pat-bpm-input" data-pat-bpm="2" min="30" max="300" step="1" value="120"><div class="pat-bpm-label">BPM</div></div>
       </div>
     </div>
 
     <div class="module fx pat">
       <div class="mod-title">PATTERN 3</div>
       <div class="knob-row">
-        <div class="pat-grid" id="patGrid3"></div>
-        <div class="knob-wrap"><canvas class="knob-canvas" data-id="pat3Bpm" width="72" height="72"></canvas><div class="knob-val" id="pat3BpmV">120</div><div class="knob-label">BPM</div></div>
+        <div class="pat-wrap">
+          <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid3" min="2" max="8" step="1" value="4"></div>
+          <div class="pat-grid" id="patGrid3"></div>
+          <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid3" min="2" max="8" step="1" value="4"></div>
+        </div>
+        <div class="pat-bpm-wrap"><input type="number" class="pat-bpm-input" data-pat-bpm="3" min="30" max="300" step="1" value="120"><div class="pat-bpm-label">BPM</div></div>
       </div>
     </div>
 
@@ -1292,30 +1313,66 @@ document.querySelectorAll('.module').forEach(mod => {
 });
 
 // Pattern grids: state + UI
-const patternStates = {}; // { 'patGrid1': [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] }
-document.querySelectorAll('.pat-grid').forEach(grid => {
+// Per-output: { steps: Array(rows*cols).fill(0), rows, cols, bpm }
+const patternStates = {};
+function newPatOut(){ return { steps: new Array(16).fill(0), rows: 4, cols: 4, bpm: 120 }; }
+function reshapePat(ps, newRows, newCols){
+  const oldRows = ps.rows, oldCols = ps.cols;
+  const old = ps.steps;
+  const next = new Array(newRows * newCols).fill(0);
+  const r = Math.min(oldRows, newRows);
+  const c = Math.min(oldCols, newCols);
+  for(let i=0;i<r;i++){
+    for(let j=0;j<c;j++){
+      next[i*newCols + j] = old[i*oldCols + j] ? 1 : 0;
+    }
+  }
+  ps.rows = newRows; ps.cols = newCols; ps.steps = next;
+}
+function renderPatGridCells(grid, ps){
+  // Rebuild cells to match rows x cols
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${ps.cols}, 15px)`;
+  grid.style.gridTemplateRows = `repeat(${ps.rows}, 15px)`;
   const id = grid.id;
-  // 4 outputs, each with 16 steps = 64 steps total
-  patternStates[id] = [
-    new Array(16).fill(0),
-    new Array(16).fill(0),
-    new Array(16).fill(0),
-    new Array(16).fill(0)
-  ];
-  grid.dataset.activeOut = '0';
-  for(let i = 0; i < 16; i++){
+  const total = ps.rows * ps.cols;
+  for(let i = 0; i < total; i++){
     const btn = document.createElement('div');
-    btn.className = 'pat-step';
+    btn.className = 'pat-step' + (ps.steps[i] ? ' on' : '');
     btn.dataset.step = i;
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const out = parseInt(grid.dataset.activeOut) || 0;
-      patternStates[id][out][i] = patternStates[id][out][i] ? 0 : 1;
-      btn.classList.toggle('on', !!patternStates[id][out][i]);
+      const p = patternStates[id][out];
+      p.steps[i] = p.steps[i] ? 0 : 1;
+      btn.classList.toggle('on', !!p.steps[i]);
       rebuildIfPlaying();
     });
     grid.appendChild(btn);
   }
+}
+function refreshPatGrid(gridId){
+  const grid = document.getElementById(gridId);
+  if(!grid) return;
+  const out = parseInt(grid.dataset.activeOut) || 0;
+  const ps = patternStates[gridId][out];
+  renderPatGridCells(grid, ps);
+  // Sync ROWS/COLS inputs
+  const mod = grid.closest('.module');
+  if(mod){
+    const rIn = mod.querySelector('input[data-pat-dim="rows"]');
+    const cIn = mod.querySelector('input[data-pat-dim="cols"]');
+    if(rIn) rIn.value = ps.rows;
+    if(cIn) cIn.value = ps.cols;
+    const bpmIn = mod.querySelector('input[data-pat-bpm]');
+    if(bpmIn) bpmIn.value = ps.bpm;
+  }
+}
+document.querySelectorAll('.pat-grid').forEach(grid => {
+  const id = grid.id;
+  patternStates[id] = [newPatOut(), newPatOut(), newPatOut(), newPatOut()];
+  grid.dataset.activeOut = '0';
+  renderPatGridCells(grid, patternStates[id][0]);
   // Hook into output selector to swap displayed pattern
   const mod = grid.closest('.module');
   if(mod){
@@ -1323,12 +1380,72 @@ document.querySelectorAll('.pat-grid').forEach(grid => {
       const activeBtn = mod.querySelector('.out-sel-btn.active');
       if(!activeBtn) return;
       const out = parseInt(activeBtn.dataset.outIdx) || 0;
+      if(parseInt(grid.dataset.activeOut) === out) return;
       grid.dataset.activeOut = out;
-      const steps = grid.querySelectorAll('.pat-step');
-      steps.forEach((s, i) => s.classList.toggle('on', !!patternStates[id][out][i]));
+      refreshPatGrid(id);
     });
     observer.observe(mod, { subtree: true, attributes: true, attributeFilter: ['class'] });
   }
+});
+
+// ROWS/COLS input handlers
+document.querySelectorAll('input.pat-dim-input').forEach(inp => {
+  const commit = () => {
+    const gridId = inp.dataset.patGrid;
+    const which = inp.dataset.patDim; // 'rows' | 'cols'
+    const grid = document.getElementById(gridId);
+    if(!grid) return;
+    const out = parseInt(grid.dataset.activeOut) || 0;
+    const ps = patternStates[gridId][out];
+    let v = Math.round(parseFloat(inp.value));
+    if(!isFinite(v)) v = 4;
+    v = Math.max(2, Math.min(8, v));
+    inp.value = v;
+    const newRows = which === 'rows' ? v : ps.rows;
+    const newCols = which === 'cols' ? v : ps.cols;
+    if(newRows !== ps.rows || newCols !== ps.cols){
+      reshapePat(ps, newRows, newCols);
+      renderPatGridCells(grid, ps);
+      rebuildIfPlaying();
+    }
+  };
+  inp.addEventListener('change', commit);
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); commit(); inp.blur(); } });
+  inp.addEventListener('click', e => e.stopPropagation());
+  inp.addEventListener('mousedown', e => e.stopPropagation());
+});
+
+// BPM input handlers
+document.querySelectorAll('input.pat-bpm-input').forEach(inp => {
+  const patNum = inp.dataset.patBpm;
+  const gridId = 'patGrid' + patNum;
+  const commit = () => {
+    const grid = document.getElementById(gridId);
+    if(!grid) return;
+    const out = parseInt(grid.dataset.activeOut) || 0;
+    const ps = patternStates[gridId][out];
+    let v = Math.round(parseFloat(inp.value));
+    if(!isFinite(v)) v = 120;
+    v = Math.max(30, Math.min(300, v));
+    inp.value = v;
+    if(v !== ps.bpm){
+      ps.bpm = v;
+      // Also update per-output modOutputState + knobState for back-compat
+      const modIdx = MOD_NAMES.indexOf('PATTERN ' + patNum);
+      const bpmKey = 'pat' + patNum + 'Bpm';
+      if(modIdx >= 0 && modOutputState[modIdx] && modOutputState[modIdx][out]){
+        modOutputState[modIdx][out][bpmKey] = v;
+      }
+      knobState[bpmKey] = v;
+      rebuildIfPlaying();
+    }
+  };
+  inp.addEventListener('change', commit);
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); commit(); inp.blur(); } });
+  inp.addEventListener('click', e => e.stopPropagation());
+  inp.addEventListener('mousedown', e => e.stopPropagation());
 });
 
 let patternIntervals = []; // cleared on stop
@@ -1339,11 +1456,12 @@ let audioModules = []; // built per play session
 function getTriggerTimes(rate, patternInfo, duration){
   if(patternInfo){
     // Pattern-driven triggers
-    const { pattern, stepDur } = patternInfo;
+    const { pattern, stepDur, totalSteps } = patternInfo;
+    const steps = totalSteps || 16;
     const times = [];
-    const loopDur = stepDur * 16;
+    const loopDur = stepDur * steps;
     for(let t = 0; t < duration; t += loopDur){
-      for(let s = 0; s < 16; s++){
+      for(let s = 0; s < steps; s++){
         if(pattern[s]) times.push(t + s * stepDur);
       }
     }
@@ -1831,23 +1949,25 @@ function buildModule(name, modIdx, patternInfo){
   }
 
   if(name.startsWith('PATTERN')){
-    // Pattern effect: each output has its own 16-step pattern and BPM
-    const gridId = 'patGrid' + name.split(' ')[1];
-    const patterns = patternStates[gridId] || [new Array(16).fill(0),new Array(16).fill(0),new Array(16).fill(0),new Array(16).fill(0)];
-    const bpmKey = 'pat' + name.split(' ')[1] + 'Bpm';
+    // Pattern effect: each output has its own configurable grid and BPM
+    const patNum = name.split(' ')[1];
+    const gridId = 'patGrid' + patNum;
+    const patterns = patternStates[gridId] || [newPatOut(), newPatOut(), newPatOut(), newPatOut()];
+    const bpmKey = 'pat' + patNum + 'Bpm';
     const now = audioCtx.currentTime;
 
     for(let o = 0; o < 4; o++){
-      const pat = patterns[o];
+      const ps = patterns[o];
       const op = getModOutParams(modIdx, o);
-      const bpm = op[bpmKey] || 120;
+      const bpm = ps.bpm || op[bpmKey] || 120;
+      const totalSteps = ps.rows * ps.cols;
       const stepDur = 60 / bpm / 4;
-      const loopDur = stepDur * 16;
+      const loopDur = stepDur * totalSteps;
       const gate = audioCtx.createGain();
       gate.gain.value = 0;
       for(let t = 0; t < 600; t += loopDur){
-        for(let s = 0; s < 16; s++){
-          gate.gain.setValueAtTime(pat[s] ? 1 : 0, now + t + s * stepDur);
+        for(let s = 0; s < totalSteps; s++){
+          gate.gain.setValueAtTime(ps.steps[s] ? 1 : 0, now + t + s * stepDur);
         }
       }
       if(o === 0){
@@ -1943,13 +2063,14 @@ function buildLive(){
     const gridId = 'patGrid' + srcName.split(' ')[1];
     const patterns = patternStates[gridId];
     if(!patterns) return;
-    const pat = patterns[c.fromIdx] || new Array(16).fill(0);
+    const ps = patterns[c.fromIdx] || newPatOut();
     const outParams = getModOutParams(c.fromMod, c.fromIdx);
     const bpmKey = 'pat' + srcName.split(' ')[1] + 'Bpm';
-    const bpm = outParams[bpmKey] || knobState[bpmKey] || 120;
+    const bpm = ps.bpm || outParams[bpmKey] || knobState[bpmKey] || 120;
     const stepDur = 60 / bpm / 4;
+    const totalSteps = ps.rows * ps.cols;
     if(!patternInfoMap[c.toMod]) patternInfoMap[c.toMod] = [null, null, null, null];
-    patternInfoMap[c.toMod][c.toIdx] = { pattern: pat, stepDur };
+    patternInfoMap[c.toMod][c.toIdx] = { pattern: ps.steps, stepDur, totalSteps };
   });
 
   audioModules = MOD_NAMES.map((name, i) => buildModule(name, i, patternInfoMap[i] || null));
@@ -2002,17 +2123,20 @@ function startPlay(){
     if(!m.isPattern) return;
     const grid = document.getElementById(m.gridId);
     if(!grid) return;
-    const steps = grid.querySelectorAll('.pat-step');
     const patNum = m.gridId.replace('patGrid','');
     const activeOut = parseInt(grid.dataset.activeOut) || 0;
+    const ps = patternStates[m.gridId] && patternStates[m.gridId][activeOut];
+    if(!ps) return;
     const outP = getModOutParams(MOD_NAMES.indexOf('PATTERN ' + patNum), activeOut);
-    const bpm = outP['pat' + patNum + 'Bpm'] || knobState['pat' + patNum + 'Bpm'] || 120;
+    const bpm = ps.bpm || outP['pat' + patNum + 'Bpm'] || knobState['pat' + patNum + 'Bpm'] || 120;
     const stepMs = (60 / bpm / 4) * 1000;
+    const total = ps.rows * ps.cols;
     let step = 0;
     const iv = setInterval(() => {
-      steps.forEach(s => s.classList.remove('current'));
-      steps[step]?.classList.add('current');
-      step = (step + 1) % 16;
+      const stepsEls = grid.querySelectorAll('.pat-step');
+      stepsEls.forEach(s => s.classList.remove('current'));
+      stepsEls[step]?.classList.add('current');
+      step = (step + 1) % total;
     }, stepMs);
     patternIntervals.push(iv);
   });
@@ -2203,16 +2327,48 @@ function loadPreset(idx){
     });
     drawAllCables();
   }
-  // Restore pattern states
+  // Restore pattern states (migrate legacy Array(16) shape to {steps,rows,cols,bpm})
   if(p.patterns){
     Object.keys(p.patterns).forEach(gridId => {
-      patternStates[gridId] = p.patterns[gridId];
-      const grid = document.getElementById(gridId);
-      if(grid){
-        const activeOut = parseInt(grid.dataset.activeOut) || 0;
-        const steps = grid.querySelectorAll('.pat-step');
-        steps.forEach((s, i) => s.classList.toggle('on', !!patternStates[gridId][activeOut][i]));
-      }
+      const raw = p.patterns[gridId];
+      if(!Array.isArray(raw)) return;
+      // Legacy BPM from preset params (knob values in modOutputState or top-level)
+      const patNum = gridId.replace('patGrid','');
+      const bpmKey = 'pat' + patNum + 'Bpm';
+      const legacyBpm = (p.params && p.params[bpmKey]) || 120;
+      const migrated = [0,1,2,3].map(o => {
+        const v = raw[o];
+        if(v && Array.isArray(v.steps)){
+          // New-shape preset
+          return {
+            steps: v.steps.map(x => x ? 1 : 0),
+            rows: v.rows || 4,
+            cols: v.cols || 4,
+            bpm: v.bpm || legacyBpm
+          };
+        }
+        if(Array.isArray(v)){
+          // Legacy: bare 16-step array
+          let rows = 4, cols = 4;
+          let steps = v.map(x => x ? 1 : 0);
+          if(steps.length !== 16){
+            // Unknown legacy length: default to 4x4
+            steps = new Array(16).fill(0);
+          }
+          // Per-output legacy BPM stored in modOutputState
+          let perOutBpm = legacyBpm;
+          if(p.params && Array.isArray(p.params.modOutputState)){
+            const mi = (typeof MOD_NAMES !== 'undefined') ? MOD_NAMES.indexOf('PATTERN ' + patNum) : -1;
+            if(mi >= 0 && p.params.modOutputState[mi] && p.params.modOutputState[mi][o]){
+              perOutBpm = p.params.modOutputState[mi][o][bpmKey] || legacyBpm;
+            }
+          }
+          return { steps, rows, cols, bpm: perOutBpm };
+        }
+        return newPatOut();
+      });
+      patternStates[gridId] = migrated;
+      refreshPatGrid(gridId);
     });
   }
   document.getElementById('presetName').value = p.name;
