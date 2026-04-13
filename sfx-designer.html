@@ -2298,13 +2298,363 @@ document.addEventListener('click', e => {
 
 function savePresets(){ localStorage.setItem('sfxPresets', JSON.stringify(presets)); }
 
+// ═══════════════════════════════════════════════════════════════════
+// PHASE C: v2 unified preset schema (cross-platform with mobile)
+// ═══════════════════════════════════════════════════════════════════
+const V2_DROPDOWN_IDS = ['waveform','tremShape','noiseType','filtType','pwmWave','formVowel','subOct','eqType'];
+
+function _isPinnedType(type){
+  const t = (type || '').trim();
+  return t === 'INPUT MIX' || t === 'MASTER' || t === 'OUTPUT';
+}
+function _isPatternType(type){ return (type || '').trim().startsWith('PATTERN'); }
+function _isSingleOutputType(type){
+  const t = (type || '').trim();
+  return t.startsWith('MIX') || t === 'INPUT MIX' || t === 'MASTER' || t === 'OUTPUT' || t === 'THROUGH';
+}
+
+// Cluster X positions into bars using 92px threshold (matches autopatch),
+// then sort modules within each bar by Y. Returns {bars: [[modArr], ...]}
+// where each modArr is sorted top-to-bottom.
+function _computeMobileLayoutHints(instanceList){
+  // instanceList: [{uuid, type, x, y, pinned}, ...]
+  const unpinned = instanceList.filter(i => !i.pinned);
+  if(unpinned.length === 0) return {};
+  // Sort by X then Y
+  const sorted = [...unpinned].sort((a,b) => a.x - b.x || a.y - b.y);
+  const bars = [];
+  const THRESH = 92;
+  sorted.forEach(inst => {
+    // Find a bar whose average X is within THRESH
+    let placed = false;
+    for(const bar of bars){
+      const avgX = bar.reduce((s,m)=>s+m.x,0) / bar.length;
+      if(Math.abs(inst.x - avgX) <= THRESH){ bar.push(inst); placed = true; break; }
+    }
+    if(!placed) bars.push([inst]);
+  });
+  // Sort bars left-to-right
+  bars.sort((a,b) => {
+    const ax = a.reduce((s,m)=>s+m.x,0)/a.length;
+    const bx = b.reduce((s,m)=>s+m.x,0)/b.length;
+    return ax - bx;
+  });
+  // Within each bar, sort by Y (columns = rank)
+  bars.forEach(bar => bar.sort((a,b) => a.y - b.y));
+  // Distribute bars across pages (8 bars per page)
+  const BARS_PER_PAGE = 8;
+  const hints = {};
+  bars.forEach((bar, barGlobalIdx) => {
+    const page = Math.floor(barGlobalIdx / BARS_PER_PAGE);
+    const barOnPage = barGlobalIdx % BARS_PER_PAGE;
+    bar.forEach((inst, col) => {
+      hints[inst.uuid] = { page, bar: barOnPage, col };
+    });
+  });
+  return hints;
+}
+
+function buildV2Preset(name){
+  // Flush current knobs to selected output (mirrors getParams behavior)
+  modKnobIds.forEach((ids, modIdx) => {
+    const o = selectedOutput[modIdx];
+    if(!modOutputState[modIdx] || !modOutputState[modIdx][o]) return;
+    ids.forEach(id => { modOutputState[modIdx][o][id] = knobState[id]; });
+    Object.keys(dropdownModMap).forEach(did => {
+      if(dropdownModMap[did] === modIdx){
+        modOutputState[modIdx][o]['_'+did] = dropdowns[did];
+      }
+    });
+  });
+
+  // Build instance list with screen positions (for mobile hint computation)
+  const modIdxToUuid = {};
+  const rawList = [];
+  Object.keys(desktopInstances).forEach(uuid => {
+    const inst = desktopInstances[uuid];
+    modIdxToUuid[inst.modIdx] = uuid;
+    const dom = inst.domEl;
+    const x = parseFloat(dom.style.left) || 0;
+    const y = parseFloat(dom.style.top) || 0;
+    rawList.push({ uuid, inst, x, y, pinned: _isPinnedType(inst.type) });
+  });
+  const mobileHints = _computeMobileLayoutHints(rawList);
+
+  const instances = rawList.map(({uuid, inst, x, y, pinned}) => {
+    const modIdx = inst.modIdx;
+    const type = inst.type;
+    const dom = inst.domEl;
+    const outCount = _isSingleOutputType(type) ? 1 : 4;
+    const states = [];
+    const dropdownsPerOut = [];
+    for(let o = 0; o < outCount; o++){
+      const src = (modOutputState[modIdx] && modOutputState[modIdx][o]) || {};
+      const plainState = {};
+      const ddObj = {};
+      Object.keys(src).forEach(k => {
+        if(k.charAt(0) === '_'){
+          ddObj[k.slice(1)] = src[k];
+        } else {
+          plainState[k] = src[k];
+        }
+      });
+      states.push(plainState);
+      dropdownsPerOut.push(ddObj);
+    }
+    // Pattern states per-output
+    let patternStatesArr = null;
+    if(_isPatternType(type)){
+      const patNum = type.trim().replace('PATTERN ', '');
+      const gridId = 'patGrid' + patNum;
+      const ps = patternStates[gridId];
+      if(Array.isArray(ps)){
+        patternStatesArr = ps.map(p => ({
+          rows: p.rows || 4,
+          cols: p.cols || 4,
+          steps: Array.isArray(p.steps) ? p.steps.slice() : [],
+          bpm: p.bpm || 120
+        }));
+      }
+    }
+    const w = dom.style.width || '';
+    const tb = dom.classList.contains('jacks-tb') ? 1 : 0;
+    const layoutHints = {
+      desktop: { x, y, w, tb }
+    };
+    if(!pinned && mobileHints[uuid]){
+      layoutHints.mobile = mobileHints[uuid];
+    }
+    const obj = {
+      id: uuid,
+      type,
+      pinned,
+      selectedOutput: selectedOutput[modIdx] || 0,
+      bypass: dom.classList.contains('bypassed'),
+      states,
+      dropdowns: dropdownsPerOut,
+      layoutHints
+    };
+    if(patternStatesArr) obj.patternStates = patternStatesArr;
+    return obj;
+  });
+
+  const v2cables = cables.map(c => ({
+    fromId: modIdxToUuid[c.fromMod],
+    fromIdx: c.fromIdx,
+    toId: modIdxToUuid[c.toMod],
+    toIdx: c.toIdx,
+    color: c.color
+  })).filter(c => c.fromId && c.toId);
+
+  return {
+    version: 2,
+    name: name || 'preset',
+    instances,
+    cables: v2cables,
+    meta: { createdOn: 'desktop', savedAt: new Date().toISOString() }
+  };
+}
+
+function loadV2Preset(preset){
+  if(!preset || !Array.isArray(preset.instances)) return;
+  // Stop playback during reshuffle
+  const wasPlaying = !!(live && live.playing);
+  if(wasPlaying) stopPlay();
+
+  // 1. Clear cables & jack state
+  cables.length = 0;
+  document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
+
+  // 2. Count current instances by type, figure out what we have
+  const byType = {}; // type -> [uuid,...]
+  Object.keys(desktopInstances).forEach(uuid => {
+    const t = desktopInstances[uuid].type;
+    (byType[t] = byType[t] || []).push(uuid);
+  });
+  // Preset needed counts by type
+  const needed = {};
+  preset.instances.forEach(pi => { needed[pi.type] = (needed[pi.type] || 0) + 1; });
+
+  // 3. Delete surplus non-original instances (extras beyond what preset needs)
+  Object.keys(byType).forEach(type => {
+    const have = byType[type].length;
+    const need = needed[type] || 0;
+    if(have > need){
+      // Remove surplus clones first (originals stay)
+      let toRemove = have - need;
+      // Walk list; delete non-originals
+      for(let i = byType[type].length - 1; i >= 0 && toRemove > 0; i--){
+        const uuid = byType[type][i];
+        const inst = desktopInstances[uuid];
+        if(inst && !inst.isOriginal){
+          window.deleteInstance(uuid);
+          toRemove--;
+        }
+      }
+    }
+  });
+
+  // 4. Rebuild byType after deletions
+  const availableByType = {};
+  Object.keys(desktopInstances).forEach(uuid => {
+    const t = desktopInstances[uuid].type;
+    (availableByType[t] = availableByType[t] || []).push(uuid);
+  });
+
+  // 5. For each preset instance, either map to existing or spawn new
+  // Strategy: preserve original instances first; then spawn for overflow.
+  const assignments = []; // array of {presetInst, domUuid}
+  const used = new Set();
+
+  // First pass: if preset UUID matches an existing desktopInstance UUID, keep
+  preset.instances.forEach(pi => {
+    if(desktopInstances[pi.id] && desktopInstances[pi.id].type === pi.type && !used.has(pi.id)){
+      assignments.push({ presetInst: pi, domUuid: pi.id });
+      used.add(pi.id);
+    } else {
+      assignments.push({ presetInst: pi, domUuid: null });
+    }
+  });
+
+  // Second pass: for unassigned, pick existing same-type instance that's unused
+  assignments.forEach(a => {
+    if(a.domUuid) return;
+    const pool = availableByType[a.presetInst.type] || [];
+    for(const uuid of pool){
+      if(!used.has(uuid)){ a.domUuid = uuid; used.add(uuid); return; }
+    }
+  });
+
+  // Third pass: spawn modules for anyone still unassigned
+  assignments.forEach(a => {
+    if(a.domUuid) return;
+    const hint = a.presetInst.layoutHints && a.presetInst.layoutHints.desktop;
+    const res = window.spawnModule(a.presetInst.type, hint ? {x: hint.x, y: hint.y} : null);
+    if(res){ a.domUuid = res.uuid; used.add(res.uuid); }
+  });
+
+  // 6. Re-key desktopInstances so UUIDs match preset UUIDs (for cable lookup)
+  assignments.forEach(a => {
+    if(!a.domUuid) return;
+    const targetUuid = a.presetInst.id;
+    if(a.domUuid === targetUuid) return;
+    const inst = desktopInstances[a.domUuid];
+    if(!inst) return;
+    delete desktopInstances[a.domUuid];
+    inst.domEl.dataset.uuid = targetUuid;
+    desktopInstances[targetUuid] = inst;
+  });
+
+  // 7. Apply per-instance state
+  assignments.forEach(a => {
+    const pi = a.presetInst;
+    const inst = desktopInstances[pi.id];
+    if(!inst) return;
+    const modIdx = inst.modIdx;
+    const dom = inst.domEl;
+    const outCount = _isSingleOutputType(pi.type) ? 1 : 4;
+    // Ensure modOutputState[modIdx] exists with 4 slots (already from init)
+    if(!modOutputState[modIdx]) modOutputState[modIdx] = [{},{},{},{}];
+    for(let o = 0; o < outCount; o++){
+      const targetSlot = modOutputState[modIdx][o] = modOutputState[modIdx][o] || {};
+      const sState = (pi.states && pi.states[o]) || {};
+      const sDropdowns = (pi.dropdowns && pi.dropdowns[o]) || {};
+      // Wipe existing keys (avoid stale cross-contamination) but preserve structure
+      Object.keys(targetSlot).forEach(k => { delete targetSlot[k]; });
+      Object.keys(sState).forEach(k => { targetSlot[k] = sState[k]; });
+      Object.keys(sDropdowns).forEach(k => { targetSlot['_'+k] = sDropdowns[k]; });
+    }
+    // Pattern states
+    if(_isPatternType(pi.type) && Array.isArray(pi.patternStates)){
+      const patNum = pi.type.trim().replace('PATTERN ', '');
+      const gridId = 'patGrid' + patNum;
+      patternStates[gridId] = pi.patternStates.map(p => ({
+        rows: p.rows || 4,
+        cols: p.cols || 4,
+        steps: Array.isArray(p.steps) ? p.steps.slice() : [],
+        bpm: p.bpm || 120
+      }));
+      try { refreshPatGrid(gridId); } catch(e){}
+    }
+    // Bypass
+    dom.classList.toggle('bypassed', !!pi.bypass);
+    const bypassBtn = dom.querySelector('.bypass-btn');
+    if(bypassBtn) bypassBtn.classList.toggle('active', !!pi.bypass);
+    // Selected output
+    const selOut = Math.min(outCount - 1, Math.max(0, pi.selectedOutput || 0));
+    selectedOutput[modIdx] = selOut;
+    // Update output selector row active state
+    const outRow = dom.querySelector('.out-sel-row');
+    if(outRow){
+      outRow.querySelectorAll('.out-sel-btn').forEach((b, bi) => b.classList.toggle('active', bi === selOut));
+    }
+    // Layout
+    const hint = pi.layoutHints && pi.layoutHints.desktop;
+    if(hint){
+      if(typeof hint.x === 'number') dom.style.left = hint.x + 'px';
+      if(typeof hint.y === 'number') dom.style.top = hint.y + 'px';
+      if(hint.w) dom.style.width = hint.w;
+      dom.classList.toggle('jacks-tb', !!hint.tb);
+    }
+  });
+
+  // 8. Load currently-selected-output knob+dropdown values into live UI state
+  //    (mirrors setParams' tail: push selected-output values into knobState/dropdowns)
+  assignments.forEach(a => {
+    const inst = desktopInstances[a.presetInst.id];
+    if(!inst) return;
+    const modIdx = inst.modIdx;
+    const o = selectedOutput[modIdx] || 0;
+    const slot = (modOutputState[modIdx] && modOutputState[modIdx][o]) || {};
+    (modKnobIds[modIdx] || []).forEach(id => {
+      if(slot[id] !== undefined){
+        knobState[id] = slot[id];
+        try { updateKnobDisplay(id); } catch(e){}
+      }
+    });
+    Object.keys(dropdownModMap).forEach(did => {
+      if(dropdownModMap[did] === modIdx){
+        const v = slot['_'+did];
+        if(v){
+          dropdowns[did] = v;
+          const el = document.getElementById(did);
+          if(el) el.value = v;
+        }
+      }
+    });
+  });
+
+  // 9. Rebuild cables
+  (preset.cables || []).forEach(c => {
+    const fromInst = desktopInstances[c.fromId];
+    const toInst = desktopInstances[c.toId];
+    if(!fromInst || !toInst) return;
+    cables.push({
+      fromMod: fromInst.modIdx,
+      fromIdx: c.fromIdx,
+      toMod: toInst.modIdx,
+      toIdx: c.toIdx,
+      color: c.color || CABLE_COLORS[0]
+    });
+  });
+  cables.forEach(c => {
+    const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
+    const te = findJackEl(c.toMod, c.toIdx, 'input');
+    if(fe) fe.classList.add('connected');
+    if(te) te.classList.add('connected');
+  });
+  drawAllCables();
+
+  // 10. Rebuild audio if was playing
+  if(wasPlaying) setTimeout(startPlay, 100);
+}
+
 document.getElementById('saveBtn').addEventListener('click', () => {
   const nameInput = document.getElementById('presetName');
   const name = nameInput.value.trim();
   if(!name){ nameInput.focus(); return; }
-  const params = getParams();
+  const entry = buildV2Preset(name);
   const idx = presets.findIndex(p => p.name === name);
-  const entry = { name, params, cables: JSON.parse(JSON.stringify(cables)), layout: getModPositions(), patterns: JSON.parse(JSON.stringify(patternStates)) };
   if(idx >= 0) presets[idx] = entry; else presets.push(entry);
   savePresets(); renderPresets();
 });
@@ -2314,6 +2664,13 @@ renderPresets();
 function loadPreset(idx){
   const p = presets[idx];
   if(!p) return;
+  // v2 unified schema branch
+  if(p.version === 2 && Array.isArray(p.instances)){
+    loadV2Preset(p);
+    document.getElementById('presetName').value = p.name || '';
+    if(live && live.playing) rebuildIfPlaying();
+    return;
+  }
   setParams(p.params);
   if(p.cables){
     pushUndo();
@@ -2387,8 +2744,7 @@ function loadPreset(idx){
 document.getElementById('exportFileBtn').addEventListener('click', () => {
   const nameInput = document.getElementById('presetName');
   const name = nameInput.value.trim() || 'sfx-preset';
-  const params = getParams();
-  const entry = { name, params, cables: JSON.parse(JSON.stringify(cables)), layout: getModPositions(), patterns: JSON.parse(JSON.stringify(patternStates)) };
+  const entry = buildV2Preset(name);
   const blob = new Blob([JSON.stringify(entry, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -2413,7 +2769,11 @@ document.getElementById('importFileBtn').addEventListener('click', () => {
         // Support single preset or array of presets
         const items = Array.isArray(data) ? data : [data];
         items.forEach(p => {
-          if(!p.name || !p.params) return;
+          // Accept v2 (needs name + instances) or v1 (needs name + params)
+          const isV2 = p && p.version === 2 && Array.isArray(p.instances);
+          const isV1 = p && p.name && p.params;
+          if(!isV2 && !isV1) return;
+          if(!p.name) p.name = 'imported';
           const idx = presets.findIndex(e => e.name === p.name);
           if(idx >= 0) presets[idx] = p; else presets.push(p);
         });
