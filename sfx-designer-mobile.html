@@ -67,21 +67,41 @@
   .pageLabel { color:#888; font-size:10px; letter-spacing:3px; }
   #mobileBottomBar {
     display:flex; flex-direction:column; align-items:stretch;
-    height:72px; padding:4px 12px 8px; background:transparent;
-    border-top:2px solid #00ffcc33; flex-shrink:0;
+    height:88px; padding:4px 12px 8px; background:rgba(0,0,0,0.3);
+    border-top:1px solid #00ffcc33; flex-shrink:0;
     touch-action:none; cursor:pointer; position:relative;
   }
   #bottomBarHandle {
-    width:44px; height:6px; background:#00ffcc55; border-radius:1px;
+    width:44px; height:4px; background:#00ffcc55; border-radius:1px;
     margin:2px auto 4px; flex-shrink:0;
   }
   #bottomBarContent {
     display:flex; align-items:center; justify-content:space-between;
-    flex:1; pointer-events:none;
+    flex:1; pointer-events:none; padding:0 4px;
   }
-  #miniInputMix { display:flex; gap:4px; flex:1; }
-  .miniChan { width:12px; height:30px; background:#111; border:2px solid #ff994444; border-radius:1px; }
-  #miniMasterKnob { width:40px; height:40px; border:2px solid #ffe00044; border-radius:50%; background:#111; margin:0 10px; }
+  #miniMixGroup { display:flex; flex-direction:column; align-items:flex-start; gap:3px; pointer-events:none; }
+  #miniInputMix { display:flex; gap:3px; align-items:flex-end; height:30px; }
+  .miniChan {
+    width:4px; height:30px; background:#0a0a14;
+    border:1px solid #ff994466; border-radius:1px;
+    position:relative; overflow:hidden;
+  }
+  .miniChan::after {
+    content:""; position:absolute; left:0; right:0; bottom:0;
+    height:40%; background:linear-gradient(to top,#ff9944cc,#ff994455);
+  }
+  #miniMixLabel { font-size:9px; letter-spacing:2px; color:#ff994488; }
+  #miniPlayBtn {
+    width:48px; height:48px; border-radius:50%;
+    border:2px solid #00ffcc; background:rgba(0,0,0,0.6);
+    color:#00ffcc; font-size:20px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; pointer-events:auto; padding:0;
+    font-family:inherit;
+  }
+  #miniPlayBtn.playing { background:rgba(0,255,204,0.22); color:#0a0a14; border-color:#00ffcc; }
+  #miniPlayBtn.playing::before { content:"\25A0"; }
+  #miniPlayBtn:not(.playing)::before { content:"\25B6"; margin-left:3px; }
   .module.through .mod-title { display:none; }
   .module.through .jack-row { display:none; }
   .module.through .bypass-btn { display:none; }
@@ -156,15 +176,16 @@
   .mobilePage { scroll-snap-align:start; align-items:stretch !important; justify-content:flex-start !important; }
   .mobilePage .pageInner { width:100%; display:flex; flex-direction:column; gap:12px; }
   .mobileBar {
-    background:rgba(0,20,20,0.85);
-    border:2px solid #00ffccaa;
+    background:rgba(0,0,0,0.3);
+    border:1px solid #00ffcc33;
     padding:6px 10px; display:flex; flex-direction:column; gap:6px;
-    position:relative;
+    position:relative; box-sizing:border-box; width:100%; max-width:100%;
+    overflow:hidden;
   }
   .mobileBarHeader {
     display:flex; justify-content:flex-end; align-items:center;
     font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#00ffcc;
-    padding:2px 2px 6px 2px; border-bottom:2px solid #00ffcc88;
+    padding:2px 2px 6px 2px; border-bottom:1px solid #00ffcc33;
     touch-action:none; user-select:none; min-height:8px;
   }
   .mobileBarHeader.dragging { background:rgba(255,224,0,0.15); }
@@ -189,8 +210,8 @@
     content:""; position:absolute; inset:-12px; /* ~44px tap target */
   }
   .barDelX:disabled { opacity:0.25; cursor:default; }
-  .mobileBarCols { display:flex; gap:6px; align-items:stretch; min-height:70px; }
-  .mobileCol { flex:1 1 0; min-width:0; display:flex; flex-direction:column; position:relative; }
+  .mobileBarCols { display:flex; gap:6px; align-items:stretch; min-height:70px; width:100%; box-sizing:border-box; }
+  .mobileCol { flex:1 1 0; min-width:0; max-width:100%; display:flex; flex-direction:column; position:relative; box-sizing:border-box; }
   .mobileCol.empty {
     border:2px dashed #00ffcc88;
     background:rgba(0,0,0,0.3);
@@ -221,11 +242,12 @@
     font-size:10px; position:relative;
     display:flex; flex-direction:column; gap:4px;
     min-height:60px;
+    box-sizing:border-box; width:100%; max-width:100%;
   }
-  .mobileNode.gen { background:rgba(40,10,20,0.6); border:2px solid #ff69b4aa; color:#00ffcc; }
-  .mobileNode.fx  { background:rgba(0,0,0,0.6); border:2px solid #00ffcc88; color:#00ffcc; }
-  .mobileNode.mix { background:rgba(40,20,10,0.6); border:2px solid #ff9944aa; color:#00ffcc; }
-  .mobileNode.pat { background:rgba(25,10,40,0.6); border:2px solid #aa66ffaa; color:#00ffcc; }
+  .mobileNode.gen { background:rgba(40,10,20,0.6); border:1px solid #ff69b444; color:#00ffcc; }
+  .mobileNode.fx  { background:rgba(0,0,0,0.6); border:1px solid #00ffcc33; color:#00ffcc; }
+  .mobileNode.mix { background:rgba(40,20,10,0.6); border:1px solid #ff994444; color:#00ffcc; }
+  .mobileNode.pat { background:rgba(25,10,40,0.6); border:1px solid #aa66ff44; color:#00ffcc; }
 
   .mobileNode .nodeHeader {
     display:flex; justify-content:space-between; align-items:center;
@@ -247,6 +269,10 @@
     border:2px solid #00ffcc; font-family:inherit; font-size:18px;
     cursor:pointer; letter-spacing:1px; line-height:1;
     min-height:40px; min-width:44px;
+  }
+  .mobileNode.expandedFull .nodeExpandBtn {
+    background:rgba(0,255,204,0.22); color:#0a0a14;
+    font-size:22px; font-weight:bold;
   }
   .mobileNode .nodeCloseBtn {
     padding:8px 18px; background:rgba(255,68,68,0.12); color:#ff6666;
@@ -274,8 +300,11 @@
     content:""; position:absolute; inset:-13px; /* 44px hit zone (18+26=44) */
   }
   .mobileNode.expandedFull {
-    width:100%;
+    width:100%; max-width:100%; box-sizing:border-box;
+    flex:1 1 100%;
   }
+  .mobileNode.expandedFull .nodeExpanded { width:100%; box-sizing:border-box; }
+  .mobileNode.expandedFull .mobKnobGrid { width:100%; box-sizing:border-box; }
 
   .mobileNode .nodeExpanded { display:flex; flex-direction:column; gap:6px; padding-top:4px; }
   .mobileNode .mobOutSel { display:flex; gap:4px; justify-content:center; }
@@ -290,25 +319,25 @@
   .mobileNode .mobOutBtn.active { border-color:#ffe000; color:#ffe000; background:rgba(255,224,0,0.15); }
   .mobileNode .mobOutBtn:hover { border-color:#ffe000; }
   .mobileNode .mobKnobGrid {
-    display:flex; flex-wrap:wrap; gap:2px; justify-content:center;
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
   }
   .mobileNode .mobKnobWrap {
-    display:flex; flex-direction:column; align-items:center; gap:2px;
-    width:80px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    width:140px;
   }
   .mobileNode .mobKnobCanvas {
-    width:72px; height:72px; cursor:ns-resize;
+    width:128px; height:128px; cursor:ns-resize;
     touch-action:none;
     user-select:none; -webkit-user-select:none;
   }
   .mobileNode .mobKnobCanvas.dragging { filter:brightness(1.25); }
-  .mobileNode .mobKnobVal { font-size:18px; color:#ffe000; text-align:center; height:22px; cursor:pointer; }
+  .mobileNode .mobKnobVal { font-size:22px; color:#ffe000; text-align:center; height:28px; cursor:pointer; }
   .mobileNode .mobKnobValInput {
-    width:64px; height:18px; background:#0a0a14; color:#ffe000;
-    border:2px solid #ffe00088; font-family:inherit; font-size:11px;
+    width:100px; height:26px; background:#0a0a14; color:#ffe000;
+    border:2px solid #ffe00088; font-family:inherit; font-size:18px;
     text-align:center; padding:0; box-sizing:border-box; border-radius:2px;
   }
-  .mobileNode .mobKnobLabel { font-size:14px; color:#00ffcc; text-align:center; white-space:nowrap; }
+  .mobileNode .mobKnobLabel { font-size:16px; color:#00ffcc; text-align:center; white-space:nowrap; letter-spacing:1px; }
 
   .mobPatGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:3px; width:108px; margin:4px auto 0; }
   .mobPatStep {
@@ -446,13 +475,16 @@
   <div id="mobileBottomBar">
     <div id="bottomBarHandle" aria-hidden="true"></div>
     <div id="bottomBarContent">
-      <div id="miniInputMix">
-        <span class="miniChan"></span><span class="miniChan"></span>
-        <span class="miniChan"></span><span class="miniChan"></span>
-        <span class="miniChan"></span><span class="miniChan"></span>
-        <span class="miniChan"></span><span class="miniChan"></span>
+      <div id="miniMixGroup">
+        <div id="miniInputMix">
+          <span class="miniChan"></span><span class="miniChan"></span>
+          <span class="miniChan"></span><span class="miniChan"></span>
+          <span class="miniChan"></span><span class="miniChan"></span>
+          <span class="miniChan"></span><span class="miniChan"></span>
+        </div>
+        <div id="miniMixLabel">IN MIX</div>
       </div>
-      <div id="miniMasterKnob"></div>
+      <button id="miniPlayBtn" aria-label="Play"></button>
     </div>
   </div>
 </div>
@@ -3859,13 +3891,17 @@ requestAnimationFrame(() => {
       renderMobilePages();
     };
     headerBtns.appendChild(expBtn);
-    const delBtn = el('button','nodeDeleteBtn','X');
-    delBtn.setAttribute('aria-label','Delete');
-    delBtn.onclick = (e)=>{
-      e.stopPropagation();
-      confirmPopup('Delete '+node.type+'?', ()=> deleteNode(nodeId));
-    };
-    headerBtns.appendChild(delBtn);
+    // Delete button only shown when collapsed (in expanded view it's removed to save space
+    // and to keep the destructive action out of the edit view)
+    if(!expanded){
+      const delBtn = el('button','nodeDeleteBtn','X');
+      delBtn.setAttribute('aria-label','Delete');
+      delBtn.onclick = (e)=>{
+        e.stopPropagation();
+        confirmPopup('Delete '+node.type+'?', ()=> deleteNode(nodeId));
+      };
+      headerBtns.appendChild(delBtn);
+    }
     header.appendChild(headerBtns);
     nodeEl.appendChild(header);
 
@@ -3888,7 +3924,7 @@ requestAnimationFrame(() => {
         const wrap = el('div','mobKnobWrap');
         const canvas = document.createElement('canvas');
         canvas.className = 'mobKnobCanvas';
-        canvas.width = 72; canvas.height = 72;
+        canvas.width = 128; canvas.height = 128;
         const initVal = node.state[kid] != null ? node.state[kid] : def.val;
         drawMobKnob(canvas, def, initVal);
         const valEl = el('div','mobKnobVal', def.fmt ? def.fmt(initVal) : String(initVal));
@@ -4013,14 +4049,7 @@ requestAnimationFrame(() => {
         });
         ex.appendChild(pg);
       }
-      // CLOSE button, prominent at the end of expanded view
-      const closeBtn = el('button','nodeCloseBtn','CLOSE');
-      closeBtn.onclick = (e)=>{
-        e.stopPropagation();
-        mobile.expandedNodeId = null;
-        renderMobilePages();
-      };
-      ex.appendChild(closeBtn);
+      // CLOSE button removed — the collapse arrow in the header is the only way to collapse
       nodeEl.appendChild(ex);
     }
     // Bottom jack row (outputs), always shown if applicable — both collapsed AND expanded
@@ -4398,10 +4427,31 @@ requestAnimationFrame(() => {
     bar.addEventListener('pointerleave', endT);
   }
 
+  function wirePlayButton(){
+    const btn = $('#miniPlayBtn');
+    if(!btn) return;
+    // Stop swipe-up from firing when tapping play
+    btn.addEventListener('pointerdown', e=>{ e.stopPropagation(); });
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const playing = btn.classList.toggle('playing');
+      btn.setAttribute('aria-label', playing ? 'Stop' : 'Play');
+      // Try to resume the audio context if it was suspended (iOS gesture unlock)
+      try { if(typeof audioCtx !== 'undefined' && audioCtx.state === 'suspended') audioCtx.resume(); } catch(_){}
+      // Attempt to defer to desktop transport if one exists
+      try {
+        const desktopPlay = document.getElementById('playBtn') || document.getElementById('playToggle');
+        if(desktopPlay && typeof desktopPlay.click === 'function') desktopPlay.click();
+      } catch(_){}
+      if(navigator.vibrate) navigator.vibrate(10);
+    });
+  }
+
   function init(){
     wireTopBar();
     setupSwipeNav();
     wireBottomBarSwipe();
+    wirePlayButton();
     renderMobilePages();
   }
   if(document.readyState === 'loading'){
