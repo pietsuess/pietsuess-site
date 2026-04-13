@@ -398,6 +398,13 @@
     max-width:340px; width:100%; max-height:85vh; overflow-y:auto;
     display:flex; flex-direction:column;
   }
+  .modalBox.pickerModal {
+    height:70vh; max-height:600px;
+    overflow:hidden;
+  }
+  .modalBox.pickerModal > .modalHeader { flex-shrink:0; }
+  .modalBox.pickerModal > .modalTabs { flex-shrink:0; }
+  .modalBox.pickerModal > .modalBody { flex:1; overflow-y:auto; }
   .modalHeader {
     display:flex; justify-content:space-between; align-items:center;
     padding:10px 12px; border-bottom:2px solid #222;
@@ -475,18 +482,6 @@
   .confirmBox button:hover { background:rgba(0,255,204,0.22); }
   .confirmBox button.danger { background:transparent; border-color:#ff4444; color:#ff4444; }
 
-  /* Top-bar delete page as minimal X glyph */
-  #delPageBtn.xGlyph {
-    background:transparent !important; border:none !important;
-    color:#e6ffff !important; font-size:26px !important;
-    padding:0 6px !important; min-width:44px; min-height:44px;
-    text-shadow:0 0 8px rgba(0,255,204,0.7);
-    line-height:1;
-  }
-  #delPageBtn.xGlyph:disabled { opacity:0.25; }
-
-  /* delete page btn */
-  #delPageBtn { margin-left:4px; }
 </style>
 </head>
 <body>
@@ -498,10 +493,6 @@
       <button id="prevPageBtn" aria-label="Previous page">◀</button>
       <div id="pageBoxes" role="tablist" aria-label="Pages"></div>
       <button id="nextPageBtn" aria-label="Next page">▶</button>
-    </div>
-    <div style="display:flex;gap:4px;">
-      <button id="addPageBtn" aria-label="Add page" style="font-size:28px;line-height:1;">+</button>
-      <button id="delPageBtn" class="xGlyph" aria-label="Delete page">×</button>
     </div>
   </div>
   <div id="pageContainer">
@@ -3739,7 +3730,12 @@ requestAnimationFrame(() => {
   const KD = (typeof KNOB_DEFS !== 'undefined') ? KNOB_DEFS : {};
 
   const mobile = {
-    pages: [{ bars: [ { cols: [ null ] } ] }],
+    pages: [
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] }
+    ],
     currentPage: 0,
     mobileNodes: {},
     nextNodeId: 1,
@@ -3806,7 +3802,7 @@ requestAnimationFrame(() => {
 
   function openNodePicker(pageIdx, barIdx, colIdx){
     const overlay = el('div','modalOverlay');
-    const box = el('div','modalBox');
+    const box = el('div','modalBox pickerModal');
     const header = el('div','modalHeader');
     header.append(el('span', null, 'SELECT NODE'));
     const close = el('button','modalClose','X');
@@ -4349,15 +4345,13 @@ requestAnimationFrame(() => {
         container.scrollLeft = pages[mobile.currentPage].offsetLeft;
       }
     });
-    const delBtn = $('#delPageBtn');
-    if(delBtn) delBtn.disabled = mobile.pages.length <= 1;
   }
 
   function updatePageIndicator(){
     const host = $('#pageBoxes');
     if(host){
       host.innerHTML = '';
-      for(let i=0;i<mobile.pages.length;i++){
+      for(let i=0;i<4;i++){
         const b = document.createElement('button');
         b.className = 'pageBox' + (i === mobile.currentPage ? ' active' : '');
         b.textContent = String(i+1);
@@ -4371,20 +4365,6 @@ requestAnimationFrame(() => {
         };
         host.appendChild(b);
       }
-    }
-    const addBtn = $('#addPageBtn');
-    if(addBtn){
-      if(mobile.pages.length >= 4){
-        addBtn.style.display = 'none';
-      } else {
-        addBtn.style.display = '';
-        addBtn.disabled = false;
-      }
-    }
-    const delBtn2 = $('#delPageBtn');
-    if(delBtn2){
-      delBtn2.style.display = '';
-      delBtn2.disabled = mobile.pages.length <= 1;
     }
     const prevBtn = $('#prevPageBtn');
     if(prevBtn){
@@ -4597,27 +4577,7 @@ requestAnimationFrame(() => {
   }
 
   function wireTopBar(){
-    const addBtn = $('#addPageBtn');
-    if(addBtn) addBtn.onclick = ()=>{
-      if(mobile.pages.length >= 4) return;
-      saveHistory();
-      mobile.pages.push({ bars: [ { cols:[null] } ] });
-      mobile.currentPage = mobile.pages.length - 1;
-      renderMobilePages();
-      requestAnimationFrame(()=> scrollToCurrentPage());
-    };
-    const delBtn = $('#delPageBtn');
-    if(delBtn) delBtn.onclick = ()=>{
-      if(mobile.pages.length <= 1) return;
-      confirmPopup('Delete PAGE '+(mobile.currentPage+1)+'?', ()=>{
-        saveHistory();
-        const p = mobile.pages[mobile.currentPage];
-        p.bars.forEach(b => b.cols.forEach(id => { if(id!=null) delete mobile.mobileNodes[id]; }));
-        mobile.pages.splice(mobile.currentPage,1);
-        if(mobile.currentPage >= mobile.pages.length) mobile.currentPage = mobile.pages.length-1;
-        renderMobilePages();
-      });
-    };
+    // Page add/delete removed — always 4 pages.
   }
 
   function wireBottomBarSwipe(){
