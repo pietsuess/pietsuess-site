@@ -2318,59 +2318,38 @@ function _isSingleOutputType(type){
 // where each modArr is sorted top-to-bottom.
 function _computeMobileLayoutHints(instanceList){
   // instanceList: [{uuid, type, x, y, pinned}, ...]
+  // Spread-first distribution: maximize pages used before stacking bars, then cols.
+  // Iteration order for slot assignment:
+  //   (page 0, bar 0, col 0), (page 1, bar 0, col 0), ... (page 5, bar 0, col 0),
+  //   (page 0, bar 1, col 0), ... (page 5, bar 5, col 0),
+  //   (page 0, bar 0, col 1), ... etc.
+  // This means: one node per bar per page first, then add bars per page, then cols.
   const unpinned = instanceList.filter(i => !i.pinned);
   if(unpinned.length === 0) return {};
-  // Sort by X then Y
+  const MAX_PAGES = 6;
+  const MAX_BARS = 6;
+  const MAX_COLS = 4;
+  // Deterministic order: by desktop X then Y (preserves rough left-to-right arrangement).
   const sorted = [...unpinned].sort((a,b) => a.x - b.x || a.y - b.y);
-  const bars = [];
-  const THRESH = 92;
-  sorted.forEach(inst => {
-    // Find a bar whose average X is within THRESH
-    let placed = false;
-    for(const bar of bars){
-      const avgX = bar.reduce((s,m)=>s+m.x,0) / bar.length;
-      if(Math.abs(inst.x - avgX) <= THRESH){ bar.push(inst); placed = true; break; }
-    }
-    if(!placed) bars.push([inst]);
-  });
-  // Sort bars left-to-right
-  bars.sort((a,b) => {
-    const ax = a.reduce((s,m)=>s+m.x,0)/a.length;
-    const bx = b.reduce((s,m)=>s+m.x,0)/b.length;
-    return ax - bx;
-  });
-  // Within each bar, sort by Y (columns = rank)
-  bars.forEach(bar => bar.sort((a,b) => a.y - b.y));
-  // Enforce mobile constraint: each bar has MAX 4 columns.
-  // If a cluster has >4 modules, split into ceil(n/4) consecutive sub-bars.
-  const MAX_COLS_PER_BAR = 4;
-  const splitBars = [];
-  bars.forEach(bar => {
-    if(bar.length <= MAX_COLS_PER_BAR){
-      splitBars.push(bar);
-    } else {
-      for(let i = 0; i < bar.length; i += MAX_COLS_PER_BAR){
-        splitBars.push(bar.slice(i, i + MAX_COLS_PER_BAR));
+  const hints = {};
+  let i = 0;
+  outer:
+  for(let col = 0; col < MAX_COLS; col++){
+    for(let bar = 0; bar < MAX_BARS; bar++){
+      for(let page = 0; page < MAX_PAGES; page++){
+        if(i >= sorted.length) break outer;
+        hints[sorted[i].uuid] = { page, bar, col };
+        i++;
       }
     }
-  });
-  // Distribute bars across pages (6 bars per page; mobile supports pages 0..5)
-  const BARS_PER_PAGE = 6;
-  const MAX_PAGES = 6;
-  const hints = {};
-  splitBars.forEach((bar, barGlobalIdx) => {
-    let page = Math.floor(barGlobalIdx / BARS_PER_PAGE);
-    let barOnPage = barGlobalIdx % BARS_PER_PAGE;
-    if(page >= MAX_PAGES){
-      // Overflow: clamp to last page, pile onto last bar (defensive; unlikely for real patches)
-      page = MAX_PAGES - 1;
-      barOnPage = BARS_PER_PAGE - 1;
-      try { console.warn('[SFX mobile layout] bar overflow beyond', MAX_PAGES*BARS_PER_PAGE, 'bars; clamping'); } catch(_){}
+  }
+  if(i < sorted.length){
+    // Overflow past 144 slots: clamp remaining onto last slot (defensive)
+    try { console.warn('[SFX mobile layout] >144 modules; clamping overflow'); } catch(_){}
+    for(; i < sorted.length; i++){
+      hints[sorted[i].uuid] = { page: MAX_PAGES-1, bar: MAX_BARS-1, col: MAX_COLS-1 };
     }
-    bar.forEach((inst, col) => {
-      hints[inst.uuid] = { page, bar: barOnPage, col };
-    });
-  });
+  }
   return hints;
 }
 

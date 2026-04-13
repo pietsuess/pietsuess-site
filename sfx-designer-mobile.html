@@ -5300,11 +5300,12 @@ requestAnimationFrame(() => {
       if(mh && Number.isFinite(mh.page) && Number.isFinite(mh.bar) && Number.isFinite(mh.col)){
         page = mh.page; bar = mh.bar; col = mh.col;
       } else {
-        // Auto-distribute: fill pages sequentially, 1 col per bar for simplicity
+        // Auto-distribute SPREAD-FIRST: iterate page (fastest), then bar, then col.
+        // Fills (page0..5 bar0 col0), then (page0..5 bar1 col0), ..., (page0..5 bar5 col3).
         page = autoPage; bar = autoBar; col = autoCol;
-        autoCol++;
-        if(autoCol >= MAX_COLS){ autoCol = 0; autoBar++; }
-        if(autoBar >= MAX_BARS){ autoBar = 0; autoPage = Math.min(MAX_PAGES-1, autoPage + 1); }
+        autoPage++;
+        if(autoPage >= MAX_PAGES){ autoPage = 0; autoBar++; }
+        if(autoBar >= MAX_BARS){ autoBar = 0; autoCol = Math.min(MAX_COLS-1, autoCol + 1); }
       }
       // Clamp base values
       if(page < 0) page = 0;
@@ -5337,7 +5338,28 @@ requestAnimationFrame(() => {
           if(col < MAX_COLS){
             while(tgt.cols.length <= col) tgt.cols.push(null);
             if(tgt.cols[col] == null) return { pIdx: page, bIdx: bar, cIdx: col };
-            // Occupied: fall through to find next empty col in this bar
+          }
+        }
+        // SPREAD-FIRST: before packing current page further, try same (bar,col) on OTHER pages.
+        if(col < MAX_COLS){
+          for(let p = 0; p < MAX_PAGES; p++){
+            if(p === page) continue;
+            if(p >= mobile.pages.length) mobile.pages.push({ bars: [ { cols: [null] } ] });
+            const np = mobile.pages[p];
+            if(!Array.isArray(np.bars)) np.bars = [];
+            while(np.bars.length <= bar && np.bars.length < MAX_BARS) np.bars.push({ cols: [null] });
+            if(bar < np.bars.length){
+              const ntgt = np.bars[bar];
+              if(!Array.isArray(ntgt.cols)) ntgt.cols = [];
+              while(ntgt.cols.length <= col) ntgt.cols.push(null);
+              if(ntgt.cols[col] == null) return { pIdx: p, bIdx: bar, cIdx: col };
+            }
+          }
+        }
+        // Fall back to next empty col in requested bar on current page
+        if(bar < pg.bars.length){
+          const tgt = pg.bars[bar];
+          if(Array.isArray(tgt.cols)){
             for(let c = 0; c < MAX_COLS; c++){
               if(tgt.cols[c] == null){ return { pIdx: page, bIdx: bar, cIdx: c }; }
             }
@@ -6123,6 +6145,8 @@ requestAnimationFrame(() => {
   }
 
   let _cableSegments = []; // for hit-testing: [{x1,y1,x2,y2,cableIdx}]
+  let _lastCableTap = null; // { cableIdx, time } — for double-tap disconnect detection
+  let _cableTapHighlight = null; // { cableIdx, until } — brief visual feedback after first tap
 
   function drawAllMobileCables(){
     if(!mobCableCtx) return;
@@ -6229,6 +6253,24 @@ requestAnimationFrame(() => {
       const from = jackCenter(mobile.armed.nodeId, mobile.armed.idx, 'output');
       if(from){
         drawBezier(mobCableCtx, from.x, from.y, mobile.armed.px, mobile.armed.py, '#ffe000');
+      }
+    }
+    // Brief highlight overlay on cable awaiting second tap (double-tap disconnect feedback)
+    if(_cableTapHighlight && Date.now() < _cableTapHighlight.until){
+      for(const seg of _cableSegments){
+        if(seg.cableIdx === _cableTapHighlight.cableIdx){
+          mobCableCtx.save();
+          mobCableCtx.strokeStyle = '#ffffff';
+          mobCableCtx.lineWidth = 6;
+          mobCableCtx.globalAlpha = 0.6;
+          mobCableCtx.lineCap = 'round';
+          const midY = (seg.y1 + seg.y2) / 2 + Math.abs(seg.x2 - seg.x1) * 0.1;
+          mobCableCtx.beginPath();
+          mobCableCtx.moveTo(seg.x1, seg.y1);
+          mobCableCtx.bezierCurveTo(seg.x1, midY, seg.x2, midY, seg.x2, seg.y2);
+          mobCableCtx.stroke();
+          mobCableCtx.restore();
+        }
       }
     }
   }
@@ -6374,7 +6416,7 @@ requestAnimationFrame(() => {
       }
       return;
     }
-    // Tapping elsewhere: check if a cable segment was tapped
+    // Tapping elsewhere: check if a cable segment was tapped (requires DOUBLE-TAP to disconnect)
     if(!mobile.armed){
       const x = e.clientX, y = e.clientY;
       let bestIdx = -1, bestD = 14;
@@ -6384,7 +6426,25 @@ requestAnimationFrame(() => {
       }
       if(bestIdx >= 0){
         e.preventDefault();
-        removeCable(bestIdx);
+        const now = Date.now();
+        const DOUBLE_TAP_MS = 400;
+        if(_lastCableTap && _lastCableTap.cableIdx === bestIdx && (now - _lastCableTap.time) <= DOUBLE_TAP_MS){
+          // Second tap on same cable within window — disconnect
+          _lastCableTap = null;
+          _cableTapHighlight = null;
+          removeCable(bestIdx);
+        } else {
+          // First tap: record and show brief highlight
+          _lastCableTap = { cableIdx: bestIdx, time: now };
+          _cableTapHighlight = { cableIdx: bestIdx, until: now + DOUBLE_TAP_MS };
+          scheduleCableDraw();
+          setTimeout(() => {
+            if(_cableTapHighlight && _cableTapHighlight.cableIdx === bestIdx){
+              _cableTapHighlight = null;
+              scheduleCableDraw();
+            }
+          }, DOUBLE_TAP_MS + 10);
+        }
         return;
       }
     }
