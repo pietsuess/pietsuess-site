@@ -5593,8 +5593,11 @@ requestAnimationFrame(() => {
     }
     if(!Array.isArray(mobile.masterBars)) mobile.masterBars = [];
     if(!Array.isArray(mobile.cables)) mobile.cables = [];
-    // Seed default INPUT MIX -> MASTER cable (explicit, user-tappable to disconnect)
-    if(mobile.inputMixId != null && mobile.masterId != null){
+    // Seed default INPUT MIX -> MASTER cable ONLY when we just created one of the
+    // pinned nodes (fresh session / import). Otherwise, if the user has explicitly
+    // disconnected this cable, re-seeding here would instantly re-create it on the
+    // next drawer render — blocking the tap-to-disconnect gesture on MASTER input.
+    if((createdInputMix || createdMaster) && mobile.inputMixId != null && mobile.masterId != null){
       const hasDefault = mobile.cables.some(c =>
         c.fromNodeId === mobile.inputMixId && c.toNodeId === mobile.masterId);
       if(!hasDefault){
