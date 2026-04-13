@@ -2387,16 +2387,27 @@ function buildV2Preset(name){
     });
   });
 
+  // Build set of module indices referenced by cables (either endpoint)
+  const usedModIdx = new Set();
+  cables.forEach(c => {
+    usedModIdx.add(c.fromMod);
+    usedModIdx.add(c.toMod);
+  });
+
   // Build instance list with screen positions (for mobile hint computation)
+  // Only include modules that are pinned OR cable-connected — skip unused defaults
+  // so presets stay lean and don't clutter mobile imports with disconnected nodes.
   const modIdxToUuid = {};
   const rawList = [];
   Object.keys(desktopInstances).forEach(uuid => {
     const inst = desktopInstances[uuid];
+    const pinned = _isPinnedType(inst.type);
+    if(!pinned && !usedModIdx.has(inst.modIdx)) return; // skip unused
     modIdxToUuid[inst.modIdx] = uuid;
     const dom = inst.domEl;
     const x = parseFloat(dom.style.left) || 0;
     const y = parseFloat(dom.style.top) || 0;
-    rawList.push({ uuid, inst, x, y, pinned: _isPinnedType(inst.type) });
+    rawList.push({ uuid, inst, x, y, pinned });
   });
   const mobileHints = _computeMobileLayoutHints(rawList);
 
