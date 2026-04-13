@@ -151,7 +151,7 @@
   /* Cable overlay */
   #cableCanvas { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:0; opacity:0.25; }
   /* Mobile cable overlay — above nodes so tap-to-disconnect works, but below modals */
-  #mobileCableCanvas { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:5; }
+  #mobileCableCanvas { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:950; }
   /* Armed state: highlight valid input targets, no dimming */
   body.armed .nodeJack.input { outline:2px solid #ffe000; outline-offset:2px; box-shadow:0 0 10px #ffe000aa; animation:armedPulse 1s ease-in-out infinite; }
   body.armed .nodeJack.armed-source { outline:2px solid #ff69b4; outline-offset:2px; box-shadow:0 0 14px #ff69b4; }
@@ -5777,6 +5777,12 @@ requestAnimationFrame(() => {
     d.classList.add('open');
     d.setAttribute('aria-hidden','false');
     renderMasterDrawer();
+    // Schedule redraws during/after the 280ms slide-in so the default
+    // INPUT MIX -> MASTER cable renders once jacks settle into place.
+    scheduleCableDraw();
+    setTimeout(scheduleCableDraw, 60);
+    setTimeout(scheduleCableDraw, 160);
+    setTimeout(scheduleCableDraw, 320);
   }
   function closeMasterDrawer(){
     mobile.drawerOpen = false;
