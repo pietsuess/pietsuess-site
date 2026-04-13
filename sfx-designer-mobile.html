@@ -470,7 +470,11 @@
 <div id="mobileShell">
   <div id="mobileTopBar">
     <button id="hamburgerBtn" aria-label="Menu">☰</button>
-    <div id="pageBoxes" role="tablist" aria-label="Pages"></div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button id="prevPageBtn" aria-label="Previous page">◀</button>
+      <div id="pageBoxes" role="tablist" aria-label="Pages"></div>
+      <button id="nextPageBtn" aria-label="Next page">▶</button>
+    </div>
     <div style="display:flex;gap:4px;">
       <button id="addPageBtn" aria-label="Add page" style="font-size:28px;line-height:1;">+</button>
       <button id="delPageBtn" class="xGlyph" aria-label="Delete page">×</button>
@@ -4201,6 +4205,26 @@ requestAnimationFrame(() => {
     }
     const addBtn = $('#addPageBtn');
     if(addBtn) addBtn.disabled = mobile.pages.length >= 4;
+    const prevBtn = $('#prevPageBtn');
+    if(prevBtn){
+      prevBtn.disabled = mobile.currentPage <= 0;
+      prevBtn.onclick = ()=>{
+        if(mobile.currentPage > 0){
+          mobile.currentPage--;
+          scrollToCurrentPage();
+        }
+      };
+    }
+    const nextBtn = $('#nextPageBtn');
+    if(nextBtn){
+      nextBtn.disabled = mobile.currentPage >= mobile.pages.length - 1;
+      nextBtn.onclick = ()=>{
+        if(mobile.currentPage < mobile.pages.length - 1){
+          mobile.currentPage++;
+          scrollToCurrentPage();
+        }
+      };
+    }
   }
 
   function attachBarReorder(headerEl, pIdx, bIdx){
