@@ -165,6 +165,32 @@
   .module.collapsed-knobs .solo-btn { display:none; }
   /* Cable overlay */
   #cableCanvas { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:0; opacity:0.25; }
+  /* Mobile cable overlay — above nodes so tap-to-disconnect works, but below modals */
+  #mobileCableCanvas { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:5; }
+  /* Armed state: dim everything except valid input targets */
+  body.armed #pageContainer .mobileNode,
+  body.armed #pageContainer .mobileBar,
+  body.armed #pageContainer .pageInner > button,
+  body.armed #mobileTopBar button,
+  body.armed #mobileTopBar .pageBox,
+  body.armed #mobileBottomBar { opacity:0.3; transition:opacity 0.15s; }
+  body.armed #pageContainer .mobileNode { pointer-events:none; }
+  body.armed #pageContainer .mobileNode .nodeJack.input { pointer-events:auto; opacity:1; outline:2px solid #ffe000; outline-offset:2px; box-shadow:0 0 10px #ffe000aa; animation:armedPulse 1s ease-in-out infinite; }
+  body.armed .mobileNode.hasArmedSource { opacity:1 !important; pointer-events:auto; }
+  body.armed .nodeJack.armed-source { opacity:1 !important; outline:2px solid #ff69b4; outline-offset:2px; box-shadow:0 0 14px #ff69b4; }
+  @keyframes armedPulse { 0%,100% { box-shadow:0 0 8px #ffe00088; } 50% { box-shadow:0 0 16px #ffe000ff; } }
+  #armedBanner {
+    position:fixed; top:44px; left:0; right:0; z-index:1002;
+    background:#0a0a14; color:#ffe000; border-top:2px solid #ffe000; border-bottom:2px solid #ffe000;
+    padding:10px 14px; text-align:center; font-family:inherit; font-size:12px; letter-spacing:2px;
+    display:none; pointer-events:none;
+  }
+  body.armed #armedBanner { display:block; }
+  .nodeJack { touch-action:none; }
+  .mobileNode .nodeJack.input.connected { background:#00ffcc66; box-shadow:0 0 6px #00ffcc; }
+  .mobileNode .nodeJack.output.connected { background:#ff69b466; box-shadow:0 0 6px #ff69b4; }
+  /* Page-edge ghost endpoint (cross-page cable) */
+  .pageEdgeStub { position:absolute; width:12px; height:12px; border-radius:50%; pointer-events:none; z-index:4; }
   .out-sel-row { display:flex; gap:3px; margin-bottom:4px; justify-content:center; }
   .out-sel-btn { width:20px; height:16px; border:1px solid #555; background:#111; color:#888; font-family:inherit; font-size:8px; cursor:pointer; text-align:center; line-height:16px; }
   .out-sel-btn.active { border-color:#ffe000; color:#ffe000; background:rgba(255,224,0,0.15); }
@@ -500,6 +526,8 @@
       <button id="nextPageBtn" aria-label="Next page">▶</button>
     </div>
   </div>
+  <div id="armedBanner">TAP INPUT TO CONNECT — TAP OUTPUT AGAIN TO CANCEL</div>
+  <canvas id="mobileCableCanvas"></canvas>
   <div id="pageContainer">
     <div class="mobilePage" data-page="0">
       <div class="pageLabel">PAGE 1</div>
@@ -3773,6 +3801,12 @@ requestAnimationFrame(() => {
     expanded: {},
     expandedNodeId: null,
     currentOut: {},
+    cables: [],       // [{fromNodeId,fromIdx,toNodeId,toIdx,color,fromPage,toPage}]
+    armed: null,      // {nodeId, idx} when output jack tapped
+    audio: {},        // nodeId -> {ins:[GainNode], outs:[GainNode], sources:[...], inGain?, outGain?}
+    playing: false,
+    masterIn: null,   // GainNode that feeds masterOut when mobile plays
+    cableDirty: true,
   };
   window.mobile = mobile;
 
@@ -3939,10 +3973,23 @@ requestAnimationFrame(() => {
     if(count <= 0) return null;
     const row = el('div','nodeJacks '+side);
     const kind = (side === 'top') ? 'input' : 'output';
+    const nodeId = node._renderId;
     for(let i=0;i<count;i++){
       const j = el('div','nodeJack '+kind);
       j.dataset.jack = kind;
+      j.dataset.jackType = kind;
       j.dataset.index = i;
+      j.dataset.jackIdx = i;
+      if(nodeId != null) j.dataset.nodeId = nodeId;
+      // Mark connected for rendering in current cables
+      if(mobile.cables && mobile.cables.some(c =>
+        (kind === 'output' && c.fromNodeId === nodeId && c.fromIdx === i) ||
+        (kind === 'input'  && c.toNodeId   === nodeId && c.toIdx   === i)
+      )) j.classList.add('connected');
+      // Armed-source highlight
+      if(mobile.armed && mobile.armed.nodeId === nodeId && mobile.armed.idx === i && kind === 'output'){
+        j.classList.add('armed-source');
+      }
       row.appendChild(j);
     }
     return row;
@@ -3951,9 +3998,11 @@ requestAnimationFrame(() => {
   function buildNodeEl(nodeId){
     const node = mobile.mobileNodes[nodeId];
     if(!node) return null;
+    node._renderId = nodeId;
     const expanded = (mobile.expandedNodeId === nodeId);
     const nodeEl = el('div','mobileNode '+node.cat + (expanded ? ' expandedFull' : ''));
     nodeEl.dataset.nodeId = nodeId;
+    if(mobile.armed && mobile.armed.nodeId === nodeId) nodeEl.classList.add('hasArmedSource');
 
     // Top jack row (inputs), always shown if applicable
     const topJacks = buildJackRow(node, 'top');
@@ -4668,12 +4717,540 @@ requestAnimationFrame(() => {
     });
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // PHASE 5: Audio engine + tap-to-patch cables
+  // Reuses desktop: audioCtx, masterOut, buildChain, KNOB_DEFS, noiseBufs,
+  //   getTriggerTimes, dropdowns (for waveform etc.), makeDistCurve
+  // ════════════════════════════════════════════════════════════════════
+
+  const PAT_COLORS = ['#ff69b4','#00ffcc','#44aaff','#ffe000','#ff8800','#88ff44','#aa44ff','#ff4444'];
+
+  function catColor(node, fromIdx){
+    if(!node) return '#ff69b4';
+    if(node.cat === 'gen') return '#ff69b4';
+    if(node.cat === 'fx')  return '#00ffcc';
+    if(node.cat === 'mix') return '#ffe000';
+    if(node.cat === 'pat') return PAT_COLORS[(fromIdx||0) % PAT_COLORS.length];
+    return '#88ff44';
+  }
+
+  // Build a full params object (p) for buildChain: node.state overrides, defaults from KNOB_DEFS
+  function paramsForNode(node){
+    const p = {};
+    if(typeof KNOB_DEFS !== 'undefined'){
+      Object.keys(KNOB_DEFS).forEach(k => { p[k] = KNOB_DEFS[k].val; });
+    }
+    // Pull dropdowns (waveform, tremShape, etc.) from desktop global
+    try {
+      if(typeof dropdowns !== 'undefined'){
+        Object.assign(p, dropdowns);
+      }
+    } catch(_){}
+    // Override with this node's state
+    Object.assign(p, node.state || {});
+    return p;
+  }
+
+  // Build audio for a single mobile node. Returns {ins, outs, sources}
+  function buildMobileAudio(nodeId){
+    const node = mobile.mobileNodes[nodeId];
+    if(!node) return null;
+    const [inCount, outCount] = jackCountsFor(node);
+    const ins = [];
+    for(let i=0;i<inCount;i++){ const g = audioCtx.createGain(); g.gain.value = 1; ins.push(g); }
+    const outs = [];
+    for(let i=0;i<Math.max(1,outCount);i++){ const g = audioCtx.createGain(); g.gain.value = 1; outs.push(g); }
+    const sources = [];
+
+    const p = paramsForNode(node);
+
+    if(node.cat === 'gen'){
+      // Generator: no inputs. buildChain needs an inGain (unused by most gens) + outGain.
+      const dummyIn = audioCtx.createGain();
+      const srcs = buildChain(node.type, p, dummyIn, outs[0], null);
+      sources.push(...srcs);
+    } else if(node.cat === 'fx'){
+      // Effect: 1 in -> 1 out (we wire ins[0] to outs[0] via buildChain)
+      const srcs = buildChain(node.type, p, ins[0], outs[0], null);
+      sources.push(...srcs);
+      // Route ins[1..3] straight through so multi-input cables don't vanish
+      for(let i=1;i<inCount;i++){ ins[i].connect(outs[0]); }
+    } else if(node.cat === 'mix'){
+      // Mixer: sum all inputs with per-channel level+amp if present
+      const prefixMap = {'MIX 1':'mix','MIX 2':'mix2','MIX 3':'mix3','MIX 4':'mix4','MIX 5':'mix5'};
+      const prefix = prefixMap[node.type] || 'mix';
+      const sum = audioCtx.createGain(); sum.gain.value = 1;
+      for(let i=0;i<inCount;i++){
+        const lvl = audioCtx.createGain();
+        lvl.gain.value = (p[prefix+'Level'] != null) ? p[prefix+'Level'] : 1;
+        const amp = audioCtx.createGain();
+        amp.gain.value = (p[prefix+'Amp'] != null) ? p[prefix+'Amp'] : 1;
+        ins[i].connect(lvl); lvl.connect(amp); amp.connect(sum);
+      }
+      sum.connect(outs[0]);
+    } else if(node.cat === 'pat'){
+      // Pattern: 4 inputs, 4 outputs, gated by step pattern
+      const bpmKey = (node.knobs||[]).find(k => /Bpm$/i.test(k));
+      const bpm = (bpmKey && node.state[bpmKey]) || 120;
+      const rows = node.patternRows || 4;
+      const cols = node.patternCols || 4;
+      const totalSteps = rows * cols;
+      const stepDur = 60 / bpm / 4;
+      const loopDur = stepDur * totalSteps;
+      const now = audioCtx.currentTime;
+      for(let o=0;o<outCount;o++){
+        const gate = audioCtx.createGain();
+        gate.gain.value = 0;
+        // Schedule pattern gating — use patternSteps as a single track for all outputs
+        for(let t=0; t<600; t+=loopDur){
+          for(let s=0; s<totalSteps; s++){
+            gate.gain.setValueAtTime(node.patternSteps[s] ? 1 : 0, now + t + s * stepDur);
+          }
+        }
+        if(ins[o]) ins[o].connect(gate);
+        gate.connect(outs[o]);
+      }
+    } else if(node.type === 'MASTER'){
+      // Pass-through to outs[0] (we connect outs[0] -> mobile.masterIn externally)
+      ins[0].connect(outs[0]);
+    } else if(node.type === 'INPUT MIX'){
+      const merge = audioCtx.createGain(); merge.gain.value = 1;
+      for(let i=0;i<inCount;i++){
+        const lvl = audioCtx.createGain();
+        lvl.gain.value = (p['inLvl'+i] != null) ? p['inLvl'+i] : 1;
+        ins[i].connect(lvl); lvl.connect(merge);
+      }
+      merge.connect(outs[0]);
+    } else {
+      // fallback pass-through
+      if(ins[0]) ins[0].connect(outs[0]);
+    }
+
+    return { ins, outs, sources };
+  }
+
+  function startMobilePlay(){
+    if(mobile.playing) return;
+    try { if(audioCtx.state === 'suspended') audioCtx.resume(); } catch(_){}
+    // Stop desktop transport if running (avoid double playback)
+    try { if(typeof live !== 'undefined' && live && live.playing) stopPlay(); } catch(_){}
+
+    // Master input bus -> masterOut
+    mobile.masterIn = audioCtx.createGain();
+    mobile.masterIn.gain.value = 1;
+    try { mobile.masterIn.connect(masterOut); } catch(_){}
+
+    // Build audio for every placed node
+    mobile.audio = {};
+    Object.keys(mobile.mobileNodes).forEach(id => {
+      const node = mobile.mobileNodes[id];
+      if(!node) return;
+      const a = buildMobileAudio(id);
+      if(a){ mobile.audio[id] = a; node.audio = a; }
+    });
+
+    // Wire explicit cables
+    const cableTargets = new Set(); // nodeId with at least one outgoing cable
+    mobile.cables.forEach(c => {
+      const from = mobile.audio[c.fromNodeId];
+      const to = mobile.audio[c.toNodeId];
+      if(from && to){
+        const srcOut = from.outs[c.fromIdx] || from.outs[0];
+        const dstIn = to.ins[c.toIdx] || to.ins[0];
+        if(srcOut && dstIn){
+          try { srcOut.connect(dstIn); cableTargets.add(c.fromNodeId); } catch(e){}
+        }
+      }
+    });
+
+    // Implicit routing: any node with outputs but no outgoing cable -> master
+    Object.keys(mobile.audio).forEach(id => {
+      if(cableTargets.has(Number(id)) || cableTargets.has(id)) return;
+      const a = mobile.audio[id];
+      const node = mobile.mobileNodes[id];
+      if(!node || !a) return;
+      const [, outCount] = jackCountsFor(node);
+      if(outCount <= 0) return;
+      // Only route generators / effects / mixers that aren't already patched inward by someone
+      try { a.outs[0].connect(mobile.masterIn); } catch(e){}
+    });
+
+    // Start all sources
+    const now = audioCtx.currentTime;
+    Object.values(mobile.audio).forEach(a => {
+      a.sources.forEach(s => { try { s.start(now); } catch(_){} });
+    });
+
+    mobile.playing = true;
+    const btn = $('#miniPlayBtn');
+    if(btn){ btn.classList.add('playing'); btn.setAttribute('aria-label','Stop'); }
+  }
+
+  function stopMobilePlay(){
+    if(!mobile.playing) return;
+    const toStop = [];
+    Object.values(mobile.audio).forEach(a => { toStop.push(...a.sources); });
+    try {
+      if(mobile.masterIn){
+        const now = audioCtx.currentTime;
+        mobile.masterIn.gain.cancelScheduledValues(now);
+        mobile.masterIn.gain.setValueAtTime(mobile.masterIn.gain.value, now);
+        mobile.masterIn.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      }
+    } catch(_){}
+    setTimeout(() => {
+      toStop.forEach(s => { try { s.stop(); } catch(_){} });
+      Object.values(mobile.audio).forEach(a => {
+        a.ins.forEach(n => { try { n.disconnect(); } catch(_){} });
+        a.outs.forEach(n => { try { n.disconnect(); } catch(_){} });
+      });
+      try { mobile.masterIn && mobile.masterIn.disconnect(); } catch(_){}
+      mobile.masterIn = null;
+      mobile.audio = {};
+    }, 200);
+
+    mobile.playing = false;
+    const btn = $('#miniPlayBtn');
+    if(btn){ btn.classList.remove('playing'); btn.setAttribute('aria-label','Play'); }
+  }
+
+  function rebuildMobileIfPlaying(){
+    if(!mobile.playing) return;
+    stopMobilePlay();
+    setTimeout(startMobilePlay, 230);
+  }
+  // Expose
+  mobile.startPlay = startMobilePlay;
+  mobile.stopPlay = stopMobilePlay;
+  mobile.rebuildIfPlaying = rebuildMobileIfPlaying;
+
+  // ─── Cable rendering ───────────────────────────────────────────────
+  const mobCableCanvas = document.getElementById('mobileCableCanvas');
+  const mobCableCtx = mobCableCanvas ? mobCableCanvas.getContext('2d') : null;
+  function sizeMobCanvas(){
+    if(!mobCableCanvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    mobCableCanvas.width = window.innerWidth * dpr;
+    mobCableCanvas.height = window.innerHeight * dpr;
+    mobCableCanvas.style.width = window.innerWidth + 'px';
+    mobCableCanvas.style.height = window.innerHeight + 'px';
+    if(mobCableCtx) mobCableCtx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', () => { sizeMobCanvas(); mobile.cableDirty = true; });
+
+  function jackCenter(nodeId, idx, type){
+    const sel = '.mobileNode[data-node-id="'+nodeId+'"] .nodeJack.'+type+'[data-jack-idx="'+idx+'"]';
+    const j = document.querySelector(sel);
+    if(!j) return null;
+    const r = j.getBoundingClientRect();
+    return { x: r.left + r.width/2, y: r.top + r.height/2, el: j };
+  }
+
+  function pageElFor(pageIdx){
+    return document.querySelector('#pageContainer .mobilePage[data-page="'+pageIdx+'"]');
+  }
+
+  function nodePageIdx(nodeId){
+    for(let p=0; p<mobile.pages.length; p++){
+      const bars = mobile.pages[p].bars || [];
+      for(let b=0; b<bars.length; b++){
+        if((bars[b].cols||[]).indexOf(nodeId) >= 0) return p;
+      }
+    }
+    return -1;
+  }
+
+  function drawBezier(ctx, x1, y1, x2, y2, color){
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    const midY = (y1 + y2) / 2 + Math.abs(x2 - x1) * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.bezierCurveTo(x1, midY, x2, midY, x2, y2);
+    ctx.stroke();
+    // Endpoint dots
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x1, y1, 4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x2, y2, 4, 0, Math.PI*2); ctx.fill();
+  }
+
+  function drawArrowAtEdge(ctx, x, y, dir, color){
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    const s = 10;
+    if(dir === 'right'){
+      ctx.moveTo(x, y); ctx.lineTo(x - s, y - s/2); ctx.lineTo(x - s, y + s/2);
+    } else {
+      ctx.moveTo(x, y); ctx.lineTo(x + s, y - s/2); ctx.lineTo(x + s, y + s/2);
+    }
+    ctx.closePath(); ctx.fill();
+  }
+
+  let _cableSegments = []; // for hit-testing: [{x1,y1,x2,y2,cableIdx}]
+
+  function drawAllMobileCables(){
+    if(!mobCableCtx) return;
+    mobCableCtx.clearRect(0, 0, mobCableCanvas.width, mobCableCanvas.height);
+    _cableSegments = [];
+    const curPage = mobile.currentPage;
+    const w = window.innerWidth;
+    mobile.cables.forEach((c, idx) => {
+      const fromPage = nodePageIdx(c.fromNodeId);
+      const toPage = nodePageIdx(c.toNodeId);
+      if(fromPage < 0 || toPage < 0) return;
+      const color = c.color || '#ff69b4';
+      if(fromPage === toPage){
+        if(fromPage !== curPage) return; // only draw when on that page
+        const from = jackCenter(c.fromNodeId, c.fromIdx, 'output');
+        const to = jackCenter(c.toNodeId, c.toIdx, 'input');
+        if(!from || !to) return;
+        drawBezier(mobCableCtx, from.x, from.y, to.x, to.y, color);
+        _cableSegments.push({ x1:from.x, y1:from.y, x2:to.x, y2:to.y, cableIdx:idx });
+      } else {
+        // Cross-page: draw stub on whichever page is visible
+        if(curPage === fromPage){
+          const from = jackCenter(c.fromNodeId, c.fromIdx, 'output');
+          if(!from) return;
+          const dirRight = toPage > fromPage;
+          const edgeX = dirRight ? w - 6 : 6;
+          const edgeY = from.y + 40;
+          drawBezier(mobCableCtx, from.x, from.y, edgeX, edgeY, color);
+          drawArrowAtEdge(mobCableCtx, edgeX, edgeY, dirRight ? 'right' : 'left', color);
+          _cableSegments.push({ x1:from.x, y1:from.y, x2:edgeX, y2:edgeY, cableIdx:idx });
+        } else if(curPage === toPage){
+          const to = jackCenter(c.toNodeId, c.toIdx, 'input');
+          if(!to) return;
+          const dirRight = fromPage > toPage;
+          const edgeX = dirRight ? w - 6 : 6;
+          const edgeY = to.y - 40;
+          drawBezier(mobCableCtx, edgeX, edgeY, to.x, to.y, color);
+          drawArrowAtEdge(mobCableCtx, edgeX, edgeY, dirRight ? 'left' : 'right', color);
+          _cableSegments.push({ x1:edgeX, y1:edgeY, x2:to.x, y2:to.y, cableIdx:idx });
+        }
+      }
+    });
+
+    // Drag preview cable while armed
+    if(mobile.armed && mobile.armed.px != null){
+      const from = jackCenter(mobile.armed.nodeId, mobile.armed.idx, 'output');
+      if(from){
+        drawBezier(mobCableCtx, from.x, from.y, mobile.armed.px, mobile.armed.py, '#ffe000');
+      }
+    }
+  }
+
+  function scheduleCableDraw(){
+    mobile.cableDirty = true;
+  }
+  function cableRAF(){
+    if(mobile.cableDirty){
+      mobile.cableDirty = false;
+      drawAllMobileCables();
+    }
+    requestAnimationFrame(cableRAF);
+  }
+
+  // Distance from point to line segment (for tap hit-test)
+  function distToSeg(px, py, x1, y1, x2, y2){
+    const dx = x2-x1, dy = y2-y1;
+    const len2 = dx*dx + dy*dy;
+    if(len2 === 0) return Math.hypot(px-x1, py-y1);
+    let t = ((px-x1)*dx + (py-y1)*dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (x1+t*dx), py - (y1+t*dy));
+  }
+
+  // ─── Tap-to-patch state machine ────────────────────────────────────
+
+  function armOutput(nodeId, idx){
+    const node = mobile.mobileNodes[nodeId];
+    mobile.armed = { nodeId: Number(nodeId), idx: Number(idx), node, color: catColor(node, idx) };
+    document.body.classList.add('armed');
+    renderMobilePages();
+    scheduleCableDraw();
+  }
+
+  function cancelArm(){
+    if(!mobile.armed) return;
+    mobile.armed = null;
+    document.body.classList.remove('armed');
+    renderMobilePages();
+    scheduleCableDraw();
+  }
+
+  function connectCable(toNodeId, toIdx){
+    if(!mobile.armed) return;
+    const { nodeId: fromNodeId, idx: fromIdx, node: fromNode } = mobile.armed;
+    if(fromNodeId === Number(toNodeId) && fromIdx === Number(toIdx)){
+      cancelArm(); return;
+    }
+    // Prevent duplicate identical cable
+    const dupe = mobile.cables.find(c =>
+      c.fromNodeId === fromNodeId && c.fromIdx === fromIdx &&
+      c.toNodeId === Number(toNodeId) && c.toIdx === Number(toIdx));
+    if(dupe){ cancelArm(); return; }
+    saveHistory();
+    const cable = {
+      fromNodeId, fromIdx,
+      toNodeId: Number(toNodeId), toIdx: Number(toIdx),
+      color: catColor(fromNode, fromIdx),
+      fromPage: nodePageIdx(fromNodeId),
+      toPage: nodePageIdx(Number(toNodeId)),
+    };
+    mobile.cables.push(cable);
+    // Live audio update
+    if(mobile.playing && mobile.audio[fromNodeId] && mobile.audio[Number(toNodeId)]){
+      try {
+        const srcOut = mobile.audio[fromNodeId].outs[fromIdx];
+        const dstIn = mobile.audio[Number(toNodeId)].ins[Number(toIdx)];
+        if(srcOut && dstIn) srcOut.connect(dstIn);
+      } catch(e){}
+      // Rebuild to honor implicit -> explicit routing change
+      rebuildMobileIfPlaying();
+    }
+    cancelArm();
+  }
+
+  function removeCable(cableIdx){
+    if(cableIdx < 0 || cableIdx >= mobile.cables.length) return;
+    saveHistory();
+    mobile.cables.splice(cableIdx, 1);
+    if(mobile.playing) rebuildMobileIfPlaying();
+    renderMobilePages();
+    scheduleCableDraw();
+  }
+
+  function removeCablesForNode(nodeId){
+    const removed = [];
+    for(let i = mobile.cables.length-1; i >= 0; i--){
+      const c = mobile.cables[i];
+      if(c.fromNodeId === nodeId || c.toNodeId === nodeId){
+        removed.push(c);
+        mobile.cables.splice(i, 1);
+      }
+    }
+    return removed;
+  }
+
+  // Wrap deleteNode to clean cables
+  const _origDeleteNode = deleteNode;
+  deleteNode = function(nodeId){
+    removeCablesForNode(Number(nodeId));
+    if(mobile.armed && mobile.armed.nodeId === Number(nodeId)) cancelArm();
+    _origDeleteNode(nodeId);
+    scheduleCableDraw();
+    if(mobile.playing) rebuildMobileIfPlaying();
+  };
+
+  // Global pointerdown for jacks + cable hit-test + cancel
+  document.addEventListener('pointerdown', e => {
+    const jack = e.target.closest && e.target.closest('.nodeJack');
+    if(jack){
+      const nodeId = parseInt(jack.dataset.nodeId);
+      const idx = parseInt(jack.dataset.jackIdx);
+      const type = jack.dataset.jackType;
+      if(!isFinite(nodeId) || !isFinite(idx)) return;
+      e.preventDefault(); e.stopPropagation();
+      if(mobile.armed){
+        if(type === 'input'){
+          connectCable(nodeId, idx);
+        } else if(type === 'output'){
+          // Tap same armed output = cancel; tap a different output = re-arm
+          if(mobile.armed.nodeId === nodeId && mobile.armed.idx === idx){
+            cancelArm();
+          } else {
+            cancelArm(); armOutput(nodeId, idx);
+          }
+        }
+      } else {
+        if(type === 'output'){
+          armOutput(nodeId, idx);
+        } else if(type === 'input'){
+          // Tap input → disconnect incoming cable (if any)
+          const cableIdx = mobile.cables.findIndex(c => c.toNodeId === nodeId && c.toIdx === idx);
+          if(cableIdx >= 0){
+            confirmPopup('Disconnect this cable?', ()=> removeCable(cableIdx));
+          }
+        }
+      }
+      return;
+    }
+    // Tapping elsewhere: check if a cable segment was tapped
+    if(!mobile.armed){
+      const x = e.clientX, y = e.clientY;
+      let bestIdx = -1, bestD = 14;
+      for(const seg of _cableSegments){
+        const d = distToSeg(x, y, seg.x1, seg.y1, seg.x2, seg.y2);
+        if(d < bestD){ bestD = d; bestIdx = seg.cableIdx; }
+      }
+      if(bestIdx >= 0){
+        e.preventDefault();
+        confirmPopup('Disconnect this cable?', ()=> removeCable(bestIdx));
+        return;
+      }
+    } else {
+      // Armed + tapped outside a jack: cancel
+      if(!e.target.closest('.modalOverlay') && !e.target.closest('.confirmPop')){
+        cancelArm();
+      }
+    }
+  }, true);
+
+  // ESC cancels arm
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && mobile.armed) cancelArm();
+  });
+
+  // Redraw hooks
+  const _origRender = renderMobilePages;
+  renderMobilePages = function(){
+    _origRender();
+    scheduleCableDraw();
+  };
+
+  // Hook scroll on #pageContainer to mark cable dirty
+  document.addEventListener('DOMContentLoaded', () => {
+    const pc = document.getElementById('pageContainer');
+    if(pc) pc.addEventListener('scroll', scheduleCableDraw, { passive:true });
+  });
+
+  // Wire mobile play button (replaces the stub wirePlayButton behavior)
+  function wireMobilePlay(){
+    const btn = $('#miniPlayBtn');
+    if(!btn) return;
+    // Remove any existing handlers by cloning? Simpler: add our handler that stops propagation and runs first.
+    btn.addEventListener('click', e => {
+      e.stopPropagation(); e.preventDefault();
+      if(mobile.playing) stopMobilePlay(); else startMobilePlay();
+    }, true);
+  }
+
+  // When the user commits a knob change, if playing, rebuild that node's audio graph
+  // (Simpler: rebuild entire mobile graph — nodes are few on mobile)
+  // Wrap the pointerup on knob canvas via a MutationObserver-like approach:
+  // Easiest: listen for any change on node.state by hooking into the exisiting
+  // endDrag / commit paths. Since the code writes directly to node.state, we intercept
+  // by polling dirty flags via a setInterval — but cheaper to tap into saveHistory().
+  const _origSaveHistory = saveHistory;
+  saveHistory = function(){
+    _origSaveHistory();
+    if(mobile.playing){
+      // Defer rebuild to let the state write settle
+      clearTimeout(mobile._rebuildT);
+      mobile._rebuildT = setTimeout(() => { rebuildMobileIfPlaying(); }, 120);
+    }
+  };
+
   function init(){
     wireTopBar();
     setupSwipeNav();
     wireBottomBarSwipe();
     wirePlayButton();
+    wireMobilePlay();
+    sizeMobCanvas();
     renderMobilePages();
+    requestAnimationFrame(cableRAF);
   }
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', init);
