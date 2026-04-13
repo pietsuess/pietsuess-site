@@ -5166,15 +5166,32 @@ requestAnimationFrame(() => {
   window.addEventListener('resize', () => { sizeMobCanvas(); mobile.cableDirty = true; });
 
   function jackCenter(nodeId, idx, type){
-    // Prefer jacks in a currently-rendered mobileNode (drawer or page).
-    const sel = '.mobileNode[data-node-id="'+nodeId+'"] .nodeJack.'+type+'[data-jack-idx="'+idx+'"]';
-    let j = document.querySelector(sel);
-    // Fallback: bottom-bar INPUT MIX jacks (only active when drawer is closed)
-    if(!j && type === 'input' && Number(nodeId) === mobile.inputMixId){
-      j = document.querySelector('#bottomBarJacks .nodeJack[data-node-id="'+nodeId+'"][data-jack-idx="'+idx+'"]');
+    // When the drawer is CLOSED, never use drawer-internal jacks — their
+    // DOM elements are translated off-screen via transform:translateY(100%)
+    // and getBoundingClientRect returns stale coords that cause floating cables.
+    const nid = Number(nodeId);
+    const isDrawer = isDrawerNode(nid);
+    let j = null;
+    if(isDrawer && !mobile.drawerOpen){
+      // Only INPUT MIX inputs have a visible proxy (bottom-bar jacks) when closed.
+      if(type === 'input' && nid === mobile.inputMixId){
+        j = document.querySelector('#bottomBarJacks .nodeJack[data-node-id="'+nid+'"][data-jack-idx="'+idx+'"]');
+      }
+      if(!j) return null;
+    } else {
+      // Prefer jacks in a currently-rendered mobileNode (drawer or page).
+      const sel = '.mobileNode[data-node-id="'+nodeId+'"] .nodeJack.'+type+'[data-jack-idx="'+idx+'"]';
+      j = document.querySelector(sel);
+      // Fallback: bottom-bar INPUT MIX jacks (only active when drawer is closed)
+      if(!j && type === 'input' && nid === mobile.inputMixId){
+        j = document.querySelector('#bottomBarJacks .nodeJack[data-node-id="'+nid+'"][data-jack-idx="'+idx+'"]');
+      }
     }
     if(!j) return null;
     const r = j.getBoundingClientRect();
+    // Guard: if jack is off-screen or has zero size, treat as hidden.
+    if(r.width === 0 && r.height === 0) return null;
+    if(r.bottom < 0 || r.top > window.innerHeight + 200) return null;
     return { x: r.left + r.width/2, y: r.top + r.height/2, el: j };
   }
 
@@ -5249,8 +5266,13 @@ requestAnimationFrame(() => {
       const fromPage = fromIsDrawer ? 'm' : nodePageIdx(c.fromNodeId);
       const toPage = toIsDrawer ? 'm' : nodePageIdx(c.toNodeId);
       if(fromPage === -1 || toPage === -1) return;
-      // Drawer cables only draw when drawer is open — unless it's an INPUT MIX cable
-      // (those render via bottom-bar jacks when the drawer is closed)
+      // Drawer-to-drawer cables (e.g. default INPUT MIX -> MASTER, or insert chains):
+      // ONLY render when drawer is open. They are internal to the drawer view and
+      // their jack coordinates are invalid when the drawer is translated off-screen.
+      if(fromIsDrawer && toIsDrawer && !mobile.drawerOpen) return;
+      // Drawer-involving cables where only one endpoint is a drawer node: allow only
+      // if the drawer endpoint is the INPUT MIX (which has a bottom-bar proxy) OR
+      // the drawer is open.
       if((fromIsDrawer || toIsDrawer) && !mobile.drawerOpen && !inputMixCable) return;
       // Non-drawer cables: hide while drawer is open (drawer covers the page)
       if(!fromIsDrawer && !toIsDrawer && mobile.drawerOpen) return;
@@ -5774,6 +5796,9 @@ requestAnimationFrame(() => {
     mobile.drawerOpen = true;
     const d = document.getElementById('masterDrawer');
     if(!d) return;
+    // Clear canvas immediately so bottom-bar-routed cables from the closed state
+    // don't leave ghost traces while the drawer slides in.
+    if(mobCableCtx) mobCableCtx.clearRect(0, 0, mobCableCanvas.width, mobCableCanvas.height);
     d.classList.add('open');
     d.setAttribute('aria-hidden','false');
     renderMasterDrawer();
@@ -5788,9 +5813,17 @@ requestAnimationFrame(() => {
     mobile.drawerOpen = false;
     const d = document.getElementById('masterDrawer');
     if(!d) return;
+    // Clear canvas immediately so drawer-internal cables drawn to now-stale
+    // DOM coordinates don't remain visible during/after the slide-out.
+    if(mobCableCtx) mobCableCtx.clearRect(0, 0, mobCableCanvas.width, mobCableCanvas.height);
     d.classList.remove('open');
     d.setAttribute('aria-hidden','true');
+    // Follow-up redraws during/after the 280ms slide-out so cables re-anchor
+    // to bottom-bar jacks once the drawer's DOM has finished translating.
     scheduleCableDraw();
+    setTimeout(scheduleCableDraw, 60);
+    setTimeout(scheduleCableDraw, 160);
+    setTimeout(scheduleCableDraw, 320);
   }
 
   function wireMasterDrawerUI(){
