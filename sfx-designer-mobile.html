@@ -4204,7 +4204,19 @@ requestAnimationFrame(() => {
       }
     }
     const addBtn = $('#addPageBtn');
-    if(addBtn) addBtn.disabled = mobile.pages.length >= 4;
+    if(addBtn){
+      if(mobile.pages.length >= 4){
+        addBtn.style.display = 'none';
+      } else {
+        addBtn.style.display = '';
+        addBtn.disabled = false;
+      }
+    }
+    const delBtn2 = $('#delPageBtn');
+    if(delBtn2){
+      delBtn2.style.display = '';
+      delBtn2.disabled = mobile.pages.length <= 1;
+    }
     const prevBtn = $('#prevPageBtn');
     if(prevBtn){
       prevBtn.disabled = mobile.currentPage <= 0;
