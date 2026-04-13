@@ -5094,6 +5094,259 @@ requestAnimationFrame(() => {
     return true;
   }
 
+  // ─────────────────────────────────────────────────────────────────────
+  // V2 UNIFIED PRESET SCHEMA (cross-platform with desktop)
+  // ─────────────────────────────────────────────────────────────────────
+
+  // Find a node's {page,bar,col} position on mobile pages, or null if in drawer / unplaced.
+  function findMobileNodeLocation(nodeId){
+    const nid = Number(nodeId);
+    for(let p=0; p<mobile.pages.length; p++){
+      const bars = mobile.pages[p].bars || [];
+      for(let b=0; b<bars.length; b++){
+        const cols = bars[b].cols || [];
+        for(let c=0; c<cols.length; c++){
+          if(cols[c] === nid) return { page:p, bar:b, col:c };
+        }
+      }
+    }
+    return null;
+  }
+
+  function serializeMobileStateV2(name){
+    const instances = [];
+    Object.keys(mobile.mobileNodes).forEach(idNum => {
+      const nid = Number(idNum);
+      const v = mobile.mobileNodes[nid];
+      if(!v) return;
+      const idStr = 'm_' + nid;
+      // States: copy as-is (array of 4 for gen/fx/pat, array of 4 for pinned but only [0] used).
+      const states = JSON.parse(JSON.stringify(v.states || []));
+      // Dropdowns: mobile does not currently track per-output dropdowns per-node.
+      // Emit an empty object per output to mirror the states array shape.
+      const slotCount = states.length || 1;
+      const dropdowns = Array.from({length: slotCount}, () => ({}));
+      const patternStates = (v.cat === 'pat' && v.patternStates)
+        ? JSON.parse(JSON.stringify(v.patternStates))
+        : null;
+      const loc = findMobileNodeLocation(nid);
+      const mobHint = loc ? { page: loc.page, bar: loc.bar, col: loc.col } : null;
+      // Default desktop layout hint based on mobile position (will be refined in Phase D).
+      let deskHint;
+      if(loc){
+        deskHint = {
+          x: loc.bar * 250 + loc.col * 60,
+          y: loc.page * 100 + loc.bar * 80,
+          w: 180,
+          tb: 0,
+        };
+      } else {
+        deskHint = { x: 0, y: 0, w: 180, tb: 0 };
+      }
+      const inst = {
+        id: idStr,
+        type: v.type,
+        pinned: v.pinned === true,
+        selectedOutput: v.selectedOutput || 0,
+        bypass: v.bypass || false,
+        states,
+        dropdowns,
+        layoutHints: { desktop: deskHint, mobile: mobHint || { page: 0, bar: 0, col: 0 } },
+      };
+      if(patternStates) inst.patternStates = patternStates;
+      instances.push(inst);
+    });
+
+    const cables = (mobile.cables || []).map(c => ({
+      fromId: 'm_' + Number(c.fromNodeId),
+      fromIdx: c.fromIdx || 0,
+      toId: 'm_' + Number(c.toNodeId),
+      toIdx: c.toIdx || 0,
+      color: c.color || '#ff69b4',
+    }));
+
+    return {
+      version: 2,
+      name: name || '',
+      instances,
+      cables,
+      meta: {
+        createdOn: 'mobile',
+        savedAt: new Date().toISOString(),
+      },
+    };
+  }
+
+  function isV2Preset(obj){
+    return !!(obj && typeof obj === 'object' && obj.version === 2 && Array.isArray(obj.instances));
+  }
+
+  function restoreMobileStateV2(preset){
+    if(!isV2Preset(preset)) return false;
+    // Stop audio playback if running
+    try {
+      if(mobile.playing){
+        const playBtn = document.getElementById('miniPlayBtn');
+        if(playBtn && playBtn.classList.contains('playing')) playBtn.click();
+      }
+    } catch(_){}
+
+    mobile.expandedNodeId = null;
+    mobile.expanded = {};
+    mobile.armed = null;
+
+    // Fresh state
+    mobile.mobileNodes = {};
+    mobile.pages = [
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
+    ];
+    mobile.masterBars = [];
+    mobile.cables = [];
+    mobile.currentOut = {};
+    mobile.inputMixId = null;
+    mobile.masterId = null;
+    mobile.nextNodeId = 1;
+
+    // Map v2 string ids -> mobile numeric ids
+    const idMap = {};
+
+    // Track a running page cursor for instances with no mobile hint (came from desktop-only)
+    let autoPage = 0, autoBar = 0, autoCol = 0;
+
+    preset.instances.forEach(inst => {
+      const cat = CATALOG_BY_NAME[inst.type];
+      const isInputMix = (inst.type === 'INPUT MIX');
+      const isMaster = (inst.type === 'MASTER');
+      let knobs, catName, isPattern;
+      if(cat){
+        knobs = cat[2];
+        catName = cat[1];
+        isPattern = !!cat[3];
+      } else if(isInputMix){
+        knobs = ['inLvl0','inLvl1','inLvl2','inLvl3','inLvl4','inLvl5','inLvl6','inLvl7'];
+        catName = 'mix';
+        isPattern = false;
+      } else if(isMaster){
+        knobs = ['masterGain'];
+        catName = 'out';
+        isPattern = false;
+      } else {
+        // Unknown type — skip
+        return;
+      }
+
+      const nid = mobile.nextNodeId++;
+      idMap[inst.id] = nid;
+      // Build states: use provided if present, otherwise init
+      let states;
+      if(Array.isArray(inst.states) && inst.states.length > 0){
+        states = JSON.parse(JSON.stringify(inst.states));
+        // Ensure 4 slots for non-pinned gen/fx/pat; pinned nodes use 4 too but only [0] active.
+        while(states.length < 4) states.push(buildInitialState(knobs));
+      } else {
+        states = [0,1,2,3].map(()=> buildInitialState(knobs));
+      }
+      let patternStates = null;
+      if(isPattern){
+        if(Array.isArray(inst.patternStates) && inst.patternStates.length > 0){
+          patternStates = JSON.parse(JSON.stringify(inst.patternStates));
+          while(patternStates.length < 4) patternStates.push(buildInitialPatternState(4,4));
+        } else {
+          patternStates = [0,1,2,3].map(()=> buildInitialPatternState(4,4));
+        }
+      }
+
+      const node = {
+        type: inst.type,
+        cat: catName,
+        knobs,
+        isPattern,
+        states,
+        patternStates,
+        selectedOutput: inst.selectedOutput || 0,
+        pinned: !!inst.pinned,
+        bypass: !!inst.bypass,
+        _renderId: nid,
+      };
+      attachStateProxy(node);
+      mobile.mobileNodes[nid] = node;
+      mobile.currentOut[nid] = 0;
+
+      // Pinned routing: only INPUT MIX and MASTER. Do NOT place in pages.
+      if(node.pinned && isInputMix){
+        mobile.inputMixId = nid;
+        return;
+      }
+      if(node.pinned && isMaster){
+        mobile.masterId = nid;
+        return;
+      }
+
+      // Place in mobile pages using layoutHints.mobile, else auto-layout
+      const mh = inst.layoutHints && inst.layoutHints.mobile;
+      let page, bar, col;
+      if(mh && Number.isFinite(mh.page) && Number.isFinite(mh.bar) && Number.isFinite(mh.col)){
+        page = mh.page; bar = mh.bar; col = mh.col;
+      } else {
+        // Auto-distribute: fill pages sequentially, 1 col per bar for simplicity
+        page = autoPage; bar = autoBar; col = autoCol;
+        autoCol++;
+        if(autoCol >= 4){ autoCol = 0; autoBar++; }
+        if(autoBar >= 4){ autoBar = 0; autoPage = Math.min(5, autoPage + 1); }
+      }
+      // Clamp & ensure structure
+      if(page < 0) page = 0;
+      if(page >= mobile.pages.length){
+        while(mobile.pages.length <= page) mobile.pages.push({ bars: [ { cols: [null] } ] });
+      }
+      const pg = mobile.pages[page];
+      if(!Array.isArray(pg.bars)) pg.bars = [];
+      while(pg.bars.length <= bar) pg.bars.push({ cols: [null] });
+      const b = pg.bars[bar];
+      if(!Array.isArray(b.cols)) b.cols = [];
+      while(b.cols.length <= col) b.cols.push(null);
+      b.cols[col] = nid;
+    });
+
+    // Ensure pinned INPUT MIX / MASTER exist even if missing from preset
+    if(typeof ensurePinnedNodes === 'function') ensurePinnedNodes();
+
+    // Cables
+    (preset.cables || []).forEach(c => {
+      const fid = idMap[c.fromId];
+      const tid = idMap[c.toId];
+      if(fid == null || tid == null) return;
+      mobile.cables.push({
+        fromNodeId: fid,
+        fromIdx: c.fromIdx || 0,
+        toNodeId: tid,
+        toIdx: c.toIdx || 0,
+        color: c.color || '#ff69b4',
+        fromPage: -1,
+        toPage: -1,
+      });
+    });
+
+    mobile.audio = {};
+    mobile.cableDirty = true;
+
+    if(typeof renderMobilePages === 'function') renderMobilePages();
+    if(typeof renderBottomBarJacks === 'function') renderBottomBarJacks();
+    if(mobile.drawerOpen && typeof renderMasterDrawer === 'function') renderMasterDrawer();
+    return true;
+  }
+
+  // Route any snapshot (v1 or v2) to the right restore path.
+  function restoreAnyPreset(snap){
+    if(isV2Preset(snap)) return restoreMobileStateV2(snap);
+    return restoreMobileState(snap);
+  }
+
   // History-based version: snapshot/restore using saveHistory's shape,
   // falling back to serializeMobileState for richer restores.
   function doMobUndo(){
@@ -5279,7 +5532,7 @@ requestAnimationFrame(() => {
       const presets = readMobPresets();
       const exists = !!presets[name];
       const commit = ()=>{
-        presets[name] = serializeMobileState();
+        presets[name] = serializeMobileStateV2(name);
         writeMobPresets(presets);
         closeMobMenu();
       };
@@ -5321,7 +5574,7 @@ requestAnimationFrame(() => {
           if(mobile.history.length > 10) mobile.history.shift();
           mobile.redoStack.length = 0;
         } catch(_){}
-        restoreMobileState(snap);
+        restoreAnyPreset(snap);
         closeMobMenu();
       }));
     });
@@ -5352,7 +5605,7 @@ requestAnimationFrame(() => {
 
   function doMobExport(){
     try {
-      const snap = serializeMobileState();
+      const snap = serializeMobileStateV2('');
       const blob = new Blob([JSON.stringify(snap, null, 2)], { type:'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -5392,7 +5645,7 @@ requestAnimationFrame(() => {
             if(mobile.history.length > 10) mobile.history.shift();
             mobile.redoStack.length = 0;
           } catch(_){}
-          const ok = restoreMobileState(snap);
+          const ok = restoreAnyPreset(snap);
           if(!ok) console.warn('[mobile] import: invalid snapshot');
           closeMobMenu();
         } catch(e){
