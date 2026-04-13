@@ -64,9 +64,12 @@
   #pageBoxes .pageBox {
     width:32px; height:32px; min-width:32px; min-height:32px;
     padding:0; display:flex; align-items:center; justify-content:center;
-    background:rgba(0,255,204,0.1); color:#00ffcc;
-    border:2px solid #00ffcc; font-family:inherit; font-size:13px;
+    background:rgba(0,255,204,0.1); color:#00ffcc55;
+    border:2px solid #00ffcc33; font-family:inherit; font-size:13px;
     letter-spacing:0; cursor:pointer;
+  }
+  #pageBoxes .pageBox.populated {
+    color:#00ffcc; border-color:#00ffcc;
   }
   #pageBoxes .pageBox.active {
     background:rgba(255,224,0,0.2); border-color:#ffe000; color:#ffe000;
@@ -4355,7 +4358,22 @@ requestAnimationFrame(() => {
       host.innerHTML = '';
       for(let i=0;i<6;i++){
         const b = document.createElement('button');
-        b.className = 'pageBox' + (i === mobile.currentPage ? ' active' : '');
+        let populated = false;
+        const pg = mobile.pages[i];
+        if(pg && pg.bars){
+          for(let bi=0; bi<pg.bars.length && !populated; bi++){
+            const cols = pg.bars[bi] && pg.bars[bi].cols;
+            if(cols){
+              for(let ci=0; ci<cols.length; ci++){
+                const nid = cols[ci];
+                if(nid != null && mobile.mobileNodes[nid]){ populated = true; break; }
+              }
+            }
+          }
+        }
+        b.className = 'pageBox'
+          + (populated ? ' populated' : '')
+          + (i === mobile.currentPage ? ' active' : '');
         b.textContent = String(i+1);
         b.setAttribute('aria-label','Page '+(i+1));
         b.setAttribute('role','tab');
