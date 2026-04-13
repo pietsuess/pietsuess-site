@@ -4176,11 +4176,9 @@ requestAnimationFrame(() => {
       if(mobile.armed && mobile.armed.nodeId === nodeId && mobile.armed.idx === i && kind === 'output'){
         j.classList.add('armed-source');
       }
-      // INPUT MIX inputs: display 1-8 number, and (for drawer render) the page(s)
-      // whose nodes have cables into this jack.
+      // INPUT MIX inputs: display page label(s) of nodes connected to this jack.
+      // (Channel # 1-8 labels are shown only on the collapsed bottom bar, not in the drawer.)
       if(isInputMix && kind === 'input'){
-        const num = el('div','jackNum', String(i+1));
-        j.appendChild(num);
         // Collect page numbers (1-based) of source nodes targeting this jack
         const pages = new Set();
         (mobile.cables||[]).forEach(c=>{
@@ -5441,6 +5439,11 @@ requestAnimationFrame(() => {
       const idx = parseInt(jack.dataset.jackIdx);
       const type = jack.dataset.jackType;
       if(!isFinite(nodeId) || !isFinite(idx)) return;
+      // If user is NOT armed and taps a jack on the collapsed bottom bar,
+      // let the bottom-bar open-drawer gesture handle it instead of disconnecting.
+      if(!mobile.armed && !mobile.drawerOpen && jack.closest('#bottomBarJacks')){
+        return;
+      }
       e.preventDefault(); e.stopPropagation();
       if(mobile.armed){
         if(type === 'input'){
@@ -5857,8 +5860,10 @@ requestAnimationFrame(() => {
     if(!bar) return;
     let startY=0, startX=0, t0=0, tracking=false, moved=false;
     bar.addEventListener('pointerdown', e=>{
-      // Ignore taps on play button or jacks
-      if(e.target.closest('#miniPlayBtn') || e.target.closest('.nodeJack')) return;
+      // PLAY button always plays — skip.
+      if(e.target.closest('#miniPlayBtn')) return;
+      // When armed, a tap on a jack patches a cable — let that flow run.
+      if(mobile.armed && e.target.closest('.nodeJack')) return;
       startY = e.clientY; startX = e.clientX; t0 = Date.now();
       tracking = true; moved = false;
     });
@@ -5877,9 +5882,11 @@ requestAnimationFrame(() => {
       if(!tracking) return;
       const wasTracking = tracking;
       tracking = false;
-      // Tap (no significant drag) opens the drawer
+      // Tap (no significant drag) opens the drawer — any tap on the bottom bar
+      // counts as long as it's not the PLAY button and we're not mid-arm on a jack.
       if(wasTracking && !moved && !mobile.drawerOpen){
-        if(e.target.closest('#miniPlayBtn') || e.target.closest('.nodeJack')) return;
+        if(e.target.closest('#miniPlayBtn')) return;
+        if(mobile.armed && e.target.closest('.nodeJack')) return;
         openMasterDrawer();
         if(navigator.vibrate) navigator.vibrate(10);
       }
