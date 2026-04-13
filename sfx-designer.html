@@ -3433,6 +3433,440 @@ requestAnimationFrame(() => {
     if(te) te.classList.add('connected');
   });
   drawAllCables();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PHASE A: Multi-instance support (UUID layer + spawnModule)
+  // ═══════════════════════════════════════════════════════════════════
+  // Every module (original 49 + any clone) gets a persistent UUID.
+  // desktopInstances[uuid] = { modIdx, domEl, type, isOriginal }
+  // modIdx remains the position-in-DOM index used by cables & audio graph.
+  // Cloned instances get a small red X delete button; originals do not.
+  //
+  // Known Phase A limitation: cloned modules share knob DOM data-ids with
+  // their original, so live knob edits in the UI affect both instances
+  // while playing. modOutputState[modIdx] entries are still per-instance,
+  // so clicking an output selector button on either instance loads that
+  // instance's independent stored state. Phase C preset-load populates
+  // modOutputState directly and does not rely on knob UI, so it will get
+  // fully independent values per instance.
+  // ═══════════════════════════════════════════════════════════════════
+
+  window.desktopInstances = {};
+  function _uuid(){ return 'm_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+
+  // Tag all existing 49 modules with UUIDs
+  document.querySelectorAll('#moduleContainer .module').forEach((mod, i) => {
+    const uuid = _uuid();
+    mod.dataset.uuid = uuid;
+    mod.dataset.isOriginal = '1';
+    desktopInstances[uuid] = { modIdx: i, domEl: mod, type: MOD_NAMES[i], isOriginal: true };
+  });
+
+  // Find an original (template) module by type name
+  function _findOriginalByType(type){
+    for(const uuid in desktopInstances){
+      const inst = desktopInstances[uuid];
+      if(inst.isOriginal && inst.type === type) return inst;
+    }
+    return null;
+  }
+
+  // Wire all event handlers on a cloned module (replicates the four init passes)
+  function _wireClone(mod, newIdx){
+    mod.dataset.modIdx = newIdx;
+
+    // --- Knob canvases: redraw + drag + dbl-click reset (re-init) ---
+    mod.querySelectorAll('.knob-canvas').forEach(canvas => {
+      const id = canvas.dataset.id;
+      if(!KNOB_DEFS[id]) return;
+      try { drawKnob(canvas, id); } catch(e){}
+      let dragging = false, startY = 0, startVal = 0;
+      canvas.addEventListener('mousedown', e => {
+        e.preventDefault();
+        pushUndo();
+        dragging = true; startY = e.clientY; startVal = knobState[id];
+        const onMove = e2 => {
+          if(!dragging) return;
+          const def = KNOB_DEFS[id];
+          const range = def.max - def.min;
+          const sensitivity = e2.shiftKey ? 600 : 150;
+          const delta = (startY - e2.clientY) / sensitivity * range;
+          knobState[id] = Math.max(def.min, Math.min(def.max, startVal + delta));
+          knobState[id] = Math.round(knobState[id] / def.step) * def.step;
+          updateKnobDisplay(id);
+          updateLive();
+        };
+        const onUp = () => { dragging = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+      canvas.addEventListener('dblclick', () => {
+        knobState[id] = KNOB_DEFS[id].val;
+        updateKnobDisplay(id);
+        updateLive();
+      });
+    });
+
+    // --- Knob value text click-to-type ---
+    mod.querySelectorAll('.knob-val').forEach(valEl => {
+      const id = valEl.id.replace(/V$/, '');
+      if(!KNOB_DEFS[id]) return;
+      valEl.addEventListener('click', e => {
+        e.stopPropagation();
+        const def = KNOB_DEFS[id];
+        const input = document.createElement('input');
+        input.className = 'knob-val-input';
+        input.type = 'text';
+        input.value = knobState[id];
+        valEl.style.display = 'none';
+        valEl.parentElement.insertBefore(input, valEl);
+        input.focus(); input.select();
+        const commit = () => {
+          const v = parseFloat(input.value);
+          if(!isNaN(v)){
+            knobState[id] = Math.max(def.min, Math.min(def.max, v));
+            updateKnobDisplay(id);
+            updateLive();
+          }
+          input.remove();
+          valEl.style.display = '';
+        };
+        input.addEventListener('keydown', e2 => {
+          if(e2.key === 'Enter') commit();
+          if(e2.key === 'Escape'){ input.remove(); valEl.style.display = ''; }
+        });
+        input.addEventListener('blur', commit);
+      });
+    });
+
+    // --- Per-module modKnobIds / modOutputState / selectedOutput ---
+    const kids = [];
+    mod.querySelectorAll('.knob-canvas').forEach(c => { if(c.dataset.id) kids.push(c.dataset.id); });
+    modKnobIds[newIdx] = kids;
+    selectedOutput[newIdx] = 0;
+    const outputs = [];
+    for(let o = 0; o < 4; o++){
+      const s = {};
+      kids.forEach(id => { s[id] = KNOB_DEFS[id] ? KNOB_DEFS[id].val : 0; });
+      outputs.push(s);
+    }
+    modOutputState[newIdx] = outputs;
+
+    // --- Output selector row (skip OUT/THROUGH/no-outputs) ---
+    if(!mod.dataset.noOutputs && !mod.classList.contains('through') && !mod.classList.contains('out')){
+      // Remove any stale cloned selector row first
+      const oldRow = mod.querySelector('.out-sel-row');
+      if(oldRow) oldRow.remove();
+      const row = document.createElement('div');
+      row.className = 'out-sel-row';
+      for(let o = 0; o < 4; o++){
+        const btn = document.createElement('div');
+        btn.className = 'out-sel-btn' + (o === 0 ? ' active' : '');
+        btn.textContent = (o + 1);
+        btn.dataset.modIdx = newIdx;
+        btn.dataset.outIdx = o;
+        btn.addEventListener('click', () => {
+          const curOut = selectedOutput[newIdx];
+          modKnobIds[newIdx].forEach(id => { modOutputState[newIdx][curOut][id] = knobState[id]; });
+          Object.keys(dropdownModMap).forEach(did => {
+            if(dropdownModMap[did] === newIdx){
+              modOutputState[newIdx][curOut]['_'+did] = dropdowns[did];
+            }
+          });
+          selectedOutput[newIdx] = o;
+          modKnobIds[newIdx].forEach(id => {
+            knobState[id] = modOutputState[newIdx][o][id];
+            updateKnobDisplay(id);
+          });
+          Object.keys(dropdownModMap).forEach(did => {
+            if(dropdownModMap[did] === newIdx){
+              const val = modOutputState[newIdx][o]['_'+did];
+              if(val){ dropdowns[did] = val; const el = document.getElementById(did); if(el) el.value = val; }
+            }
+          });
+          row.querySelectorAll('.out-sel-btn').forEach((b, bi) => b.classList.toggle('active', bi === o));
+        });
+        row.appendChild(btn);
+      }
+      const title = mod.querySelector('.mod-title');
+      if(title && title.nextSibling) mod.insertBefore(row, title.nextSibling);
+      else mod.appendChild(row);
+    }
+
+    // --- Jack rows (strip any cloned jacks first, rebuild fresh) ---
+    mod.querySelectorAll('.jack-row').forEach(r => r.remove());
+    mod.querySelectorAll('.solo-btn').forEach(s => s.remove());
+    mod.querySelectorAll('.bypass-btn').forEach(b => b.remove());
+    mod.querySelectorAll('.orient-btn').forEach(b => b.remove());
+
+    if(!mod.dataset.noInputs){
+      if(mod.classList.contains('out')){
+        // OUT modules: jacks above IN knob-wraps
+        const knobWraps = mod.querySelectorAll('.knob-wrap');
+        let jackIdx = 0;
+        knobWraps.forEach(kw => {
+          const label = kw.querySelector('.knob-label');
+          if(label && label.textContent.startsWith('IN ') && jackIdx < 8){
+            const ji = jackIdx;
+            const j = document.createElement('div');
+            j.className = 'jack input';
+            j.dataset.modIdx = newIdx; j.dataset.jackIdx = ji; j.dataset.jackType = 'input';
+            j.style.cssText = 'width:10px;height:8px;margin:-10px auto 2px;';
+            kw.insertBefore(j, kw.firstChild);
+            jackIdx++;
+          }
+        });
+        if(jackIdx === 0){
+          const inRow = document.createElement('div'); inRow.className = 'jack-row inputs';
+          const j = document.createElement('div');
+          j.className = 'jack input';
+          j.dataset.modIdx = newIdx; j.dataset.jackIdx = 0; j.dataset.jackType = 'input';
+          inRow.appendChild(j); mod.appendChild(inRow);
+        }
+      } else {
+        const inRow = document.createElement('div'); inRow.className = 'jack-row inputs';
+        const isThrough = mod.classList.contains('through');
+        const inCount = isThrough ? 1 : 4;
+        for(let i=0;i<inCount;i++){
+          const j = document.createElement('div');
+          j.className = 'jack input';
+          j.dataset.modIdx = newIdx; j.dataset.jackIdx = i; j.dataset.jackType = 'input';
+          inRow.appendChild(j);
+          if(!isThrough){
+            const s = document.createElement('div');
+            s.className = 'solo-btn'; s.textContent = 'S';
+            s.dataset.modIdx = newIdx; s.dataset.jackIdx = i;
+            s.addEventListener('mousedown', e => { e.stopPropagation(); e.preventDefault(); });
+            s.addEventListener('click', e => {
+              e.stopPropagation();
+              const wasActive = s.classList.contains('active');
+              mod.querySelectorAll('.solo-btn').forEach(sb => sb.classList.remove('active'));
+              mod.querySelectorAll('.jack.input').forEach(jk => jk.classList.remove('soloed'));
+              if(!wasActive){ s.classList.add('active'); j.classList.add('soloed'); mod.dataset.soloInput = i; }
+              else { delete mod.dataset.soloInput; }
+              rebuildIfPlaying();
+            });
+            inRow.appendChild(s);
+          }
+        }
+        mod.appendChild(inRow);
+      }
+    }
+
+    if(!mod.dataset.noOutputs){
+      const title = mod.querySelector('.mod-title');
+      let titleText = '';
+      if(title) title.childNodes.forEach(n => { if(n.nodeType === 3) titleText += n.textContent; });
+      const tn = titleText.trim();
+      const outCount = (tn.startsWith('MIX') || tn.startsWith('INPUT MIX') || mod.classList.contains('through') || mod.classList.contains('out')) ? 1 : 4;
+      const outRow = document.createElement('div'); outRow.className = 'jack-row outputs';
+      for(let i=0;i<outCount;i++){
+        const j = document.createElement('div');
+        j.className = 'jack output';
+        j.dataset.modIdx = newIdx; j.dataset.jackIdx = i; j.dataset.jackType = 'output';
+        outRow.appendChild(j);
+      }
+      mod.appendChild(outRow);
+    }
+
+    // --- Bypass button ---
+    if(!mod.classList.contains('out') && !mod.classList.contains('through')){
+      const btn = document.createElement('div');
+      btn.className = 'bypass-btn';
+      btn.title = mod.classList.contains('gen') ? 'MUTE' : 'BYPASS';
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        mod.classList.toggle('bypassed');
+        btn.classList.toggle('active');
+        rebuildIfPlaying();
+      });
+      const title = mod.querySelector('.mod-title');
+      if(title) title.appendChild(btn);
+    }
+
+    // --- Orient toggle ---
+    if(!mod.classList.contains('out') && !mod.classList.contains('through')){
+      const orient = document.createElement('button');
+      orient.className = 'orient-btn';
+      orient.innerHTML = '&#8645;';
+      orient.title = 'Toggle jack orientation';
+      orient.addEventListener('click', e => {
+        e.stopPropagation();
+        mod.classList.toggle('jacks-tb');
+        setTimeout(drawAllCables, 50);
+      });
+      mod.appendChild(orient);
+    }
+
+    // --- Drag / dblclick collapse: minimal subset sufficient for clones ---
+    const title = mod.querySelector('.mod-title');
+    if(title){
+      title.style.cursor = 'grab';
+      title.style.userSelect = 'none';
+      mod.querySelectorAll('.knob-row, .out-sel-row').forEach(k => { k.style.display = 'none'; });
+      mod.classList.add('collapsed-knobs');
+      title.addEventListener('dblclick', e => {
+        e.preventDefault();
+        const knobs = mod.querySelectorAll('.knob-row, .out-sel-row');
+        const isHidden = knobs[0] && knobs[0].style.display === 'none';
+        knobs.forEach(k => { k.style.display = isHidden ? '' : 'none'; });
+        mod.classList.toggle('collapsed-knobs', !isHidden);
+        mod.style.zIndex = isHidden ? 10 : 2;
+        setTimeout(drawAllCables, 50);
+      });
+      title.addEventListener('mousedown', e => {
+        if(e.target.closest('.knob-canvas') || e.target.closest('.jack') || e.target.closest('select') || e.target.closest('input') || e.target.closest('.bypass-btn') || e.target.closest('.x-del-btn')) return;
+        e.preventDefault(); e.stopPropagation();
+        pushUndo();
+        const startLeft = parseFloat(mod.style.left) || 0;
+        const startTop = parseFloat(mod.style.top) || 0;
+        const sx = e.clientX, sy = e.clientY;
+        mod.style.zIndex = 20;
+        title.style.cursor = 'grabbing';
+        const onMove = e2 => {
+          mod.style.left = (startLeft + e2.clientX - sx) + 'px';
+          mod.style.top = (startTop + e2.clientY - sy) + 'px';
+          drawAllCables();
+        };
+        const onUp = () => {
+          mod.style.zIndex = 10;
+          title.style.cursor = 'grab';
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          drawAllCables();
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    }
+  }
+
+  // Spawn a new instance of a module by type name
+  function spawnModule(type, positionHint){
+    const tmpl = _findOriginalByType(type);
+    if(!tmpl){ console.warn('spawnModule: unknown type', type); return null; }
+    const clone = tmpl.domEl.cloneNode(true);
+    // Strip original-only markers and any cached indices
+    delete clone.dataset.isOriginal;
+    delete clone.dataset.modIdx;
+    delete clone.dataset.uuid;
+    delete clone.dataset.soloInput;
+    clone.classList.remove('bypassed','selected','collapsed-knobs');
+    // Remove duplicate IDs on children that would collide globally (except knob-val IDs
+    // used by updateKnobDisplay — those CAN remain; getElementById finds first match
+    // which is the original. Clone's knob-val text updates are driven by the id-based
+    // lookup hitting the original element, so we null the clone's knob-val ids to
+    // prevent duplicate-id DOM issues but accept that clone's val text won't live-update.
+    clone.querySelectorAll('[id]').forEach(el => {
+      // Pattern grids need unique IDs; generate fresh ones
+      if(el.classList.contains('pat-grid')){
+        const nid = el.id + '_' + Math.random().toString(36).slice(2,7);
+        el.id = nid;
+      } else {
+        // Drop duplicate IDs on clone so querySelectorById still finds the original
+        el.removeAttribute('id');
+      }
+    });
+
+    const container = document.getElementById('moduleContainer');
+    container.appendChild(clone);
+    clone.style.position = 'absolute';
+    if(positionHint && typeof positionHint.x === 'number'){
+      clone.style.left = positionHint.x + 'px';
+      clone.style.top = positionHint.y + 'px';
+    } else {
+      // Auto-place: offset from template
+      const baseLeft = parseFloat(tmpl.domEl.style.left) || 100;
+      const baseTop = parseFloat(tmpl.domEl.style.top) || 100;
+      clone.style.left = (baseLeft + 30) + 'px';
+      clone.style.top = (baseTop + 30) + 'px';
+    }
+    if(!clone.style.width && tmpl.domEl.style.width) clone.style.width = tmpl.domEl.style.width;
+
+    // Assign new modIdx = current count (MOD_NAMES grows)
+    const newIdx = MOD_NAMES.length;
+    MOD_NAMES.push(type);
+
+    // Wire everything up
+    _wireClone(clone, newIdx);
+
+    // Register instance (uuid needed for delete button closure)
+    const uuid = _uuid();
+    clone.dataset.uuid = uuid;
+    desktopInstances[uuid] = { modIdx: newIdx, domEl: clone, type, isOriginal: false };
+
+    // Delete (X) button — only on clones
+    const xBtn = document.createElement('div');
+    xBtn.className = 'x-del-btn';
+    xBtn.textContent = '×';
+    xBtn.title = 'Delete instance';
+    xBtn.style.cssText = 'position:absolute;top:2px;right:2px;width:16px;height:16px;line-height:14px;text-align:center;background:rgba(255,68,68,0.25);color:#ff4444;border:1px solid #ff4444;border-radius:3px;cursor:pointer;font-size:14px;font-weight:bold;z-index:20;user-select:none;';
+    xBtn.addEventListener('mousedown', e => { e.stopPropagation(); e.preventDefault(); });
+    xBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteInstance(uuid);
+    });
+    clone.appendChild(xBtn);
+
+    rebuildIfPlaying();
+    drawAllCables();
+    return { uuid, modIdx: newIdx };
+  }
+
+  // Remove a clone. Reindexes cables/state so remaining modIdx values are contiguous.
+  function deleteInstance(uuid){
+    const inst = desktopInstances[uuid];
+    if(!inst || inst.isOriginal) return;
+    const rmIdx = inst.modIdx;
+
+    // Drop cables touching this module; shift others
+    for(let i = cables.length - 1; i >= 0; i--){
+      const c = cables[i];
+      if(c.fromMod === rmIdx || c.toMod === rmIdx){ cables.splice(i, 1); continue; }
+      if(c.fromMod > rmIdx) c.fromMod--;
+      if(c.toMod > rmIdx) c.toMod--;
+    }
+
+    // Remove from state arrays
+    MOD_NAMES.splice(rmIdx, 1);
+    modKnobIds.splice(rmIdx, 1);
+    modOutputState.splice(rmIdx, 1);
+    selectedOutput.splice(rmIdx, 1);
+
+    // Remove DOM
+    inst.domEl.remove();
+    delete desktopInstances[uuid];
+
+    // Reindex remaining modules: any module whose modIdx was > rmIdx drops by 1
+    Object.keys(desktopInstances).forEach(k => {
+      if(desktopInstances[k].modIdx > rmIdx) desktopInstances[k].modIdx--;
+    });
+
+    // Update dataset.modIdx on ALL module DOM elements to match new positions
+    document.querySelectorAll('#moduleContainer .module').forEach((mod, i) => {
+      mod.dataset.modIdx = i;
+      // Update child jack/solo/button data-mod-idx
+      mod.querySelectorAll('[data-mod-idx]').forEach(el => {
+        el.dataset.modIdx = i;
+      });
+    });
+
+    // Reconnect jack-connected class state
+    document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
+    cables.forEach(c => {
+      const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
+      const te = findJackEl(c.toMod, c.toIdx, 'input');
+      if(fe) fe.classList.add('connected');
+      if(te) te.classList.add('connected');
+    });
+
+    rebuildIfPlaying();
+    drawAllCables();
+  }
+
+  // Expose API for Phase C consumers
+  window.spawnModule = spawnModule;
+  window.deleteInstance = deleteInstance;
 });
 
 </script>
