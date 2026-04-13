@@ -60,12 +60,12 @@
   }
   #mobileTopBar button:hover { background:rgba(0,255,204,0.22); }
   #mobileTopBar button:disabled { opacity:0.3; cursor:default; }
-  #pageBoxes { display:flex; align-items:center; justify-content:center; gap:3px; }
+  #pageBoxes { display:flex; align-items:center; justify-content:space-between; gap:3px; flex:1; }
   #pageBoxes .pageBox {
-    width:32px; height:32px; min-width:32px; min-height:32px;
+    width:35px; height:35px; min-width:35px; min-height:35px;
     padding:0; display:flex; align-items:center; justify-content:center;
     background:rgba(0,255,204,0.1); color:#00ffcc55;
-    border:2px solid #00ffcc33; font-family:inherit; font-size:13px;
+    border:2px solid #00ffcc33; font-family:inherit; font-size:14px;
     letter-spacing:0; cursor:pointer;
   }
   #pageBoxes .pageBox.populated {
@@ -492,7 +492,7 @@
 <div id="mobileShell">
   <div id="mobileTopBar">
     <button id="hamburgerBtn" aria-label="Menu">☰</button>
-    <div style="display:flex;align-items:center;gap:3px;">
+    <div style="display:flex;align-items:center;gap:3px;flex:1;min-width:0;margin-left:3px;">
       <button id="prevPageBtn" aria-label="Previous page">◀</button>
       <div id="pageBoxes" role="tablist" aria-label="Pages"></div>
       <button id="nextPageBtn" aria-label="Next page">▶</button>
