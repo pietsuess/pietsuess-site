@@ -2341,12 +2341,32 @@ function _computeMobileLayoutHints(instanceList){
   });
   // Within each bar, sort by Y (columns = rank)
   bars.forEach(bar => bar.sort((a,b) => a.y - b.y));
-  // Distribute bars across pages (8 bars per page)
-  const BARS_PER_PAGE = 8;
+  // Enforce mobile constraint: each bar has MAX 4 columns.
+  // If a cluster has >4 modules, split into ceil(n/4) consecutive sub-bars.
+  const MAX_COLS_PER_BAR = 4;
+  const splitBars = [];
+  bars.forEach(bar => {
+    if(bar.length <= MAX_COLS_PER_BAR){
+      splitBars.push(bar);
+    } else {
+      for(let i = 0; i < bar.length; i += MAX_COLS_PER_BAR){
+        splitBars.push(bar.slice(i, i + MAX_COLS_PER_BAR));
+      }
+    }
+  });
+  // Distribute bars across pages (6 bars per page; mobile supports pages 0..5)
+  const BARS_PER_PAGE = 6;
+  const MAX_PAGES = 6;
   const hints = {};
-  bars.forEach((bar, barGlobalIdx) => {
-    const page = Math.floor(barGlobalIdx / BARS_PER_PAGE);
-    const barOnPage = barGlobalIdx % BARS_PER_PAGE;
+  splitBars.forEach((bar, barGlobalIdx) => {
+    let page = Math.floor(barGlobalIdx / BARS_PER_PAGE);
+    let barOnPage = barGlobalIdx % BARS_PER_PAGE;
+    if(page >= MAX_PAGES){
+      // Overflow: clamp to last page, pile onto last bar (defensive; unlikely for real patches)
+      page = MAX_PAGES - 1;
+      barOnPage = BARS_PER_PAGE - 1;
+      try { console.warn('[SFX mobile layout] bar overflow beyond', MAX_PAGES*BARS_PER_PAGE, 'bars; clamping'); } catch(_){}
+    }
     bar.forEach((inst, col) => {
       hints[inst.uuid] = { page, bar: barOnPage, col };
     });

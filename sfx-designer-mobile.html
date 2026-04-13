@@ -5287,7 +5287,14 @@ requestAnimationFrame(() => {
         return;
       }
 
-      // Place in mobile pages using layoutHints.mobile, else auto-layout
+      // Place in mobile pages using layoutHints.mobile, else auto-layout.
+      // Mobile constraints (enforced defensively even if preset is malformed):
+      //   - MAX 4 cols per bar
+      //   - MAX 6 bars per page (visible cap; drawer is separate)
+      //   - MAX 6 pages (indices 0..5)
+      const MAX_COLS = 4;
+      const MAX_BARS = 6;
+      const MAX_PAGES = 6;
       const mh = inst.layoutHints && inst.layoutHints.mobile;
       let page, bar, col;
       if(mh && Number.isFinite(mh.page) && Number.isFinite(mh.bar) && Number.isFinite(mh.col)){
@@ -5296,16 +5303,102 @@ requestAnimationFrame(() => {
         // Auto-distribute: fill pages sequentially, 1 col per bar for simplicity
         page = autoPage; bar = autoBar; col = autoCol;
         autoCol++;
-        if(autoCol >= 4){ autoCol = 0; autoBar++; }
-        if(autoBar >= 4){ autoBar = 0; autoPage = Math.min(5, autoPage + 1); }
+        if(autoCol >= MAX_COLS){ autoCol = 0; autoBar++; }
+        if(autoBar >= MAX_BARS){ autoBar = 0; autoPage = Math.min(MAX_PAGES-1, autoPage + 1); }
       }
-      // Clamp & ensure structure
+      // Clamp base values
       if(page < 0) page = 0;
-      if(page >= mobile.pages.length){
-        while(mobile.pages.length <= page) mobile.pages.push({ bars: [ { cols: [null] } ] });
+      if(bar < 0) bar = 0;
+      if(col < 0) col = 0;
+      if(page >= MAX_PAGES) page = MAX_PAGES - 1;
+      if(bar >= MAX_BARS){
+        // Bar overflow: advance pages until we find room (or clamp to last)
+        while(bar >= MAX_BARS && page < MAX_PAGES - 1){ bar -= MAX_BARS; page++; }
+        if(bar >= MAX_BARS) bar = MAX_BARS - 1;
       }
-      const pg = mobile.pages[page];
+      // Ensure page structure
+      if(page >= mobile.pages.length){
+        while(mobile.pages.length <= page && mobile.pages.length < MAX_PAGES){
+          mobile.pages.push({ bars: [ { cols: [null] } ] });
+        }
+        if(page >= mobile.pages.length) page = mobile.pages.length - 1;
+      }
+      let pg = mobile.pages[page];
       if(!Array.isArray(pg.bars)) pg.bars = [];
+
+      // Defensive col-overflow: if col >= MAX_COLS, find first bar on this page
+      // with <MAX_COLS; else create a new bar (or spill to next page if full).
+      const findSlot = () => {
+        // Try requested bar first
+        if(bar < pg.bars.length){
+          const tgt = pg.bars[bar];
+          if(!Array.isArray(tgt.cols)) tgt.cols = [];
+          // If col is in-range and empty, accept it
+          if(col < MAX_COLS){
+            while(tgt.cols.length <= col) tgt.cols.push(null);
+            if(tgt.cols[col] == null) return { pIdx: page, bIdx: bar, cIdx: col };
+            // Occupied: fall through to find next empty col in this bar
+            for(let c = 0; c < MAX_COLS; c++){
+              if(tgt.cols[c] == null){ return { pIdx: page, bIdx: bar, cIdx: c }; }
+            }
+          }
+        }
+        // Scan existing bars on this page for any with room
+        for(let bIdx = 0; bIdx < pg.bars.length; bIdx++){
+          const tgt = pg.bars[bIdx];
+          if(!Array.isArray(tgt.cols)) tgt.cols = [];
+          // Effective fill count (non-null)
+          const filled = tgt.cols.filter(x => x != null).length;
+          if(filled < MAX_COLS){
+            // Find first null slot within MAX_COLS
+            for(let c = 0; c < MAX_COLS; c++){
+              if(tgt.cols[c] == null){
+                while(tgt.cols.length <= c) tgt.cols.push(null);
+                return { pIdx: page, bIdx, cIdx: c };
+              }
+            }
+          }
+        }
+        // No room in existing bars — add a new bar if under cap
+        if(pg.bars.length < MAX_BARS){
+          pg.bars.push({ cols: [null] });
+          return { pIdx: page, bIdx: pg.bars.length - 1, cIdx: 0 };
+        }
+        // Page full — spill to next page(s)
+        for(let p = page + 1; p < MAX_PAGES; p++){
+          if(p >= mobile.pages.length) mobile.pages.push({ bars: [ { cols: [null] } ] });
+          const np = mobile.pages[p];
+          if(!Array.isArray(np.bars)) np.bars = [];
+          // Try first-bar first-empty slot
+          for(let bIdx = 0; bIdx < np.bars.length; bIdx++){
+            const tgt = np.bars[bIdx];
+            if(!Array.isArray(tgt.cols)) tgt.cols = [];
+            const filled = tgt.cols.filter(x => x != null).length;
+            if(filled < MAX_COLS){
+              for(let c = 0; c < MAX_COLS; c++){
+                if(tgt.cols[c] == null){
+                  while(tgt.cols.length <= c) tgt.cols.push(null);
+                  return { pIdx: p, bIdx, cIdx: c };
+                }
+              }
+            }
+          }
+          if(np.bars.length < MAX_BARS){
+            np.bars.push({ cols: [null] });
+            return { pIdx: p, bIdx: np.bars.length - 1, cIdx: 0 };
+          }
+        }
+        // Absolute fallback: pile onto last page last bar col 0 (overwrite-risk logged)
+        try { console.warn('[SFX mobile] layout full; piling node', nid); } catch(_){}
+        const lp = mobile.pages[MAX_PAGES - 1];
+        const lb = lp.bars[lp.bars.length - 1];
+        if(!Array.isArray(lb.cols)) lb.cols = [null];
+        return { pIdx: MAX_PAGES - 1, bIdx: lp.bars.length - 1, cIdx: 0 };
+      };
+
+      const slot = findSlot();
+      page = slot.pIdx; bar = slot.bIdx; col = slot.cIdx;
+      pg = mobile.pages[page];
       while(pg.bars.length <= bar) pg.bars.push({ cols: [null] });
       const b = pg.bars[bar];
       if(!Array.isArray(b.cols)) b.cols = [];
