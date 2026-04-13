@@ -4107,7 +4107,7 @@ requestAnimationFrame(() => {
       if(cat === 'other'){
         const mixEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='mix')[0];
         const patEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='pat')[0];
-        if(mixEntry) rows.push([mixEntry, 'MIX', 'mix']);
+        if(mixEntry) rows.push([mixEntry, 'MIX / AMP', 'mix']);
         if(patEntry) rows.push([patEntry, 'PATTERN', 'pat']);
       } else {
         MOBILE_NODE_CATALOG.filter(n=>n[1]===cat).forEach(n=>{
@@ -4250,7 +4250,7 @@ requestAnimationFrame(() => {
     const t = node.type;
     if(t === 'INPUT MIX') return [8, 1];
     if(t === 'MASTER' || cat === 'out') return [1, 0];
-    if(cat === 'gen') return [0, 4];
+    if(cat === 'gen') return [4, 4];
     if(cat === 'mix') return [4, 1];
     if(cat === 'fx' || cat === 'pat') return [4, 4];
     return [0, 0];
@@ -4316,7 +4316,7 @@ requestAnimationFrame(() => {
     if(topJacks) nodeEl.appendChild(topJacks);
 
     const header = el('div','nodeHeader');
-    header.append(el('div','nodeTitle', node.type));
+    header.append(el('div','nodeTitle', (typeof node.type === 'string' && node.type.startsWith('MIX') && node.type !== 'INPUT MIX') ? (node.type + ' / AMP') : node.type));
     const headerBtns = el('div','nodeHeaderBtns');
     headerBtns.style.cssText = 'display:flex;gap:6px;align-items:center;';
     const expBtn = el('button','nodeExpandBtn', expanded ? '▲' : '▼');
@@ -6293,7 +6293,7 @@ requestAnimationFrame(() => {
       if(cat === 'other'){
         const mixEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='mix')[0];
         const patEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='pat')[0];
-        if(mixEntry) rows.push([mixEntry,'MIX','mix']);
+        if(mixEntry) rows.push([mixEntry,'MIX / AMP','mix']);
         if(patEntry) rows.push([patEntry,'PATTERN','pat']);
       } else {
         MOBILE_NODE_CATALOG.filter(n=>n[1]===cat).forEach(n=> rows.push([n, n[0], cat]));
