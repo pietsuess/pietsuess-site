@@ -167,25 +167,25 @@
   #cableCanvas { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:0; opacity:0.25; }
   /* Mobile cable overlay — above nodes so tap-to-disconnect works, but below modals */
   #mobileCableCanvas { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:5; }
-  /* Armed state: dim everything except valid input targets */
-  body.armed #pageContainer .mobileNode,
-  body.armed #pageContainer .mobileBar,
-  body.armed #pageContainer .pageInner > button,
-  body.armed #mobileTopBar button,
-  body.armed #mobileTopBar .pageBox,
-  body.armed #mobileBottomBar { opacity:0.3; transition:opacity 0.15s; }
-  body.armed #pageContainer .mobileNode { pointer-events:none; }
-  body.armed #pageContainer .mobileNode .nodeJack.input { pointer-events:auto; opacity:1; outline:2px solid #ffe000; outline-offset:2px; box-shadow:0 0 10px #ffe000aa; animation:armedPulse 1s ease-in-out infinite; }
-  body.armed .mobileNode.hasArmedSource { opacity:1 !important; pointer-events:auto; }
-  body.armed .nodeJack.armed-source { opacity:1 !important; outline:2px solid #ff69b4; outline-offset:2px; box-shadow:0 0 14px #ff69b4; }
+  /* Armed state: highlight valid input targets, no dimming */
+  body.armed .nodeJack.input { outline:2px solid #ffe000; outline-offset:2px; box-shadow:0 0 10px #ffe000aa; animation:armedPulse 1s ease-in-out infinite; }
+  body.armed .nodeJack.armed-source { outline:2px solid #ff69b4; outline-offset:2px; box-shadow:0 0 14px #ff69b4; }
   @keyframes armedPulse { 0%,100% { box-shadow:0 0 8px #ffe00088; } 50% { box-shadow:0 0 16px #ffe000ff; } }
   #armedBanner {
     position:fixed; top:44px; left:0; right:0; z-index:1002;
     background:#0a0a14; color:#ffe000; border-top:2px solid #ffe000; border-bottom:2px solid #ffe000;
-    padding:10px 14px; text-align:center; font-family:inherit; font-size:12px; letter-spacing:2px;
-    display:none; pointer-events:none;
+    padding:0; font-family:inherit; font-size:13px; letter-spacing:2px;
+    display:none; align-items:center; justify-content:space-between;
+    pointer-events:auto;
   }
-  body.armed #armedBanner { display:block; }
+  #armedBanner .armedLabel { flex:1; text-align:center; padding:14px 10px; pointer-events:none; }
+  #armedBanner .armedCancel {
+    width:52px; min-width:52px; height:44px; background:transparent;
+    border:none; color:#ffe000; font-family:inherit; font-size:26px;
+    cursor:pointer; line-height:1; padding:0 10px; margin:0;
+  }
+  #armedBanner .armedCancel:active { background:rgba(255,224,0,0.15); }
+  body.armed #armedBanner { display:flex; }
   .nodeJack { touch-action:none; }
   .mobileNode .nodeJack.input.connected { background:#00ffcc66; box-shadow:0 0 6px #00ffcc; }
   .mobileNode .nodeJack.output.connected { background:#ff69b466; box-shadow:0 0 6px #ff69b4; }
@@ -513,6 +513,72 @@
   .confirmBox button:hover { background:rgba(0,255,204,0.22); }
   .confirmBox button.danger { background:transparent; border-color:#ff4444; color:#ff4444; }
 
+  /* ===== MASTER DRAWER ===== */
+  #masterDrawer {
+    position:fixed; left:0; right:0; bottom:0; top:0;
+    background:#0a0a14; border-top:2px solid #ffe000;
+    z-index:900; display:flex; flex-direction:column;
+    transform:translateY(100%); transition:transform 0.28s ease-out;
+    box-sizing:border-box; overflow:hidden;
+    pointer-events:none;
+  }
+  #masterDrawer.open { transform:translateY(0); pointer-events:auto; }
+  #masterDrawerHeader {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 12px; background:rgba(255,224,0,0.08);
+    border-bottom:2px solid #ffe00055; flex-shrink:0;
+    touch-action:none; user-select:none;
+  }
+  #masterDrawerHeader .drawerTitle {
+    color:#ffe000; font-size:14px; letter-spacing:3px;
+  }
+  #masterDrawerHeader .drawerHandle {
+    width:40px; height:4px; background:#ffe00077;
+    border-radius:2px; margin:0 auto;
+    position:absolute; left:50%; top:6px; transform:translateX(-50%);
+  }
+  #masterDrawerClose {
+    width:44px; height:44px; background:transparent;
+    border:none; color:#ffe000; font-family:inherit; font-size:26px;
+    cursor:pointer; padding:0; line-height:1;
+  }
+  #masterDrawerClose:active { background:rgba(255,224,0,0.15); }
+  #masterDrawerBody {
+    flex:1; overflow-y:auto; overflow-x:hidden;
+    padding:12px; display:flex; flex-direction:column; gap:12px;
+    box-sizing:border-box;
+  }
+  #masterPinTop, #masterPinBottom {
+    border:1px solid #ffe00055; padding:6px; background:rgba(0,0,0,0.4);
+    flex-shrink:0;
+  }
+  #masterPinTop .pinLabel, #masterPinBottom .pinLabel {
+    color:#ffe000; font-size:10px; letter-spacing:2px;
+    padding:2px 4px 6px; text-align:center;
+  }
+  #masterInserts { display:flex; flex-direction:column; gap:12px; }
+  #masterInserts .mobileBar { background:rgba(0,0,0,0.3); }
+  #masterAddBarBtn {
+    align-self:center; min-height:50px; padding:10px 28px;
+    background:#111; border:2px solid #00ffcc; color:#00ffcc;
+    font-family:inherit; font-size:16px; border-radius:4px;
+    letter-spacing:3px; cursor:pointer; margin-top:4px;
+  }
+  /* Bottom-bar collapsed INPUT MIX jacks overlay (8 tappable jacks) */
+  #bottomBarJacks {
+    position:absolute; left:12px; bottom:56px;
+    display:flex; gap:3px; pointer-events:auto; z-index:3;
+  }
+  #bottomBarJacks .nodeJack {
+    flex:0 0 auto; width:10px; height:14px; border-radius:2px;
+    background:rgba(0,255,204,0.15); border:2px solid #00ffcc;
+    position:relative; cursor:pointer; box-sizing:border-box;
+  }
+  #bottomBarJacks .nodeJack::before {
+    content:""; position:absolute; inset:-14px;
+  }
+  #bottomBarJacks .nodeJack.connected { background:#00ffcc44; box-shadow:0 0 6px #00ffcc; }
+
 </style>
 </head>
 <body>
@@ -527,7 +593,7 @@
     </div>
   </div>
   <h1 id="mobileTitle" style="color:#ffe000; font-size:11px; text-shadow:0 0 10px #ffe000; margin:0; padding:6px 10px 4px; text-align:center; letter-spacing:1px; flex-shrink:0;">NAVIGATOR — Sound Effects Designer</h1>
-  <div id="armedBanner">TAP INPUT TO CONNECT — TAP OUTPUT AGAIN TO CANCEL</div>
+  <div id="armedBanner"><span class="armedLabel">CONNECTING</span><button type="button" class="armedCancel" id="armedCancelBtn" aria-label="Cancel connecting">×</button></div>
   <canvas id="mobileCableCanvas"></canvas>
   <div id="pageContainer">
     <div class="mobilePage" data-page="0">
@@ -547,6 +613,20 @@
       </div>
       <button id="miniPlayBtn" aria-label="Play"></button>
       <div id="bottomBarRight"></div>
+    </div>
+    <div id="bottomBarJacks" aria-label="Input mix jacks"></div>
+  </div>
+  <div id="masterDrawer" aria-hidden="true">
+    <div id="masterDrawerHeader">
+      <div class="drawerHandle" aria-hidden="true"></div>
+      <span class="drawerTitle">MASTER</span>
+      <button id="masterDrawerClose" type="button" aria-label="Close master drawer">×</button>
+    </div>
+    <div id="masterDrawerBody">
+      <div id="masterPinTop"><div class="pinLabel">INPUT MIX</div><div id="masterInputMixHost"></div></div>
+      <div id="masterInserts"></div>
+      <button id="masterAddBarBtn" type="button">+ BAR</button>
+      <div id="masterPinBottom"><div class="pinLabel">MASTER</div><div id="masterMasterHost"></div></div>
     </div>
   </div>
 </div>
@@ -3808,6 +3888,10 @@ requestAnimationFrame(() => {
     playing: false,
     masterIn: null,   // GainNode that feeds masterOut when mobile plays
     cableDirty: true,
+    masterBars: [],   // [{cols:[nodeId|null,...]}] — insert bars in master drawer
+    inputMixId: null, // pinned INPUT MIX node id (drawer top)
+    masterId: null,   // pinned MASTER node id (drawer bottom)
+    drawerOpen: false,
   };
   window.mobile = mobile;
 
@@ -3822,7 +3906,8 @@ requestAnimationFrame(() => {
     try {
       mobile.history.push(JSON.stringify({
         pages: mobile.pages,
-        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,state:v.state}]))
+        masterBars: mobile.masterBars,
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,state:v.state,pinned:!!v.pinned}]))
       }));
       if(mobile.history.length > 50) mobile.history.shift();
       mobile.redoStack.length = 0;
@@ -3945,15 +4030,21 @@ requestAnimationFrame(() => {
   }
 
   function deleteNode(nodeId){
+    const n = mobile.mobileNodes[nodeId];
+    if(n && n.pinned) return; // INPUT MIX and MASTER cannot be deleted
     saveHistory();
     mobile.pages.forEach(p => p.bars.forEach(b => {
       b.cols = b.cols.map(c => c === nodeId ? null : c);
     }));
+    (mobile.masterBars || []).forEach(b => {
+      b.cols = (b.cols||[]).map(c => c === nodeId ? null : c);
+    });
     delete mobile.mobileNodes[nodeId];
     delete mobile.expanded[nodeId];
     delete mobile.currentOut[nodeId];
     if(mobile.expandedNodeId === nodeId) mobile.expandedNodeId = null;
     renderMobilePages();
+    if(mobile.drawerOpen && typeof renderMasterDrawer === 'function') renderMasterDrawer();
   }
 
   // Jack counts per node category: [inputs, outputs]
@@ -4021,9 +4112,8 @@ requestAnimationFrame(() => {
       renderMobilePages();
     };
     headerBtns.appendChild(expBtn);
-    // Delete button only shown when collapsed (in expanded view it's removed to save space
-    // and to keep the destructive action out of the edit view)
-    if(!expanded){
+    // Delete button only shown when collapsed and node isn't pinned (INPUT MIX / MASTER)
+    if(!expanded && !node.pinned){
       const delBtn = el('button','nodeDeleteBtn','X');
       delBtn.setAttribute('aria-label','Delete');
       delBtn.onclick = (e)=>{
@@ -4812,8 +4902,10 @@ requestAnimationFrame(() => {
         gate.connect(outs[o]);
       }
     } else if(node.type === 'MASTER'){
-      // Pass-through to outs[0] (we connect outs[0] -> mobile.masterIn externally)
-      ins[0].connect(outs[0]);
+      // Apply master gain knob before outs[0] (which is connected externally to masterIn)
+      const g = audioCtx.createGain();
+      g.gain.value = (p.masterGain != null) ? p.masterGain : 0.6;
+      ins[0].connect(g); g.connect(outs[0]);
     } else if(node.type === 'INPUT MIX'){
       const merge = audioCtx.createGain(); merge.gain.value = 1;
       for(let i=0;i<inCount;i++){
@@ -4850,8 +4942,7 @@ requestAnimationFrame(() => {
       if(a){ mobile.audio[id] = a; node.audio = a; }
     });
 
-    // Wire explicit cables
-    const cableTargets = new Set(); // nodeId with at least one outgoing cable
+    // Wire explicit user cables (no auto-routing — audio only reaches master via explicit cables)
     mobile.cables.forEach(c => {
       const from = mobile.audio[c.fromNodeId];
       const to = mobile.audio[c.toNodeId];
@@ -4859,22 +4950,23 @@ requestAnimationFrame(() => {
         const srcOut = from.outs[c.fromIdx] || from.outs[0];
         const dstIn = to.ins[c.toIdx] || to.ins[0];
         if(srcOut && dstIn){
-          try { srcOut.connect(dstIn); cableTargets.add(c.fromNodeId); } catch(e){}
+          try { srcOut.connect(dstIn); } catch(e){}
         }
       }
     });
 
-    // Implicit routing: any node with outputs but no outgoing cable -> master
-    Object.keys(mobile.audio).forEach(id => {
-      if(cableTargets.has(Number(id)) || cableTargets.has(id)) return;
-      const a = mobile.audio[id];
-      const node = mobile.mobileNodes[id];
-      if(!node || !a) return;
-      const [, outCount] = jackCountsFor(node);
-      if(outCount <= 0) return;
-      // Only route generators / effects / mixers that aren't already patched inward by someone
-      try { a.outs[0].connect(mobile.masterIn); } catch(e){}
-    });
+    // Drawer implicit chain: INPUT MIX -> inserts in order -> MASTER
+    // (Any explicit user cables within the drawer already wired above take precedence and
+    //  simply add to the mix; implicit chain guarantees a default path exists.)
+    try { wireDrawerImplicitChain(); } catch(e){}
+
+    // MASTER -> masterIn (final sink)
+    if(mobile.masterId != null){
+      const ma = mobile.audio[mobile.masterId];
+      if(ma && ma.outs[0]){
+        try { ma.outs[0].connect(mobile.masterIn); } catch(e){}
+      }
+    }
 
     // Start all sources
     const now = audioCtx.currentTime;
@@ -4951,6 +5043,15 @@ requestAnimationFrame(() => {
     return document.querySelector('#pageContainer .mobilePage[data-page="'+pageIdx+'"]');
   }
 
+  function isDrawerNode(nodeId){
+    const nid = Number(nodeId);
+    if(nid === mobile.inputMixId || nid === mobile.masterId) return true;
+    for(const bar of (mobile.masterBars || [])){
+      if((bar.cols||[]).indexOf(nid) >= 0) return true;
+    }
+    return false;
+  }
+
   function nodePageIdx(nodeId){
     for(let p=0; p<mobile.pages.length; p++){
       const bars = mobile.pages[p].bars || [];
@@ -4997,9 +5098,16 @@ requestAnimationFrame(() => {
     const curPage = mobile.currentPage;
     const w = window.innerWidth;
     mobile.cables.forEach((c, idx) => {
-      const fromPage = nodePageIdx(c.fromNodeId);
-      const toPage = nodePageIdx(c.toNodeId);
-      if(fromPage < 0 || toPage < 0) return;
+      // Drawer nodes (INPUT MIX, MASTER, inserts) use sentinel 'm' so they share a "location".
+      const fromIsDrawer = isDrawerNode(c.fromNodeId);
+      const toIsDrawer = isDrawerNode(c.toNodeId);
+      const fromPage = fromIsDrawer ? 'm' : nodePageIdx(c.fromNodeId);
+      const toPage = toIsDrawer ? 'm' : nodePageIdx(c.toNodeId);
+      if(fromPage === -1 || toPage === -1) return;
+      // Drawer cables only draw when drawer is open
+      if((fromIsDrawer || toIsDrawer) && !mobile.drawerOpen) return;
+      // Non-drawer cables: hide while drawer is open (drawer covers the page)
+      if(!fromIsDrawer && !toIsDrawer && mobile.drawerOpen) return;
       const color = c.color || '#ff69b4';
       if(fromPage === toPage){
         if(fromPage !== curPage) return; // only draw when on that page
@@ -5171,7 +5279,7 @@ requestAnimationFrame(() => {
           // Tap input → disconnect incoming cable (if any)
           const cableIdx = mobile.cables.findIndex(c => c.toNodeId === nodeId && c.toIdx === idx);
           if(cableIdx >= 0){
-            confirmPopup('Disconnect this cable?', ()=> removeCable(cableIdx));
+            removeCable(cableIdx);
           }
         }
       }
@@ -5187,21 +5295,15 @@ requestAnimationFrame(() => {
       }
       if(bestIdx >= 0){
         e.preventDefault();
-        confirmPopup('Disconnect this cable?', ()=> removeCable(bestIdx));
+        removeCable(bestIdx);
         return;
       }
-    } else {
-      // Armed + tapped outside a jack: cancel
-      if(!e.target.closest('.modalOverlay') && !e.target.closest('.confirmPop')){
-        cancelArm();
-      }
     }
+    // Armed state: only canceled by tapping the output jack again or the banner X.
+    // Tapping elsewhere (page, background) does NOT cancel — user needs to swipe pages to reach the target input.
   }, true);
 
-  // ESC cancels arm
-  document.addEventListener('keydown', e => {
-    if(e.key === 'Escape' && mobile.armed) cancelArm();
-  });
+  // (ESC cancel removed — arm is only canceled by banner X or re-tap of armed output.)
 
   // Redraw hooks
   const _origRender = renderMobilePages;
@@ -5243,14 +5345,365 @@ requestAnimationFrame(() => {
     }
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  // PHASE 6: MASTER DRAWER
+  // ════════════════════════════════════════════════════════════════════
+
+  function createPinnedNode(typeName){
+    // Pinned INPUT MIX / MASTER: not user-deletable. Use synthetic catalog entry.
+    const id = mobile.nextNodeId++;
+    const isInputMix = (typeName === 'INPUT MIX');
+    const knobs = isInputMix
+      ? ['inLvl0','inLvl1','inLvl2','inLvl3','inLvl4','inLvl5','inLvl6','inLvl7']
+      : ['masterGain'];
+    const state = {};
+    knobs.forEach(k => { if(KD[k]) state[k] = KD[k].val; });
+    mobile.mobileNodes[id] = {
+      type: typeName,
+      cat: isInputMix ? 'mix' : 'out',
+      knobs,
+      isPattern: false,
+      state,
+      patternSteps: null,
+      patternRows: null,
+      patternCols: null,
+      pinned: true,
+    };
+    mobile.currentOut[id] = 0;
+    return id;
+  }
+
+  function ensurePinnedNodes(){
+    if(mobile.inputMixId == null || !mobile.mobileNodes[mobile.inputMixId]){
+      mobile.inputMixId = createPinnedNode('INPUT MIX');
+    }
+    if(mobile.masterId == null || !mobile.mobileNodes[mobile.masterId]){
+      mobile.masterId = createPinnedNode('MASTER');
+    }
+    if(!Array.isArray(mobile.masterBars)) mobile.masterBars = [];
+  }
+
+  // Find a node's location as drawer ('master') or page index; returns {loc:'page',page} or {loc:'master'} or null
+  function nodeLocation(nodeId){
+    const nid = Number(nodeId);
+    if(nid === mobile.inputMixId || nid === mobile.masterId) return { loc:'master' };
+    for(const bar of mobile.masterBars){
+      if((bar.cols||[]).indexOf(nid) >= 0) return { loc:'master' };
+    }
+    const p = nodePageIdx(nid);
+    if(p >= 0) return { loc:'page', page:p };
+    return null;
+  }
+
+  function renderMasterDrawer(){
+    const imHost = document.getElementById('masterInputMixHost');
+    const mHost = document.getElementById('masterMasterHost');
+    const insertsHost = document.getElementById('masterInserts');
+    if(!imHost || !mHost || !insertsHost) return;
+    ensurePinnedNodes();
+
+    // INPUT MIX pinned top
+    imHost.innerHTML = '';
+    const imEl = buildNodeEl(mobile.inputMixId);
+    if(imEl) imHost.appendChild(imEl);
+
+    // MASTER pinned bottom
+    mHost.innerHTML = '';
+    const mEl = buildNodeEl(mobile.masterId);
+    if(mEl) mHost.appendChild(mEl);
+
+    // Insert bars
+    insertsHost.innerHTML = '';
+    mobile.masterBars.forEach((bar, bIdx) => {
+      const barEl = el('div','mobileBar');
+      barEl.dataset.bar = bIdx;
+      barEl.dataset.scope = 'master';
+
+      const barHeader = el('div','mobileBarHeader');
+      barEl.appendChild(barHeader);
+
+      const delBarBtn = el('button','barDelX');
+      delBarBtn.setAttribute('aria-label','Delete bar');
+      delBarBtn.textContent = '×';
+      delBarBtn.onclick = (ev)=>{
+        ev.stopPropagation();
+        confirmPopup('Remove this bar?', ()=>{
+          saveHistory();
+          (bar.cols||[]).forEach(id=>{ if(id != null){
+            removeCablesForNode(id);
+            delete mobile.mobileNodes[id];
+            delete mobile.expanded[id];
+          }});
+          mobile.masterBars.splice(bIdx,1);
+          renderMasterDrawer();
+          scheduleCableDraw();
+          if(mobile.playing) rebuildMobileIfPlaying();
+        });
+      };
+      barEl.appendChild(delBarBtn);
+
+      const colsRow = el('div','mobileBarCols');
+      (bar.cols||[]).forEach((nodeId, cIdx)=>{
+        const colEl = el('div','mobileCol');
+        if(nodeId == null){
+          colEl.classList.add('empty');
+          colEl.textContent = '+';
+          colEl.onclick = ()=> openNodePickerMaster(bIdx, cIdx);
+          if((bar.cols||[]).length > 1){
+            const colDel = el('button','colDelBtn','X');
+            colDel.onclick = (ev)=>{
+              ev.stopPropagation();
+              confirmPopup('Remove this column?', ()=>{
+                saveHistory();
+                bar.cols.splice(cIdx,1);
+                renderMasterDrawer();
+                scheduleCableDraw();
+              });
+            };
+            colEl.appendChild(colDel);
+          }
+        } else {
+          const nEl = buildNodeEl(nodeId);
+          if(nEl) colEl.appendChild(nEl); else colEl.textContent = '?';
+        }
+        colsRow.appendChild(colEl);
+      });
+      if((bar.cols||[]).length < 4){
+        const addMini = el('div','mobileCol addMini');
+        addMini.textContent = '+';
+        addMini.onclick = ()=>{
+          saveHistory();
+          bar.cols.push(null);
+          renderMasterDrawer();
+        };
+        colsRow.appendChild(addMini);
+      }
+      barEl.appendChild(colsRow);
+      insertsHost.appendChild(barEl);
+    });
+
+    scheduleCableDraw();
+  }
+
+  function openNodePickerMaster(barIdx, colIdx){
+    const overlay = el('div','modalOverlay');
+    const box = el('div','modalBox pickerModal');
+    const header = el('div','modalHeader');
+    header.append(el('span', null, 'SELECT NODE'));
+    const close = el('button','modalClose','X');
+    close.onclick = ()=> overlay.remove();
+    header.appendChild(close);
+    box.appendChild(header);
+    const tabs = el('div','modalTabs');
+    const body = el('div','modalBody');
+    const cats = [['gen','GENERATORS'],['fx','EFFECTS'],['other','OTHER']];
+    const tabBtns = {};
+    cats.forEach(([cat,label])=>{
+      const t = el('button','modalTab',label);
+      t.onclick = ()=> renderTab(cat);
+      tabBtns[cat] = t;
+      tabs.appendChild(t);
+    });
+    box.appendChild(tabs);
+    box.appendChild(body);
+    function renderTab(cat){
+      Object.entries(tabBtns).forEach(([c,b])=> b.classList.toggle('active', c===cat));
+      body.innerHTML = '';
+      let rows = [];
+      if(cat === 'other'){
+        const mixEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='mix')[0];
+        const patEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='pat')[0];
+        if(mixEntry) rows.push([mixEntry,'MIX','mix']);
+        if(patEntry) rows.push([patEntry,'PATTERN','pat']);
+      } else {
+        MOBILE_NODE_CATALOG.filter(n=>n[1]===cat).forEach(n=> rows.push([n, n[0], cat]));
+      }
+      rows.forEach(([n, label, rowCat])=>{
+        const row = el('div','pickerRow '+rowCat, label);
+        row.onclick = ()=>{
+          overlay.remove();
+          createMasterNode(n[0], barIdx, colIdx);
+        };
+        body.appendChild(row);
+      });
+    }
+    renderTab('gen');
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  function createMasterNode(typeName, barIdx, colIdx){
+    const cat = CATALOG_BY_NAME[typeName];
+    if(!cat) return;
+    saveHistory();
+    const id = mobile.nextNodeId++;
+    const state = {};
+    cat[2].forEach(k=>{ if(KD[k]) state[k] = KD[k].val; });
+    const isPattern = !!cat[3];
+    mobile.mobileNodes[id] = {
+      type: typeName,
+      cat: cat[1],
+      knobs: cat[2],
+      isPattern,
+      state,
+      patternSteps: isPattern ? Array(16).fill(false) : null,
+      patternRows: isPattern ? 4 : null,
+      patternCols: isPattern ? 4 : null,
+    };
+    if(!mobile.masterBars[barIdx]) mobile.masterBars[barIdx] = { cols:[null] };
+    mobile.masterBars[barIdx].cols[colIdx] = id;
+    mobile.currentOut[id] = 0;
+    renderMasterDrawer();
+    if(mobile.playing) rebuildMobileIfPlaying();
+  }
+
+  function openMasterDrawer(){
+    ensurePinnedNodes();
+    mobile.drawerOpen = true;
+    const d = document.getElementById('masterDrawer');
+    if(!d) return;
+    d.classList.add('open');
+    d.setAttribute('aria-hidden','false');
+    renderMasterDrawer();
+  }
+  function closeMasterDrawer(){
+    mobile.drawerOpen = false;
+    const d = document.getElementById('masterDrawer');
+    if(!d) return;
+    d.classList.remove('open');
+    d.setAttribute('aria-hidden','true');
+    scheduleCableDraw();
+  }
+
+  // Implicit chain within the drawer: INPUT MIX -> insert[0] -> insert[1] -> ... -> MASTER
+  // Only fills in gaps; does not override explicit user cables.
+  function wireDrawerImplicitChain(){
+    const chain = [];
+    if(mobile.inputMixId != null) chain.push(mobile.inputMixId);
+    (mobile.masterBars||[]).forEach(bar => {
+      (bar.cols||[]).forEach(id => { if(id != null) chain.push(id); });
+    });
+    if(mobile.masterId != null) chain.push(mobile.masterId);
+    for(let i=0; i<chain.length-1; i++){
+      const fromId = chain[i], toId = chain[i+1];
+      const from = mobile.audio[fromId], to = mobile.audio[toId];
+      if(!from || !to) continue;
+      // Skip if user already cabled anything from this fromId's out[0] to this toId's in[0]
+      const already = mobile.cables.some(c =>
+        c.fromNodeId === fromId && c.toNodeId === toId);
+      if(already) continue;
+      // Also skip if this insert already has any incoming cable (don't double-feed)
+      const hasIn = mobile.cables.some(c => c.toNodeId === toId);
+      if(hasIn && i > 0) continue; // first link (INPUT MIX -> first insert) always wired
+      try { from.outs[0].connect(to.ins[0]); } catch(_){}
+    }
+  }
+
+  function wireMasterDrawerUI(){
+    const closeBtn = document.getElementById('masterDrawerClose');
+    if(closeBtn) closeBtn.onclick = closeMasterDrawer;
+    const addBar = document.getElementById('masterAddBarBtn');
+    if(addBar) addBar.onclick = ()=>{
+      saveHistory();
+      mobile.masterBars.push({ cols:[null] });
+      renderMasterDrawer();
+    };
+    const header = document.getElementById('masterDrawerHeader');
+    if(header){
+      let startY=0, t0=0, tracking=false;
+      header.addEventListener('pointerdown', e=>{ startY=e.clientY; t0=Date.now(); tracking=true; });
+      header.addEventListener('pointermove', e=>{
+        if(!tracking) return;
+        const dy = e.clientY - startY;
+        if(dy > 50 && (Date.now()-t0) < 600){
+          tracking=false;
+          closeMasterDrawer();
+          if(navigator.vibrate) navigator.vibrate(15);
+        }
+      });
+      const stop = ()=>{ tracking=false; };
+      header.addEventListener('pointerup', stop);
+      header.addEventListener('pointercancel', stop);
+      header.addEventListener('pointerleave', stop);
+    }
+  }
+
+  // Render tappable INPUT MIX jacks on the bottom bar (mirrors the pinned INPUT MIX inputs).
+  function renderBottomBarJacks(){
+    const host = document.getElementById('bottomBarJacks');
+    if(!host) return;
+    ensurePinnedNodes();
+    host.innerHTML = '';
+    const nid = mobile.inputMixId;
+    for(let i=0;i<8;i++){
+      const j = el('div','nodeJack input');
+      j.dataset.jack = 'input';
+      j.dataset.jackType = 'input';
+      j.dataset.index = i;
+      j.dataset.jackIdx = i;
+      j.dataset.nodeId = nid;
+      if(mobile.cables && mobile.cables.some(c => c.toNodeId === nid && c.toIdx === i)) j.classList.add('connected');
+      host.appendChild(j);
+    }
+  }
+
+  // Replace bottom-bar swipe-up handler to actually open the drawer
+  function wireBottomBarSwipeOpenDrawer(){
+    const bar = $('#mobileBottomBar');
+    if(!bar) return;
+    // Remove old listeners by cloning would be safer; instead attach our own that opens drawer
+    let startY=0, t0=0, tracking=false;
+    bar.addEventListener('pointerdown', e=>{
+      // Ignore taps on play button or jacks
+      if(e.target.closest('#miniPlayBtn') || e.target.closest('.nodeJack')) return;
+      startY = e.clientY; t0 = Date.now(); tracking = true;
+    });
+    bar.addEventListener('pointermove', e=>{
+      if(!tracking) return;
+      const dy = e.clientY - startY;
+      if(dy < -50 && (Date.now() - t0) < 600){
+        tracking = false;
+        openMasterDrawer();
+        if(navigator.vibrate) navigator.vibrate(20);
+      }
+    });
+    const stop = ()=>{ tracking=false; };
+    bar.addEventListener('pointerup', stop);
+    bar.addEventListener('pointercancel', stop);
+    bar.addEventListener('pointerleave', stop);
+  }
+
+  function wireArmedBannerCancel(){
+    const btn = document.getElementById('armedCancelBtn');
+    if(!btn) return;
+    btn.addEventListener('click', e=>{
+      e.stopPropagation(); e.preventDefault();
+      cancelArm();
+    });
+    btn.addEventListener('pointerdown', e=> e.stopPropagation());
+  }
+
+  // Re-render drawer + bottom jacks whenever pages re-render (connected states etc.)
+  const _origRenderForDrawer = renderMobilePages;
+  renderMobilePages = function(){
+    _origRenderForDrawer();
+    if(mobile.drawerOpen) renderMasterDrawer();
+    renderBottomBarJacks();
+  };
+
   function init(){
+    ensurePinnedNodes();
     wireTopBar();
     setupSwipeNav();
-    wireBottomBarSwipe();
+    wireBottomBarSwipeOpenDrawer();
     wirePlayButton();
     wireMobilePlay();
+    wireMasterDrawerUI();
+    wireArmedBannerCancel();
     sizeMobCanvas();
     renderMobilePages();
+    renderBottomBarJacks();
     requestAnimationFrame(cableRAF);
   }
   if(document.readyState === 'loading'){
