@@ -528,6 +528,20 @@
     cursor:pointer; padding:0; line-height:1;
   }
   #masterDrawerClose:active { background:rgba(255,224,0,0.15); }
+  #masterDrawerHeader .drawerHeaderRight {
+    display:flex; align-items:center; gap:8px; margin-left:auto;
+    position:relative; z-index:1;
+  }
+  #drawerPlayBtn {
+    width:44px; height:44px; border-radius:50%;
+    border:2px solid #00ffcc; background:rgba(0,0,0,0.6);
+    color:#00ffcc; font-size:22px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0; font-family:inherit;
+  }
+  #drawerPlayBtn.playing { background:rgba(0,255,204,0.22); color:#0a0a14; border-color:#00ffcc; }
+  #drawerPlayBtn.playing::before { content:"\25A0"; }
+  #drawerPlayBtn:not(.playing)::before { content:"\25B6"; margin-left:2px; }
   #masterDrawerBody {
     flex:1; overflow-y:auto; overflow-x:hidden;
     padding:12px; display:flex; flex-direction:column; gap:12px;
@@ -643,7 +657,10 @@
     <div id="masterDrawerHeader">
       <div class="drawerHandle" aria-hidden="true"></div>
       <span class="drawerTitle">MASTER</span>
-      <button id="masterDrawerClose" type="button" aria-label="Close master drawer">×</button>
+      <div class="drawerHeaderRight">
+        <button id="drawerPlayBtn" type="button" aria-label="Play"></button>
+        <button id="masterDrawerClose" type="button" aria-label="Close master drawer">×</button>
+      </div>
     </div>
     <div id="masterDrawerBody">
       <div id="masterPinTop"><div class="pinLabel">INPUT MIX</div><div id="masterInputMixHost"></div></div>
@@ -5111,6 +5128,8 @@ requestAnimationFrame(() => {
     mobile.playing = true;
     const btn = $('#miniPlayBtn');
     if(btn){ btn.classList.add('playing'); btn.setAttribute('aria-label','Stop'); }
+    const dbtn = $('#drawerPlayBtn');
+    if(dbtn){ dbtn.classList.add('playing'); dbtn.setAttribute('aria-label','Stop'); }
   }
 
   function stopMobilePlay(){
@@ -5139,6 +5158,8 @@ requestAnimationFrame(() => {
     mobile.playing = false;
     const btn = $('#miniPlayBtn');
     if(btn){ btn.classList.remove('playing'); btn.setAttribute('aria-label','Play'); }
+    const dbtn = $('#drawerPlayBtn');
+    if(dbtn){ dbtn.classList.remove('playing'); dbtn.setAttribute('aria-label','Play'); }
   }
 
   function rebuildMobileIfPlaying(){
@@ -5276,6 +5297,12 @@ requestAnimationFrame(() => {
       if((fromIsDrawer || toIsDrawer) && !mobile.drawerOpen && !inputMixCable) return;
       // Non-drawer cables: hide while drawer is open (drawer covers the page)
       if(!fromIsDrawer && !toIsDrawer && mobile.drawerOpen) return;
+      // Drawer OPEN + mixed cable (one end is a drawer node, the other is a page node):
+      // The page jack is hidden under the drawer, so there is no legitimate endpoint
+      // to draw. Without this guard, the cross-page stub branch below would draw a
+      // stray cyan arc+dot anchored at the left screen edge (string-vs-number page
+      // comparison collapses edgeX to 6), appearing near MASTER inside the drawer.
+      if(mobile.drawerOpen && (fromIsDrawer !== toIsDrawer)) return;
       const color = c.color || '#ff69b4';
       // INPUT MIX cables: when drawer is closed, terminate at the bottom-bar jack.
       // The source (page node) must be on the current page to have a valid DOM jack,
@@ -5527,12 +5554,24 @@ requestAnimationFrame(() => {
   // Wire mobile play button (replaces the stub wirePlayButton behavior)
   function wireMobilePlay(){
     const btn = $('#miniPlayBtn');
-    if(!btn) return;
-    // Remove any existing handlers by cloning? Simpler: add our handler that stops propagation and runs first.
-    btn.addEventListener('click', e => {
-      e.stopPropagation(); e.preventDefault();
-      if(mobile.playing) stopMobilePlay(); else startMobilePlay();
-    }, true);
+    if(btn){
+      // Remove any existing handlers by cloning? Simpler: add our handler that stops propagation and runs first.
+      btn.addEventListener('click', e => {
+        e.stopPropagation(); e.preventDefault();
+        if(mobile.playing) stopMobilePlay(); else startMobilePlay();
+      }, true);
+    }
+    // Drawer PLAY button (visible when drawer is open, covering the bottom bar).
+    const dbtn = $('#drawerPlayBtn');
+    if(dbtn){
+      dbtn.addEventListener('pointerdown', e => { e.stopPropagation(); });
+      dbtn.addEventListener('click', e => {
+        e.stopPropagation(); e.preventDefault();
+        try { if(typeof audioCtx !== 'undefined' && audioCtx.state === 'suspended') audioCtx.resume(); } catch(_){}
+        if(mobile.playing) stopMobilePlay(); else startMobilePlay();
+        if(navigator.vibrate) navigator.vibrate(10);
+      }, true);
+    }
   }
 
   // When the user commits a knob change, if playing, rebuild that node's audio graph
