@@ -65,6 +65,8 @@
   .pat-step:hover { border-color:#aa66ff; }
   .pat-step.current { box-shadow:0 0 6px #ffe000; border-color:#ffe000; }
   .pat-wrap { display:flex; align-items:center; gap:6px; }
+  .pat-body { display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; }
+  .pat-body .pat-bpm-wrap { flex-direction:row; align-items:center; gap:6px; }
   .pat-dim-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:30px; }
   .pat-dim-label { font-size:8px; color:#aa66ff; letter-spacing:1px; }
   .pat-dim-input { width:30px; height:18px; background:#0a0a14; color:#ffe000; border:1px solid #aa66ff88; font-family:inherit; font-size:11px; text-align:center; padding:0; box-sizing:border-box; border-radius:2px; }
@@ -700,36 +702,42 @@
     <div class="module fx pat">
       <div class="mod-title">PATTERN 1</div>
       <div class="knob-row">
-        <div class="pat-wrap">
-          <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid1" min="2" max="8" step="1" value="4"></div>
-          <div class="pat-grid" id="patGrid1"></div>
-          <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid1" min="2" max="8" step="1" value="4"></div>
+        <div class="pat-body">
+          <div class="pat-wrap">
+            <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid1" min="2" max="8" step="1" value="4"></div>
+            <div class="pat-grid" id="patGrid1"></div>
+            <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid1" min="2" max="8" step="1" value="4"></div>
+          </div>
+          <div class="pat-bpm-wrap"><div class="pat-bpm-label">BPM</div><input type="number" class="pat-bpm-input" data-pat-bpm="1" min="30" max="300" step="1" value="120"></div>
         </div>
-        <div class="pat-bpm-wrap"><input type="number" class="pat-bpm-input" data-pat-bpm="1" min="30" max="300" step="1" value="120"><div class="pat-bpm-label">BPM</div></div>
       </div>
     </div>
 
     <div class="module fx pat">
       <div class="mod-title">PATTERN 2</div>
       <div class="knob-row">
-        <div class="pat-wrap">
-          <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid2" min="2" max="8" step="1" value="4"></div>
-          <div class="pat-grid" id="patGrid2"></div>
-          <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid2" min="2" max="8" step="1" value="4"></div>
+        <div class="pat-body">
+          <div class="pat-wrap">
+            <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid2" min="2" max="8" step="1" value="4"></div>
+            <div class="pat-grid" id="patGrid2"></div>
+            <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid2" min="2" max="8" step="1" value="4"></div>
+          </div>
+          <div class="pat-bpm-wrap"><div class="pat-bpm-label">BPM</div><input type="number" class="pat-bpm-input" data-pat-bpm="2" min="30" max="300" step="1" value="120"></div>
         </div>
-        <div class="pat-bpm-wrap"><input type="number" class="pat-bpm-input" data-pat-bpm="2" min="30" max="300" step="1" value="120"><div class="pat-bpm-label">BPM</div></div>
       </div>
     </div>
 
     <div class="module fx pat">
       <div class="mod-title">PATTERN 3</div>
       <div class="knob-row">
-        <div class="pat-wrap">
-          <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid3" min="2" max="8" step="1" value="4"></div>
-          <div class="pat-grid" id="patGrid3"></div>
-          <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid3" min="2" max="8" step="1" value="4"></div>
+        <div class="pat-body">
+          <div class="pat-wrap">
+            <div class="pat-dim-col"><div class="pat-dim-label">ROWS</div><input type="number" class="pat-dim-input" data-pat-dim="rows" data-pat-grid="patGrid3" min="2" max="8" step="1" value="4"></div>
+            <div class="pat-grid" id="patGrid3"></div>
+            <div class="pat-dim-col"><div class="pat-dim-label">COLS</div><input type="number" class="pat-dim-input" data-pat-dim="cols" data-pat-grid="patGrid3" min="2" max="8" step="1" value="4"></div>
+          </div>
+          <div class="pat-bpm-wrap"><div class="pat-bpm-label">BPM</div><input type="number" class="pat-bpm-input" data-pat-bpm="3" min="30" max="300" step="1" value="120"></div>
         </div>
-        <div class="pat-bpm-wrap"><input type="number" class="pat-bpm-input" data-pat-bpm="3" min="30" max="300" step="1" value="120"><div class="pat-bpm-label">BPM</div></div>
       </div>
     </div>
 
