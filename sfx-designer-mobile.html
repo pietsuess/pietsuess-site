@@ -498,6 +498,89 @@
   .confirmBox button:hover { background:rgba(0,255,204,0.22); }
   .confirmBox button.danger { background:transparent; border-color:#ff4444; color:#ff4444; }
 
+  /* ===== HAMBURGER MENU (Phase 7) ===== */
+  .mobMenuOverlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.75);
+    z-index:10001; opacity:0; transition:opacity 0.18s ease-out;
+  }
+  .mobMenuOverlay.open { opacity:1; }
+  .mobMenuDrawer {
+    position:fixed; top:0; left:0; bottom:0; width:85%; max-width:340px;
+    background:#0a0a14; border-right:2px solid #ffe00066;
+    z-index:10002; display:flex; flex-direction:column;
+    transform:translateX(-100%); transition:transform 0.22s ease-out;
+    box-shadow:4px 0 24px rgba(0,0,0,0.8);
+  }
+  .mobMenuDrawer.open { transform:translateX(0); }
+  .mobMenuHeader {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; border-bottom:2px solid #222; flex-shrink:0;
+  }
+  .mobMenuTitle {
+    color:#ffe000; font-size:14px; letter-spacing:3px;
+    text-shadow:0 0 8px #ffe00066;
+  }
+  .mobMenuBack {
+    width:36px; height:36px; border:2px solid #00ffcc; background:transparent;
+    color:#00ffcc; font-family:inherit; font-size:16px; cursor:pointer; border-radius:4px;
+    line-height:1; display:none;
+  }
+  .mobMenuClose {
+    width:36px; height:36px; border:2px solid #ff4444; background:transparent;
+    color:#ff4444; font-family:inherit; font-size:18px; cursor:pointer; border-radius:4px;
+    line-height:1;
+  }
+  .mobMenuBody {
+    flex:1; overflow-y:auto; padding:10px 12px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .mobMenuItem {
+    min-height:52px; padding:14px 14px;
+    background:rgba(0,0,0,0.6); border:2px solid #00ffcc88;
+    color:#00ffcc; font-family:inherit; font-size:18px; letter-spacing:2px;
+    text-transform:uppercase; text-align:left; cursor:pointer;
+    border-radius:0;
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .mobMenuItem:active { background:rgba(0,255,204,0.14); }
+  .mobMenuItem.disabled { opacity:0.35; cursor:default; }
+  .mobMenuItem.warn { color:#ff9944; border-color:#ff9944aa; background:rgba(40,20,10,0.6); }
+  .mobMenuItem.danger { color:#ff4444; border-color:#ff4444aa; background:rgba(40,10,10,0.4); }
+  .mobMenuItem.accent { color:#ffe000; border-color:#ffe000aa; background:rgba(40,35,0,0.4); }
+  .mobMenuItemHint {
+    font-size:10px; letter-spacing:1px; opacity:0.6;
+  }
+  .mobMenuEmpty {
+    padding:20px 14px; text-align:center; color:#666;
+    font-size:12px; letter-spacing:1px; font-style:italic;
+  }
+  .mobMenuPresetRow {
+    display:flex; gap:6px; align-items:stretch;
+  }
+  .mobMenuPresetRow .mobMenuItem { flex:1; min-width:0; }
+  .mobMenuPresetRow .mobMenuItem span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mobMenuPresetDel {
+    width:52px; flex-shrink:0;
+    background:transparent; border:2px solid #ff4444;
+    color:#ff4444; font-family:inherit; font-size:14px; cursor:pointer;
+    letter-spacing:1px;
+  }
+
+  /* Text prompt modal (save preset name) */
+  .mobPromptBox {
+    background:#0d0d18; border:2px solid #ffe00066; border-radius:6px;
+    padding:18px; max-width:340px; width:100%;
+    color:#ccc; font-size:16px; letter-spacing:1px; line-height:1.4;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .mobPromptBox input {
+    width:100%; padding:12px; box-sizing:border-box;
+    background:#0a0a14; color:#ffe000; border:2px solid #ffe00066;
+    font-family:inherit; font-size:16px; letter-spacing:1px;
+    border-radius:4px;
+  }
+  .mobPromptBox input:focus { outline:none; border-color:#ffe000; }
+
   /* ===== MASTER DRAWER ===== */
   #masterDrawer {
     position:fixed; left:0; right:0; bottom:0; top:0;
@@ -3950,9 +4033,10 @@ requestAnimationFrame(() => {
       mobile.history.push(JSON.stringify({
         pages: mobile.pages,
         masterBars: mobile.masterBars,
+        cables: mobile.cables,
         nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
       }));
-      if(mobile.history.length > 50) mobile.history.shift();
+      if(mobile.history.length > 10) mobile.history.shift();
       mobile.redoStack.length = 0;
     } catch(e){}
   }
@@ -4897,6 +4981,429 @@ requestAnimationFrame(() => {
 
   function wireTopBar(){
     // Page add/delete removed — always 6 pages.
+    const hb = document.getElementById('hamburgerBtn');
+    if(hb){
+      hb.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        openMobMenu();
+      });
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // PHASE 7: HAMBURGER MENU (undo/redo + preset save/load/export/import)
+  // ════════════════════════════════════════════════════════════════════
+
+  const MOB_PRESETS_KEY = 'mobileSfxPresets';
+
+  function readMobPresets(){
+    try {
+      const raw = localStorage.getItem(MOB_PRESETS_KEY);
+      if(!raw) return {};
+      const obj = JSON.parse(raw);
+      return (obj && typeof obj === 'object') ? obj : {};
+    } catch(_){ return {}; }
+  }
+  function writeMobPresets(obj){
+    try { localStorage.setItem(MOB_PRESETS_KEY, JSON.stringify(obj)); } catch(_){}
+  }
+
+  // Serialize the full mobile state into a portable snapshot.
+  function serializeMobileState(){
+    const nodes = {};
+    Object.keys(mobile.mobileNodes).forEach(id => {
+      const v = mobile.mobileNodes[id];
+      nodes[id] = {
+        type: v.type,
+        cat: v.cat,
+        knobs: v.knobs,
+        isPattern: !!v.isPattern,
+        states: v.states,
+        patternStates: v.patternStates || null,
+        selectedOutput: v.selectedOutput || 0,
+        pinned: !!v.pinned,
+      };
+    });
+    return {
+      _mobileSfxPreset: 1,
+      pages: mobile.pages,
+      masterBars: mobile.masterBars,
+      cables: mobile.cables,
+      nextNodeId: mobile.nextNodeId,
+      inputMixId: mobile.inputMixId,
+      masterId: mobile.masterId,
+      nodes,
+    };
+  }
+
+  // Restore a serialized snapshot. Stops audio, rebuilds node objects, re-renders.
+  function restoreMobileState(snap){
+    if(!snap || typeof snap !== 'object' || !snap.nodes) return false;
+    // Stop audio playback if running
+    try {
+      if(mobile.playing){
+        const playBtn = document.getElementById('miniPlayBtn');
+        if(playBtn && playBtn.classList.contains('playing')) playBtn.click();
+      }
+    } catch(_){}
+
+    // Close any expanded node & reset transient ui
+    mobile.expandedNodeId = null;
+    mobile.expanded = {};
+    mobile.armed = null;
+
+    // Rehydrate nodes
+    const newNodes = {};
+    Object.keys(snap.nodes || {}).forEach(id => {
+      const v = snap.nodes[id];
+      const node = {
+        type: v.type,
+        cat: v.cat,
+        knobs: v.knobs || [],
+        isPattern: !!v.isPattern,
+        states: v.states || [0,1,2,3].map(()=>buildInitialState(v.knobs||[])),
+        patternStates: v.patternStates || null,
+        selectedOutput: v.selectedOutput || 0,
+        pinned: !!v.pinned,
+        _renderId: Number(id),
+      };
+      attachStateProxy(node);
+      newNodes[Number(id)] = node;
+    });
+
+    mobile.mobileNodes = newNodes;
+    mobile.pages = snap.pages || mobile.pages;
+    mobile.masterBars = Array.isArray(snap.masterBars) ? snap.masterBars : [];
+    mobile.cables = Array.isArray(snap.cables) ? snap.cables : [];
+    mobile.nextNodeId = snap.nextNodeId || (Math.max(0, ...Object.keys(newNodes).map(Number)) + 1);
+    mobile.inputMixId = snap.inputMixId != null ? Number(snap.inputMixId) : null;
+    mobile.masterId = snap.masterId != null ? Number(snap.masterId) : null;
+    mobile.currentOut = {};
+    Object.keys(newNodes).forEach(id => { mobile.currentOut[id] = 0; });
+
+    // Ensure pinned still exist (in case snapshot was corrupt)
+    if(typeof ensurePinnedNodes === 'function') ensurePinnedNodes();
+
+    // Flush audio graph — it will rebuild lazily via buildMobileAudio when play resumes
+    mobile.audio = {};
+    mobile.cableDirty = true;
+
+    if(typeof renderMobilePages === 'function') renderMobilePages();
+    if(typeof renderBottomBarJacks === 'function') renderBottomBarJacks();
+    if(mobile.drawerOpen && typeof renderMasterDrawer === 'function') renderMasterDrawer();
+    return true;
+  }
+
+  // History-based version: snapshot/restore using saveHistory's shape,
+  // falling back to serializeMobileState for richer restores.
+  function doMobUndo(){
+    if(!mobile.history || mobile.history.length === 0) return false;
+    // Snapshot current state into redoStack
+    try {
+      mobile.redoStack.push(JSON.stringify(serializeMobileState()));
+      if(mobile.redoStack.length > 10) mobile.redoStack.shift();
+    } catch(_){}
+    const prev = mobile.history.pop();
+    try {
+      const parsed = JSON.parse(prev);
+      // saveHistory stores a compact shape {pages, masterBars, nodes:{id:{type,states,...}}}
+      // Reconstruct a full snap from it by filling in knobs/cat via CATALOG_BY_NAME.
+      const fullNodes = {};
+      Object.keys(parsed.nodes || {}).forEach(id => {
+        const nv = parsed.nodes[id];
+        const cat = CATALOG_BY_NAME[nv.type];
+        const knobs = cat ? cat[2] : (nv.type === 'INPUT MIX' ? ['inLvl0','inLvl1','inLvl2','inLvl3','inLvl4','inLvl5','inLvl6','inLvl7'] : (nv.type === 'MASTER' ? ['masterGain'] : []));
+        const catName = cat ? cat[1] : (nv.type === 'INPUT MIX' ? 'mix' : (nv.type === 'MASTER' ? 'out' : 'fx'));
+        const isPattern = cat ? !!cat[3] : false;
+        fullNodes[id] = {
+          type: nv.type, cat: catName, knobs, isPattern,
+          states: nv.states, patternStates: nv.patternStates || null,
+          selectedOutput: nv.selectedOutput || 0, pinned: !!nv.pinned,
+        };
+      });
+      const snap = {
+        pages: parsed.pages,
+        masterBars: parsed.masterBars,
+        cables: parsed.cables || mobile.cables, // legacy: may not be captured
+        nextNodeId: mobile.nextNodeId,
+        inputMixId: mobile.inputMixId,
+        masterId: mobile.masterId,
+        nodes: fullNodes,
+      };
+      restoreMobileState(snap);
+    } catch(e){ return false; }
+    return true;
+  }
+  function doMobRedo(){
+    if(!mobile.redoStack || mobile.redoStack.length === 0) return false;
+    try {
+      mobile.history.push(JSON.stringify({
+        pages: mobile.pages,
+        masterBars: mobile.masterBars,
+        cables: mobile.cables,
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
+      }));
+      if(mobile.history.length > 10) mobile.history.shift();
+    } catch(_){}
+    const next = mobile.redoStack.pop();
+    try {
+      const snap = JSON.parse(next);
+      restoreMobileState(snap);
+    } catch(e){ return false; }
+    return true;
+  }
+
+  // ---------- Menu UI ----------
+  let mobMenuEls = null;
+
+  function closeMobMenu(){
+    if(!mobMenuEls) return;
+    mobMenuEls.overlay.classList.remove('open');
+    mobMenuEls.drawer.classList.remove('open');
+    setTimeout(()=>{
+      if(mobMenuEls){
+        mobMenuEls.overlay.remove();
+        mobMenuEls.drawer.remove();
+        mobMenuEls = null;
+      }
+    }, 220);
+  }
+
+  function openMobMenu(){
+    if(mobMenuEls) return;
+    const overlay = el('div','mobMenuOverlay');
+    const drawer = el('div','mobMenuDrawer');
+    const header = el('div','mobMenuHeader');
+    const title = el('div','mobMenuTitle','MENU');
+    const close = el('button','mobMenuClose','×');
+    close.setAttribute('aria-label','Close menu');
+    header.append(title, close);
+    const body = el('div','mobMenuBody');
+    drawer.append(header, body);
+    document.body.append(overlay, drawer);
+    mobMenuEls = { overlay, drawer, header, title, body, close };
+
+    overlay.addEventListener('click', closeMobMenu);
+    close.addEventListener('click', closeMobMenu);
+
+    // Slight delay so the transition animates
+    requestAnimationFrame(()=>{
+      overlay.classList.add('open');
+      drawer.classList.add('open');
+    });
+
+    showMobMenuRoot();
+  }
+
+  function setMobMenuTitle(t, showBack){
+    if(!mobMenuEls) return;
+    mobMenuEls.title.textContent = t;
+    // Replace back button state
+    const existingBack = mobMenuEls.header.querySelector('.mobMenuBack');
+    if(showBack){
+      if(!existingBack){
+        const back = el('button','mobMenuBack','◀');
+        back.setAttribute('aria-label','Back');
+        back.style.display = 'inline-block';
+        back.addEventListener('click', showMobMenuRoot);
+        mobMenuEls.header.insertBefore(back, mobMenuEls.title);
+      }
+    } else if(existingBack){
+      existingBack.remove();
+    }
+  }
+
+  function clearMobMenuBody(){
+    if(mobMenuEls) mobMenuEls.body.innerHTML = '';
+  }
+
+  function makeMenuItem(label, cls, onClick, hint){
+    const b = el('button','mobMenuItem' + (cls ? ' '+cls : ''));
+    const span = el('span', null, label);
+    b.appendChild(span);
+    if(hint){ b.appendChild(el('span','mobMenuItemHint', hint)); }
+    b.addEventListener('click', (e)=>{ e.stopPropagation(); onClick(); });
+    return b;
+  }
+
+  function showMobMenuRoot(){
+    if(!mobMenuEls) return;
+    setMobMenuTitle('MENU', false);
+    clearMobMenuBody();
+    const body = mobMenuEls.body;
+
+    const canUndo = mobile.history.length > 0;
+    const canRedo = mobile.redoStack.length > 0;
+
+    const undoBtn = makeMenuItem('UNDO', canUndo ? 'accent' : 'accent disabled', ()=>{
+      if(!canUndo) return;
+      if(doMobUndo()) closeMobMenu();
+    }, canUndo ? (mobile.history.length+' states') : '—');
+    if(!canUndo) undoBtn.disabled = true;
+    body.appendChild(undoBtn);
+
+    const redoBtn = makeMenuItem('REDO', canRedo ? 'accent' : 'accent disabled', ()=>{
+      if(!canRedo) return;
+      if(doMobRedo()) closeMobMenu();
+    }, canRedo ? (mobile.redoStack.length+' states') : '—');
+    if(!canRedo) redoBtn.disabled = true;
+    body.appendChild(redoBtn);
+
+    body.appendChild(makeMenuItem('SAVE PRESET', '', showMobMenuSavePreset));
+    body.appendChild(makeMenuItem('LOAD PRESET', '', showMobMenuLoadPreset));
+    body.appendChild(makeMenuItem('EXPORT', '', doMobExport));
+    body.appendChild(makeMenuItem('IMPORT', '', doMobImport));
+    body.appendChild(makeMenuItem('DELETE PRESET', 'danger', showMobMenuDeletePreset));
+  }
+
+  function showMobMenuSavePreset(){
+    if(!mobMenuEls) return;
+    setMobMenuTitle('SAVE PRESET', true);
+    clearMobMenuBody();
+    const body = mobMenuEls.body;
+    const box = el('div','mobPromptBox');
+    box.appendChild(el('div', null, 'Preset name:'));
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'my preset';
+    const defaultName = 'preset ' + (new Date().toISOString().replace(/[TZ:]/g,' ').slice(0,16));
+    input.value = defaultName;
+    box.appendChild(input);
+    const btns = el('div','knobModalButtons');
+    const cancel = el('button', null, 'CANCEL');
+    const save = el('button', 'primary', 'SAVE');
+    cancel.addEventListener('click', showMobMenuRoot);
+    save.addEventListener('click', ()=>{
+      const name = (input.value || '').trim();
+      if(!name) return;
+      const presets = readMobPresets();
+      const exists = !!presets[name];
+      const commit = ()=>{
+        presets[name] = serializeMobileState();
+        writeMobPresets(presets);
+        closeMobMenu();
+      };
+      if(exists){
+        confirmPopup('Overwrite "'+name+'"?', commit);
+      } else {
+        commit();
+      }
+    });
+    btns.append(cancel, save);
+    box.appendChild(btns);
+    body.appendChild(box);
+    setTimeout(()=>{ try { input.focus(); input.select(); } catch(_){} }, 50);
+  }
+
+  function showMobMenuLoadPreset(){
+    if(!mobMenuEls) return;
+    setMobMenuTitle('LOAD PRESET', true);
+    clearMobMenuBody();
+    const body = mobMenuEls.body;
+    const presets = readMobPresets();
+    const names = Object.keys(presets).sort();
+    if(names.length === 0){
+      body.appendChild(el('div','mobMenuEmpty','No saved presets'));
+      return;
+    }
+    names.forEach(name => {
+      body.appendChild(makeMenuItem(name, '', ()=>{
+        const snap = presets[name];
+        if(!snap) return;
+        // Save current state to history so LOAD is undoable
+        try {
+          mobile.history.push(JSON.stringify({
+            pages: mobile.pages,
+            masterBars: mobile.masterBars,
+            cables: mobile.cables,
+            nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
+          }));
+          if(mobile.history.length > 10) mobile.history.shift();
+          mobile.redoStack.length = 0;
+        } catch(_){}
+        restoreMobileState(snap);
+        closeMobMenu();
+      }));
+    });
+  }
+
+  function showMobMenuDeletePreset(){
+    if(!mobMenuEls) return;
+    setMobMenuTitle('DELETE PRESET', true);
+    clearMobMenuBody();
+    const body = mobMenuEls.body;
+    const presets = readMobPresets();
+    const names = Object.keys(presets).sort();
+    if(names.length === 0){
+      body.appendChild(el('div','mobMenuEmpty','No saved presets'));
+      return;
+    }
+    names.forEach(name => {
+      body.appendChild(makeMenuItem(name, 'danger', ()=>{
+        confirmPopup('Delete preset "'+name+'"?', ()=>{
+          const cur = readMobPresets();
+          delete cur[name];
+          writeMobPresets(cur);
+          showMobMenuDeletePreset(); // re-render list
+        });
+      }));
+    });
+  }
+
+  function doMobExport(){
+    try {
+      const snap = serializeMobileState();
+      const blob = new Blob([JSON.stringify(snap, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+      a.href = url;
+      a.download = 'mobile-sfx-' + stamp + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 100);
+      closeMobMenu();
+    } catch(e){
+      console.warn('[mobile] export failed', e);
+    }
+  }
+
+  function doMobImport(){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', ()=>{
+      const f = input.files && input.files[0];
+      if(!f){ input.remove(); return; }
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try {
+          const snap = JSON.parse(reader.result);
+          // Save current to history first so import is undoable
+          try {
+            mobile.history.push(JSON.stringify({
+              pages: mobile.pages,
+              masterBars: mobile.masterBars,
+              cables: mobile.cables,
+              nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
+            }));
+            if(mobile.history.length > 10) mobile.history.shift();
+            mobile.redoStack.length = 0;
+          } catch(_){}
+          const ok = restoreMobileState(snap);
+          if(!ok) console.warn('[mobile] import: invalid snapshot');
+          closeMobMenu();
+        } catch(e){
+          console.warn('[mobile] import failed', e);
+        } finally {
+          input.remove();
+        }
+      };
+      reader.readAsText(f);
+    });
+    input.click();
   }
 
   function wireBottomBarSwipe(){
