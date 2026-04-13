@@ -4140,6 +4140,27 @@ requestAnimationFrame(() => {
     (knobs||[]).forEach(k => { if(KD[k]) s[k] = KD[k].val; });
     return s;
   }
+  // Default per-output dropdown values by node type. Mirrors desktop initial
+  // values in `const dropdowns = {...}`. Keys absent here => no dropdown used
+  // by that type; emit an empty object in that slot.
+  function buildInitialDropdowns(typeName){
+    switch(typeName){
+      case 'OSCILLATOR': return { waveform: 'triangle' };
+      case 'TREMOLO':    return { tremShape: 'sine' };
+      case 'NOISE GEN':  return { noiseType: 'white' };
+      case 'FILTER':     return { filtType: 'lowpass' };
+      case 'PWM OSC':    return { pwmWave: 'square' };
+      case 'FORMANT':    return { formVowel: 'a' };
+      case 'SUB OCTAVE': return { subOct: '0.5' };
+      case 'EQ':         return { eqType: 'peaking' };
+      default: return {};
+    }
+  }
+  // 4-slot array of identical defaults per type.
+  function buildInitialDropdownsArray(typeName){
+    const base = buildInitialDropdowns(typeName);
+    return [0,1,2,3].map(()=> Object.assign({}, base));
+  }
   function buildInitialPatternState(rows, cols){
     return { steps: Array(rows * cols).fill(false), rows, cols };
   }
@@ -4216,6 +4237,7 @@ requestAnimationFrame(() => {
       isPattern,
       states,
       patternStates,
+      dropdowns: buildInitialDropdownsArray(typeName),
       selectedOutput: 0,
       _renderId: id,
     };
@@ -5020,6 +5042,7 @@ requestAnimationFrame(() => {
         isPattern: !!v.isPattern,
         states: v.states,
         patternStates: v.patternStates || null,
+        dropdowns: Array.isArray(v.dropdowns) ? v.dropdowns : undefined,
         selectedOutput: v.selectedOutput || 0,
         pinned: !!v.pinned,
       };
@@ -5063,6 +5086,9 @@ requestAnimationFrame(() => {
         isPattern: !!v.isPattern,
         states: v.states || [0,1,2,3].map(()=>buildInitialState(v.knobs||[])),
         patternStates: v.patternStates || null,
+        dropdowns: Array.isArray(v.dropdowns) && v.dropdowns.length > 0
+          ? v.dropdowns.map(d => (d && typeof d === 'object') ? Object.assign({}, d) : {})
+          : buildInitialDropdownsArray(v.type),
         selectedOutput: v.selectedOutput || 0,
         pinned: !!v.pinned,
         _renderId: Number(id),
@@ -5122,10 +5148,20 @@ requestAnimationFrame(() => {
       const idStr = 'm_' + nid;
       // States: copy as-is (array of 4 for gen/fx/pat, array of 4 for pinned but only [0] used).
       const states = JSON.parse(JSON.stringify(v.states || []));
-      // Dropdowns: mobile does not currently track per-output dropdowns per-node.
-      // Emit an empty object per output to mirror the states array shape.
+      // Dropdowns: emit per-output dropdown values stored on the node (set at
+      // creation time from type defaults, updated on preset load). Falls back
+      // to empty objects if a node somehow lacks the field.
       const slotCount = states.length || 1;
-      const dropdowns = Array.from({length: slotCount}, () => ({}));
+      let dropdowns;
+      if(Array.isArray(v.dropdowns) && v.dropdowns.length > 0){
+        dropdowns = [];
+        for(let i=0;i<slotCount;i++){
+          const d = v.dropdowns[i];
+          dropdowns.push((d && typeof d === 'object') ? Object.assign({}, d) : {});
+        }
+      } else {
+        dropdowns = Array.from({length: slotCount}, () => ({}));
+      }
       const patternStates = (v.cat === 'pat' && v.patternStates)
         ? JSON.parse(JSON.stringify(v.patternStates))
         : null;
@@ -5288,6 +5324,23 @@ requestAnimationFrame(() => {
             tb: incomingDesk.tb ? 1 : 0,
           }
         : null;
+      // Per-output dropdowns: preserve from preset if present, otherwise seed
+      // with this type's default so the node sounds right on playback.
+      let dropdownsArr;
+      if(Array.isArray(inst.dropdowns) && inst.dropdowns.length > 0){
+        dropdownsArr = inst.dropdowns.map(d => (d && typeof d === 'object') ? Object.assign({}, d) : {});
+        // Fill any missing keys with the type default so empty-object slots
+        // (from older mobile saves that emitted {}) still sound correct.
+        const def = buildInitialDropdowns(inst.type);
+        dropdownsArr = dropdownsArr.map(d => {
+          const merged = Object.assign({}, def);
+          Object.keys(d).forEach(k => { merged[k] = d[k]; });
+          return merged;
+        });
+        while(dropdownsArr.length < 4) dropdownsArr.push(Object.assign({}, buildInitialDropdowns(inst.type)));
+      } else {
+        dropdownsArr = buildInitialDropdownsArray(inst.type);
+      }
       const node = {
         type: inst.type,
         cat: catName,
@@ -5295,6 +5348,7 @@ requestAnimationFrame(() => {
         isPattern,
         states,
         patternStates,
+        dropdowns: dropdownsArr,
         selectedOutput: inst.selectedOutput || 0,
         pinned: !!inst.pinned,
         bypass: !!inst.bypass,
@@ -5870,13 +5924,20 @@ requestAnimationFrame(() => {
     if(typeof KNOB_DEFS !== 'undefined'){
       Object.keys(KNOB_DEFS).forEach(k => { p[k] = KNOB_DEFS[k].val; });
     }
-    // Pull dropdowns (waveform, tremShape, etc.) from desktop global
+    // Start from desktop global dropdowns (safety net of defaults).
     try {
       if(typeof dropdowns !== 'undefined'){
         Object.assign(p, dropdowns);
       }
     } catch(_){}
-    // Override with this output's channel state
+    // Apply this node's per-output dropdowns (waveform, tremShape, noiseType,
+    // filtType, pwmWave, formVowel, subOct, eqType). These override the
+    // desktop globals so a saved patch plays back with its authored values.
+    if(Array.isArray(node.dropdowns)){
+      const nd = node.dropdowns[outIdx] || node.dropdowns[0];
+      if(nd && typeof nd === 'object') Object.assign(p, nd);
+    }
+    // Override with this output's channel state (knob values)
     const s = (node.states && node.states[outIdx]) ? node.states[outIdx] : null;
     if(s) Object.assign(p, s);
     return p;
@@ -6555,6 +6616,7 @@ requestAnimationFrame(() => {
       isPattern: false,
       states,
       patternStates: null,
+      dropdowns: [{},{},{},{}],
       selectedOutput: 0,
       pinned: true,
       _renderId: id,
@@ -6765,6 +6827,7 @@ requestAnimationFrame(() => {
       isPattern,
       states,
       patternStates,
+      dropdowns: buildInitialDropdownsArray(typeName),
       selectedOutput: 0,
       _renderId: id,
     };
