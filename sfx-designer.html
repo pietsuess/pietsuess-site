@@ -2535,11 +2535,36 @@ function loadV2Preset(preset){
     }
   });
 
+  // Compute baseline Y: bottom of the original hardcoded module area.
+  // Any preset hint with y above this baseline (i.e. in the originals' zone) will
+  // be pushed down by baselineDelta so newly-spawned preset modules never pile on
+  // top of the originals at the top of the canvas.
+  // Originals live roughly 38..1023px (see module position table near L3472).
+  // Use the actual DOM state (in case user moved originals) so baseline is live.
+  const _originalYs = [];
+  Object.keys(desktopInstances).forEach(uuid => {
+    const inst = desktopInstances[uuid];
+    if(inst && inst.isOriginal && inst.domEl){
+      const ty = parseFloat(inst.domEl.style.top) || 0;
+      const h  = inst.domEl.offsetHeight || 40;
+      _originalYs.push(ty + h);
+    }
+  });
+  const baselineY = _originalYs.length ? Math.max.apply(null, _originalYs) + 30 : 1080;
+  function _clampHintY(hy){
+    // If preset already placed this below originals, keep as-is (no further shift).
+    if(typeof hy !== 'number') return hy;
+    if(hy >= baselineY) return hy;
+    // Preset's y falls inside the originals' zone -> offset down so it sits below.
+    return baselineY + hy; // preserve relative spacing authored by mobile side
+  }
+
   // Third pass: spawn modules for anyone still unassigned
   assignments.forEach(a => {
     if(a.domUuid) return;
     const hint = a.presetInst.layoutHints && a.presetInst.layoutHints.desktop;
-    const res = window.spawnModule(a.presetInst.type, hint ? {x: hint.x, y: hint.y} : null);
+    const spawnPos = hint ? { x: hint.x, y: _clampHintY(hint.y) } : null;
+    const res = window.spawnModule(a.presetInst.type, spawnPos);
     if(res){ a.domUuid = res.uuid; used.add(res.uuid); }
   });
 
@@ -2600,11 +2625,24 @@ function loadV2Preset(preset){
     }
     // Layout
     const hint = pi.layoutHints && pi.layoutHints.desktop;
+    const isPinned = _isPinnedType(pi.type);
     if(hint){
-      if(typeof hint.x === 'number') dom.style.left = hint.x + 'px';
-      if(typeof hint.y === 'number') dom.style.top = hint.y + 'px';
-      if(hint.w) dom.style.width = hint.w;
-      dom.classList.toggle('jacks-tb', !!hint.tb);
+      // Skip repositioning originals — they already have correct hardcoded positions,
+      // and mobile-synthesized hints for originals would otherwise pile them on top-left.
+      if(!inst.isOriginal){
+        if(typeof hint.x === 'number') dom.style.left = hint.x + 'px';
+        if(typeof hint.y === 'number') dom.style.top = _clampHintY(hint.y) + 'px';
+        if(hint.w) dom.style.width = hint.w;
+      }
+      // Pinned nodes (INPUT MIX / MASTER) must always be jacks-tb on desktop.
+      // Honor tb flag for everyone else; default to current class if flag absent.
+      if(isPinned){
+        dom.classList.add('jacks-tb');
+      } else if(typeof hint.tb !== 'undefined'){
+        dom.classList.toggle('jacks-tb', !!hint.tb);
+      }
+    } else if(isPinned){
+      dom.classList.add('jacks-tb');
     }
   });
 

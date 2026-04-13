@@ -5131,17 +5131,33 @@ requestAnimationFrame(() => {
         : null;
       const loc = findMobileNodeLocation(nid);
       const mobHint = loc ? { page: loc.page, bar: loc.bar, col: loc.col } : null;
-      // Default desktop layout hint based on mobile position (will be refined in Phase D).
+      // Desktop layout hint: prefer hint preserved from an incoming preset
+      // (so desktop round-trip keeps authored positions + jacks-tb orientation).
+      // Otherwise synthesize from mobile position, offset well below the 49
+      // hardcoded originals so they never pile on top on desktop load.
+      // Originals occupy roughly y=38..1055 on desktop; use 1100 as safe baseline.
+      const DESK_BASELINE_Y = 1100;
+      const isInputMix = (v.type === 'INPUT MIX');
+      const isMaster = (v.type === 'MASTER');
+      const isPinnedType = !!v.pinned || isInputMix || isMaster;
       let deskHint;
-      if(loc){
+      if(v.savedDeskHint && typeof v.savedDeskHint === 'object'){
+        // Pass through verbatim; force tb=1 for pinned types defensively.
+        deskHint = {
+          x: typeof v.savedDeskHint.x === 'number' ? v.savedDeskHint.x : 0,
+          y: typeof v.savedDeskHint.y === 'number' ? v.savedDeskHint.y : DESK_BASELINE_Y,
+          w: v.savedDeskHint.w || 180,
+          tb: isPinnedType ? 1 : (v.savedDeskHint.tb ? 1 : 0),
+        };
+      } else if(loc){
         deskHint = {
           x: loc.bar * 250 + loc.col * 60,
-          y: loc.page * 100 + loc.bar * 80,
+          y: DESK_BASELINE_Y + loc.page * 100 + loc.bar * 80,
           w: 180,
-          tb: 0,
+          tb: isPinnedType ? 1 : 0,
         };
       } else {
-        deskHint = { x: 0, y: 0, w: 180, tb: 0 };
+        deskHint = { x: 0, y: DESK_BASELINE_Y, w: 180, tb: isPinnedType ? 1 : 0 };
       }
       const inst = {
         id: idStr,
@@ -5261,6 +5277,17 @@ requestAnimationFrame(() => {
         }
       }
 
+      // Preserve incoming desktop layout hint so a mobile→desktop round-trip
+      // brings back authored positions + jacks-tb orientation.
+      const incomingDesk = inst.layoutHints && inst.layoutHints.desktop;
+      const savedDeskHint = (incomingDesk && typeof incomingDesk === 'object')
+        ? {
+            x: typeof incomingDesk.x === 'number' ? incomingDesk.x : undefined,
+            y: typeof incomingDesk.y === 'number' ? incomingDesk.y : undefined,
+            w: incomingDesk.w || undefined,
+            tb: incomingDesk.tb ? 1 : 0,
+          }
+        : null;
       const node = {
         type: inst.type,
         cat: catName,
@@ -5271,6 +5298,7 @@ requestAnimationFrame(() => {
         selectedOutput: inst.selectedOutput || 0,
         pinned: !!inst.pinned,
         bypass: !!inst.bypass,
+        savedDeskHint,
         _renderId: nid,
       };
       attachStateProxy(node);
