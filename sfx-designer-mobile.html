@@ -3907,7 +3907,7 @@ requestAnimationFrame(() => {
       mobile.history.push(JSON.stringify({
         pages: mobile.pages,
         masterBars: mobile.masterBars,
-        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,state:v.state,pinned:!!v.pinned}]))
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned}]))
       }));
       if(mobile.history.length > 50) mobile.history.shift();
       mobile.redoStack.length = 0;
@@ -4003,27 +4003,97 @@ requestAnimationFrame(() => {
     document.body.appendChild(overlay);
   }
 
+  // Per-node multi-output state: each node holds 4 independent channels.
+  // node.states[0..3] = {knobId: val, ...} — full knob map per output
+  // node.patternStates[0..3] = {steps, rows, cols} — independent grid per output
+  // node.state / .patternSteps / .patternRows / .patternCols are live proxies
+  // to the currently-selected output (mobile.currentOut[nodeId] || 0).
+  function buildInitialState(knobs){
+    const s = {};
+    (knobs||[]).forEach(k => { if(KD[k]) s[k] = KD[k].val; });
+    return s;
+  }
+  function buildInitialPatternState(rows, cols){
+    return { steps: Array(rows * cols).fill(false), rows, cols };
+  }
+  function attachStateProxy(node){
+    if(!node._proxied){
+      Object.defineProperty(node, 'state', {
+        configurable: true,
+        get(){
+          const o = (mobile.currentOut[node._renderId] || node.selectedOutput || 0) | 0;
+          return node.states[o] || node.states[0];
+        },
+        set(v){
+          const o = (mobile.currentOut[node._renderId] || node.selectedOutput || 0) | 0;
+          node.states[o] = v;
+        }
+      });
+      if(node.isPattern){
+        Object.defineProperty(node, 'patternSteps', {
+          configurable: true,
+          get(){
+            const o = (mobile.currentOut[node._renderId] || node.selectedOutput || 0) | 0;
+            return (node.patternStates[o] || node.patternStates[0]).steps;
+          },
+          set(v){
+            const o = (mobile.currentOut[node._renderId] || node.selectedOutput || 0) | 0;
+            (node.patternStates[o] || node.patternStates[0]).steps = v;
+          }
+        });
+        Object.defineProperty(node, 'patternRows', {
+          configurable: true,
+          get(){
+            const o = (mobile.currentOut[node._renderId] || node.selectedOutput || 0) | 0;
+            return (node.patternStates[o] || node.patternStates[0]).rows;
+          },
+          set(v){
+            const o = (mobile.currentOut[node._renderId] || node.selectedOutput || 0) | 0;
+            (node.patternStates[o] || node.patternStates[0]).rows = v;
+          }
+        });
+        Object.defineProperty(node, 'patternCols', {
+          configurable: true,
+          get(){
+            const o = (mobile.currentOut[node._renderId] || node.selectedOutput || 0) | 0;
+            return (node.patternStates[o] || node.patternStates[0]).cols;
+          },
+          set(v){
+            const o = (mobile.currentOut[node._renderId] || node.selectedOutput || 0) | 0;
+            (node.patternStates[o] || node.patternStates[0]).cols = v;
+          }
+        });
+      }
+      node._proxied = true;
+    }
+  }
+
   function createMobileNode(typeName, pageIdx, barIdx, colIdx){
     const cat = CATALOG_BY_NAME[typeName];
     if(!cat) return;
     saveHistory();
     const id = mobile.nextNodeId++;
-    const state = {};
-    cat[2].forEach(k=>{ if(KD[k]) state[k] = KD[k].val; });
+    const knobs = cat[2];
     const isPattern = !!cat[3];
     const patternRows = isPattern ? 4 : null;
     const patternCols = isPattern ? 4 : null;
-    const patternSteps = isPattern ? Array(patternRows * patternCols).fill(false) : null;
-    mobile.mobileNodes[id] = {
+    // 4 independent channels of full knob-value maps
+    const states = [0,1,2,3].map(()=> buildInitialState(knobs));
+    const patternStates = isPattern
+      ? [0,1,2,3].map(()=> buildInitialPatternState(patternRows, patternCols))
+      : null;
+    const node = {
       type: typeName,
       cat: cat[1],
-      knobs: cat[2],
+      knobs,
       isPattern,
-      state,
-      patternSteps,
-      patternRows,
-      patternCols,
+      states,
+      patternStates,
+      selectedOutput: 0,
+      _renderId: id,
     };
+    attachStateProxy(node);
+    mobile.mobileNodes[id] = node;
     mobile.pages[pageIdx].bars[barIdx].cols[colIdx] = id;
     mobile.currentOut[id] = 0;
     renderMobilePages();
@@ -4133,7 +4203,11 @@ requestAnimationFrame(() => {
         for(let i=0;i<outs;i++){
           const b = el('button','mobOutBtn', String(i+1));
           if((mobile.currentOut[nodeId]||0) === i) b.classList.add('active');
-          b.onclick = ()=>{ mobile.currentOut[nodeId] = i; renderMobilePages(); };
+          b.onclick = ()=>{
+            mobile.currentOut[nodeId] = i;
+            if(node) node.selectedOutput = i;
+            renderMobilePages();
+          };
           outRow.appendChild(b);
         }
         ex.appendChild(outRow);
@@ -4825,8 +4899,9 @@ requestAnimationFrame(() => {
     return '#88ff44';
   }
 
-  // Build a full params object (p) for buildChain: node.state overrides, defaults from KNOB_DEFS
-  function paramsForNode(node){
+  // Build a full params object (p) for buildChain from a specific output's state.
+  // Each of a node's 4 outputs is an independent channel with its own knob-value map.
+  function paramsForOutput(node, outIdx){
     const p = {};
     if(typeof KNOB_DEFS !== 'undefined'){
       Object.keys(KNOB_DEFS).forEach(k => { p[k] = KNOB_DEFS[k].val; });
@@ -4837,12 +4912,15 @@ requestAnimationFrame(() => {
         Object.assign(p, dropdowns);
       }
     } catch(_){}
-    // Override with this node's state
-    Object.assign(p, node.state || {});
+    // Override with this output's channel state
+    const s = (node.states && node.states[outIdx]) ? node.states[outIdx] : null;
+    if(s) Object.assign(p, s);
     return p;
   }
 
   // Build audio for a single mobile node. Returns {ins, outs, sources}
+  // For gen/fx/pat nodes, each of the 4 outputs is an INDEPENDENT audio chain
+  // driven by its own channel state (node.states[i] / node.patternStates[i]).
   function buildMobileAudio(nodeId){
     const node = mobile.mobileNodes[nodeId];
     if(!node) return null;
@@ -4853,21 +4931,35 @@ requestAnimationFrame(() => {
     for(let i=0;i<Math.max(1,outCount);i++){ const g = audioCtx.createGain(); g.gain.value = 1; outs.push(g); }
     const sources = [];
 
-    const p = paramsForNode(node);
-
     if(node.cat === 'gen'){
-      // Generator: no inputs. buildChain needs an inGain (unused by most gens) + outGain.
-      const dummyIn = audioCtx.createGain();
-      const srcs = buildChain(node.type, p, dummyIn, outs[0], null);
-      sources.push(...srcs);
+      // Generator: 4 independent output chains, each with its own params.
+      // No inputs. buildChain needs a dummy inGain (unused by most gens).
+      for(let o=0;o<outCount;o++){
+        const p = paramsForOutput(node, o);
+        const dummyIn = audioCtx.createGain();
+        const srcs = buildChain(node.type, p, dummyIn, outs[o], null);
+        sources.push(...srcs);
+      }
     } else if(node.cat === 'fx'){
-      // Effect: 1 in -> 1 out (we wire ins[0] to outs[0] via buildChain)
-      const srcs = buildChain(node.type, p, ins[0], outs[0], null);
-      sources.push(...srcs);
-      // Route ins[1..3] straight through so multi-input cables don't vanish
-      for(let i=1;i<inCount;i++){ ins[i].connect(outs[0]); }
+      // Effect: 4 independent chains. Mirror desktop behavior:
+      //   out[0] = mix of all inputs   (input 0 or all feeding chain 0)
+      //   out[i] (i>0) = input[i] only, processed by chain[i]
+      // Each chain uses its own channel state -> fully independent processing.
+      for(let o=0;o<outCount;o++){
+        const p = paramsForOutput(node, o);
+        const chainIn = audioCtx.createGain(); chainIn.gain.value = 1;
+        if(o === 0){
+          // Output 0: mix of all inputs
+          for(let i=0;i<inCount;i++){ ins[i].connect(chainIn); }
+        } else {
+          if(ins[o]) ins[o].connect(chainIn);
+        }
+        const srcs = buildChain(node.type, p, chainIn, outs[o], null);
+        sources.push(...srcs);
+      }
     } else if(node.cat === 'mix'){
-      // Mixer: sum all inputs with per-channel level+amp if present
+      // Mixer: single output — keep existing single-channel behavior.
+      const p = paramsForOutput(node, 0);
       const prefixMap = {'MIX 1':'mix','MIX 2':'mix2','MIX 3':'mix3','MIX 4':'mix4','MIX 5':'mix5'};
       const prefix = prefixMap[node.type] || 'mix';
       const sum = audioCtx.createGain(); sum.gain.value = 1;
@@ -4880,33 +4972,37 @@ requestAnimationFrame(() => {
       }
       sum.connect(outs[0]);
     } else if(node.cat === 'pat'){
-      // Pattern: 4 inputs, 4 outputs, gated by step pattern
+      // Pattern: 4 inputs, 4 outputs. Each output has its own grid + BPM.
       const bpmKey = (node.knobs||[]).find(k => /Bpm$/i.test(k));
-      const bpm = (bpmKey && node.state[bpmKey]) || 120;
-      const rows = node.patternRows || 4;
-      const cols = node.patternCols || 4;
-      const totalSteps = rows * cols;
-      const stepDur = 60 / bpm / 4;
-      const loopDur = stepDur * totalSteps;
       const now = audioCtx.currentTime;
       for(let o=0;o<outCount;o++){
+        const ps = (node.patternStates && node.patternStates[o])
+          ? node.patternStates[o]
+          : { steps: [], rows: 4, cols: 4 };
+        const state = (node.states && node.states[o]) || {};
+        const bpm = (bpmKey && state[bpmKey]) || 120;
+        const rows = ps.rows || 4;
+        const cols = ps.cols || 4;
+        const totalSteps = rows * cols;
+        const stepDur = 60 / bpm / 4;
+        const loopDur = stepDur * totalSteps;
         const gate = audioCtx.createGain();
         gate.gain.value = 0;
-        // Schedule pattern gating — use patternSteps as a single track for all outputs
         for(let t=0; t<600; t+=loopDur){
           for(let s=0; s<totalSteps; s++){
-            gate.gain.setValueAtTime(node.patternSteps[s] ? 1 : 0, now + t + s * stepDur);
+            gate.gain.setValueAtTime(ps.steps[s] ? 1 : 0, now + t + s * stepDur);
           }
         }
         if(ins[o]) ins[o].connect(gate);
         gate.connect(outs[o]);
       }
     } else if(node.type === 'MASTER'){
-      // Apply master gain knob before outs[0] (which is connected externally to masterIn)
+      const p = paramsForOutput(node, 0);
       const g = audioCtx.createGain();
       g.gain.value = (p.masterGain != null) ? p.masterGain : 0.6;
       ins[0].connect(g); g.connect(outs[0]);
     } else if(node.type === 'INPUT MIX'){
+      const p = paramsForOutput(node, 0);
       const merge = audioCtx.createGain(); merge.gain.value = 1;
       for(let i=0;i<inCount;i++){
         const lvl = audioCtx.createGain();
@@ -5356,19 +5452,22 @@ requestAnimationFrame(() => {
     const knobs = isInputMix
       ? ['inLvl0','inLvl1','inLvl2','inLvl3','inLvl4','inLvl5','inLvl6','inLvl7']
       : ['masterGain'];
-    const state = {};
-    knobs.forEach(k => { if(KD[k]) state[k] = KD[k].val; });
-    mobile.mobileNodes[id] = {
+    // Pinned nodes also use a 4-slot states array for uniform access, though
+    // INPUT MIX / MASTER only ever use states[0] (single-output behavior).
+    const states = [0,1,2,3].map(()=> buildInitialState(knobs));
+    const node = {
       type: typeName,
       cat: isInputMix ? 'mix' : 'out',
       knobs,
       isPattern: false,
-      state,
-      patternSteps: null,
-      patternRows: null,
-      patternCols: null,
+      states,
+      patternStates: null,
+      selectedOutput: 0,
       pinned: true,
+      _renderId: id,
     };
+    attachStateProxy(node);
+    mobile.mobileNodes[id] = node;
     mobile.currentOut[id] = 0;
     return id;
   }
@@ -5538,19 +5637,24 @@ requestAnimationFrame(() => {
     if(!cat) return;
     saveHistory();
     const id = mobile.nextNodeId++;
-    const state = {};
-    cat[2].forEach(k=>{ if(KD[k]) state[k] = KD[k].val; });
+    const knobs = cat[2];
     const isPattern = !!cat[3];
-    mobile.mobileNodes[id] = {
+    const states = [0,1,2,3].map(()=> buildInitialState(knobs));
+    const patternStates = isPattern
+      ? [0,1,2,3].map(()=> buildInitialPatternState(4, 4))
+      : null;
+    const node = {
       type: typeName,
       cat: cat[1],
-      knobs: cat[2],
+      knobs,
       isPattern,
-      state,
-      patternSteps: isPattern ? Array(16).fill(false) : null,
-      patternRows: isPattern ? 4 : null,
-      patternCols: isPattern ? 4 : null,
+      states,
+      patternStates,
+      selectedOutput: 0,
+      _renderId: id,
     };
+    attachStateProxy(node);
+    mobile.mobileNodes[id] = node;
     if(!mobile.masterBars[barIdx]) mobile.masterBars[barIdx] = { cols:[null] };
     mobile.masterBars[barIdx].cols[colIdx] = id;
     mobile.currentOut[id] = 0;
