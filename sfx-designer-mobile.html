@@ -3734,6 +3734,8 @@ requestAnimationFrame(() => {
       { bars: [ { cols: [ null ] } ] },
       { bars: [ { cols: [ null ] } ] },
       { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
+      { bars: [ { cols: [ null ] } ] },
       { bars: [ { cols: [ null ] } ] }
     ],
     currentPage: 0,
@@ -4351,7 +4353,7 @@ requestAnimationFrame(() => {
     const host = $('#pageBoxes');
     if(host){
       host.innerHTML = '';
-      for(let i=0;i<4;i++){
+      for(let i=0;i<6;i++){
         const b = document.createElement('button');
         b.className = 'pageBox' + (i === mobile.currentPage ? ' active' : '');
         b.textContent = String(i+1);
@@ -4577,7 +4579,7 @@ requestAnimationFrame(() => {
   }
 
   function wireTopBar(){
-    // Page add/delete removed — always 4 pages.
+    // Page add/delete removed — always 6 pages.
   }
 
   function wireBottomBarSwipe(){
