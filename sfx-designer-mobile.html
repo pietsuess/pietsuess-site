@@ -372,13 +372,11 @@
     text-align:center; padding:0; box-sizing:border-box; border-radius:2px;
   }
   .mobPatGrid {
-    display:grid; gap:3px;
-    max-width:70%;
-    flex: 0 1 auto;
+    display:grid; gap:4px;
+    flex: 0 0 auto;
   }
   .mobPatStep {
-    width:100%; aspect-ratio:1/1;
-    min-width:12px;
+    width:28px; height:28px;
     border:2px solid #aa66ffaa; background:#aa66ff22;
     border-radius:2px; cursor:pointer; position:relative;
     box-sizing:border-box;
@@ -3817,7 +3815,7 @@ requestAnimationFrame(() => {
     box.appendChild(header);
 
     const tabs = el('div','modalTabs');
-    const categories = [['gen','GENERATORS'],['fx','EFFECTS'],['mix','MIXES'],['pat','PATTERNS']];
+    const categories = [['gen','GENERATORS'],['fx','EFFECTS'],['other','OTHER']];
     const body = el('div','modalBody');
     const tabBtns = {};
     categories.forEach(([cat,label])=>{
@@ -3832,14 +3830,20 @@ requestAnimationFrame(() => {
     function renderTab(cat){
       Object.entries(tabBtns).forEach(([c,b])=> b.classList.toggle('active', c===cat));
       body.innerHTML = '';
-      // For mix/pat categories, collapse numbered variants into a single picker entry
-      let entries = MOBILE_NODE_CATALOG.filter(n=>n[1]===cat);
-      let displayLabel = null;
-      if(cat === 'mix'){ entries = entries.slice(0,1); displayLabel = 'MIX'; }
-      else if(cat === 'pat'){ entries = entries.slice(0,1); displayLabel = 'PATTERN'; }
-      entries.forEach(n=>{
-        const label = displayLabel || n[0];
-        const row = el('div','pickerRow '+cat, label);
+      // OTHER tab combines a single MIX entry and a single PATTERN entry
+      let rows = [];
+      if(cat === 'other'){
+        const mixEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='mix')[0];
+        const patEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='pat')[0];
+        if(mixEntry) rows.push([mixEntry, 'MIX', 'mix']);
+        if(patEntry) rows.push([patEntry, 'PATTERN', 'pat']);
+      } else {
+        MOBILE_NODE_CATALOG.filter(n=>n[1]===cat).forEach(n=>{
+          rows.push([n, n[0], cat]);
+        });
+      }
+      rows.forEach(([n, label, rowCat])=>{
+        const row = el('div','pickerRow '+rowCat, label);
         row.onclick = ()=>{
           overlay.remove();
           createMobileNode(n[0], pageIdx, barIdx, colIdx);
@@ -3971,6 +3975,8 @@ requestAnimationFrame(() => {
       }
       const grid = el('div','mobKnobGrid');
       node.knobs.forEach(kid=>{
+        // Pattern nodes render BPM as a text input (not a knob) below, so skip here
+        if(node.isPattern && /Bpm$/i.test(kid)) return;
         const def = KD[kid]; if(!def) return;
         const wrap = el('div','mobKnobWrap');
         const canvas = document.createElement('canvas');
@@ -4120,6 +4126,39 @@ requestAnimationFrame(() => {
           node.patternSteps = next;
         };
 
+        // BPM text input row (replaces the old BPM knob)
+        const bpmKey = (node.knobs || []).find(k => /Bpm$/i.test(k));
+        if(bpmKey){
+          const bpmRow = el('div','mobPatGridWrap');
+          bpmRow.style.marginBottom = '8px';
+          const bpmLabel = el('div','mobKnobLabel','BPM');
+          bpmLabel.style.marginRight = '8px';
+          const bpmInput = document.createElement('input');
+          bpmInput.type = 'number';
+          bpmInput.min = 30; bpmInput.max = 300; bpmInput.step = 1;
+          bpmInput.className = 'mobKnobValInput';
+          bpmInput.style.width = '80px';
+          const curBpm = (node.state[bpmKey] != null) ? node.state[bpmKey] : 120;
+          node.state[bpmKey] = curBpm;
+          bpmInput.value = curBpm;
+          const commitBpm = ()=>{
+            let v = parseFloat(bpmInput.value);
+            if(!isFinite(v)) v = 120;
+            v = Math.max(30, Math.min(300, Math.round(v)));
+            if(v !== node.state[bpmKey]){
+              saveHistory();
+              node.state[bpmKey] = v;
+            }
+            bpmInput.value = v;
+          };
+          bpmInput.addEventListener('blur', commitBpm);
+          bpmInput.addEventListener('keydown', ev=>{
+            if(ev.key === 'Enter'){ ev.preventDefault(); commitBpm(); bpmInput.blur(); }
+          });
+          bpmRow.append(bpmLabel, bpmInput);
+          ex.appendChild(bpmRow);
+        }
+
         const wrap = el('div','mobPatGridWrap');
 
         // Shared helper to build a tap-to-type dimension column
@@ -4174,11 +4213,9 @@ requestAnimationFrame(() => {
         wrap.appendChild(buildDimCol('ROWS', 'rows'));
 
         const pg = el('div','mobPatGrid');
-        pg.style.gridTemplateRows = `repeat(${node.patternRows}, 1fr)`;
-        pg.style.gridTemplateColumns = `repeat(${node.patternCols}, 1fr)`;
-        // Target size: ~24px cells at 4x4, scale down at larger grids.
-        const cellPx = Math.max(12, Math.round(96 / Math.max(node.patternRows, node.patternCols)));
-        pg.style.width = (cellPx * node.patternCols + 3 * (node.patternCols - 1)) + 'px';
+        // Fixed cell size — grid area grows with rows/cols instead of cells shrinking
+        pg.style.gridTemplateRows = `repeat(${node.patternRows}, 28px)`;
+        pg.style.gridTemplateColumns = `repeat(${node.patternCols}, 28px)`;
 
         node.patternSteps.forEach((on,i)=>{
           const s = el('div','mobPatStep');
