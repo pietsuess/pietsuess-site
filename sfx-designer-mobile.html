@@ -734,20 +734,29 @@
   /* Make sure bottom bar jacks/content are visible on collapsed bar */
   #bottomBarContent { min-height:0; }
 
-  /* ===== SOLO BUTTONS (mobile — per-input, module-level single-solo) ===== */
-  .mobileNode .nodeJack { /* allow absolutely-positioned solo badge */ }
+  /* ===== SOLO BUTTONS (mobile — per-input, module-level single-solo) =====
+     Solo buttons now sit in a row DIRECTLY BELOW the input jack row so they
+     never overlap the jack hit-target. Each S cell aligns with its input jack. */
+  .mobileNode .nodeSoloRow {
+    display:flex; gap:4px; width:100%;
+    justify-content:space-around; align-items:stretch;
+    margin:2px 0 4px 0;
+  }
+  .mobileNode .nodeSoloRow .soloCell {
+    flex:1 1 0; min-width:0; max-width:12.5%;
+    display:flex; align-items:center; justify-content:center;
+  }
   .mobileNode .mobSoloBtn {
-    position:absolute; top:-10px; right:-10px;
-    width:22px; height:22px; border-radius:50%;
-    background:#111; border:2px solid #555; color:#888;
-    font-family:inherit; font-size:10px; font-weight:bold;
+    width:100%; height:14px; border-radius:2px;
+    background:#111; border:1px solid #555; color:#888;
+    font-family:inherit; font-size:9px; font-weight:bold;
     line-height:1; padding:0; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
-    box-sizing:border-box; z-index:5;
+    box-sizing:border-box; position:relative;
     letter-spacing:0;
   }
   .mobileNode .mobSoloBtn::before {
-    content:""; position:absolute; inset:-11px; /* 44px hit target */
+    content:""; position:absolute; inset:-15px -2px; /* ~44px vertical hit */
   }
   .mobileNode .mobSoloBtn.active {
     background:#ffe00033; border-color:#ffe000; color:#ffe000;
@@ -760,33 +769,33 @@
   .mobileNode .nodeJack.input.solo-dim {
     opacity:0.35;
   }
-  /* Bottom-bar (INPUT MIX collapsed) solo badge — smaller, fits narrow cell */
-  #bottomBarJacks .mobSoloBtn {
-    position:absolute; top:-8px; right:-6px;
-    width:18px; height:18px; border-radius:50%;
-    background:#111; border:2px solid #555; color:#888;
-    font-family:inherit; font-size:9px; font-weight:bold;
-    line-height:1; padding:0; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    box-sizing:border-box; z-index:5;
+  /* Drawer INPUT MIX — bigger S row beneath the 8 large jacks */
+  .mobileNode.inputMixDrawer .nodeSoloRow {
+    gap:2px; margin:4px 0 6px 0;
   }
-  #bottomBarJacks .mobSoloBtn::before {
-    content:""; position:absolute; inset:-13px; /* 44px hit target */
+  .mobileNode.inputMixDrawer .nodeSoloRow .soloCell {
+    flex:1 1 0; max-width:none;
   }
-  #bottomBarJacks .mobSoloBtn.active {
-    background:#ffe00033; border-color:#ffe000; color:#ffe000;
-    box-shadow:0 0 6px #ffe000aa;
+  .mobileNode.inputMixDrawer .mobSoloBtn {
+    height:26px; font-size:12px; letter-spacing:1px;
   }
-  #bottomBarJacks .nodeJack.soloed {
-    background:#ffe00055 !important; border-color:#ffe000 !important;
-    box-shadow:0 0 8px #ffe000aa !important;
-  }
-  #bottomBarJacks .nodeJack.solo-dim { opacity:0.35; }
-  /* Drawer INPUT MIX (large jacks) */
   .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack.soloed {
     background:rgba(255,224,0,0.35) !important;
     border-color:#ffe000 !important;
     box-shadow:0 0 10px #ffe000 !important;
+  }
+  /* Long-press disconnect visual feedback */
+  .nodeJack.pressPulse {
+    animation:pressPulseAnim 0.5s ease-out;
+  }
+  @keyframes pressPulseAnim {
+    0%   { box-shadow:0 0 0 0 #ff444400; }
+    50%  { box-shadow:0 0 12px 4px #ff4444cc; background:#ff444455 !important; }
+    100% { box-shadow:0 0 0 0 #ff444400; }
+  }
+  .nodeJack.pressCommit {
+    background:#ff4444aa !important; border-color:#ff4444 !important;
+    box-shadow:0 0 14px #ff4444 !important;
   }
 
 </style>
@@ -4400,19 +4409,8 @@ requestAnimationFrame(() => {
         if(i === soloed) j.classList.add('soloed');
         else j.classList.add('solo-dim');
       }
-      // Solo "S" badge on input jacks (per-input, module-level single-solo)
-      if(kind === 'input'){
-        const sBtn = el('button','mobSoloBtn', 'S');
-        sBtn.type = 'button';
-        sBtn.setAttribute('aria-label', 'Solo input '+(i+1));
-        if(soloed === i) sBtn.classList.add('active');
-        sBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
-        sBtn.addEventListener('click', (e)=>{
-          e.stopPropagation(); e.preventDefault();
-          toggleNodeSolo(nodeId, i);
-        });
-        j.appendChild(sBtn);
-      }
+      // Solo "S" badges are now rendered in a SEPARATE row beneath the jack row
+      // (see buildSoloRow) so they never overlap the jack hit-target.
       // INPUT MIX inputs: display page label(s) of nodes connected to this jack.
       // (Channel # 1-8 labels are shown only on the collapsed bottom bar, not in the drawer.)
       if(isInputMix && kind === 'input'){
@@ -4435,6 +4433,31 @@ requestAnimationFrame(() => {
     return row;
   }
 
+  // Build a row of S (solo) buttons that aligns 1:1 with the input jack row above it.
+  // Returns null for modules with no inputs.
+  function buildSoloRow(node){
+    const [inCount] = jackCountsFor(node);
+    if(inCount <= 0) return null;
+    const nodeId = node._renderId;
+    const soloed = (node.soloedInput != null) ? node.soloedInput : -1;
+    const row = el('div','nodeSoloRow');
+    for(let i=0;i<inCount;i++){
+      const cell = el('div','soloCell');
+      const sBtn = el('button','mobSoloBtn','S');
+      sBtn.type = 'button';
+      sBtn.setAttribute('aria-label','Solo input '+(i+1));
+      if(soloed === i) sBtn.classList.add('active');
+      sBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
+      sBtn.addEventListener('click', (e)=>{
+        e.stopPropagation(); e.preventDefault();
+        toggleNodeSolo(nodeId, i);
+      });
+      cell.appendChild(sBtn);
+      row.appendChild(cell);
+    }
+    return row;
+  }
+
   function buildNodeEl(nodeId){
     const node = mobile.mobileNodes[nodeId];
     if(!node) return null;
@@ -4447,6 +4470,9 @@ requestAnimationFrame(() => {
     // Top jack row (inputs), always shown if applicable
     const topJacks = buildJackRow(node, 'top');
     if(topJacks) nodeEl.appendChild(topJacks);
+    // Solo row (S buttons) directly beneath the inputs, aligned 1:1
+    const soloRow = buildSoloRow(node);
+    if(soloRow) nodeEl.appendChild(soloRow);
 
     const header = el('div','nodeHeader');
     // Bypass button: only for non-pinned nodes. Matches desktop .bypass-btn behavior.
@@ -6717,6 +6743,28 @@ requestAnimationFrame(() => {
     if(mobile.playing) rebuildMobileIfPlaying();
   };
 
+  // ===== Long-press disconnect state =====
+  // Press-and-hold on an input jack (or a cable line) for LONGPRESS_MS disconnects.
+  // Short tap keeps existing semantics (arm/connect on output; arm/connect on input).
+  const LONGPRESS_MS = 500;
+  const LONGPRESS_MOVE_TOLERANCE = 10; // px — cancel if pointer moves too far
+  let _pressTimer = null;
+  let _pressStart = null; // { kind:'jack'|'cable', nodeId, idx, cableIdx, el, x, y, pointerId, committed }
+
+  function clearPressTimer(){
+    if(_pressTimer){ clearTimeout(_pressTimer); _pressTimer = null; }
+  }
+  function cancelPressGesture(){
+    clearPressTimer();
+    if(_pressStart && _pressStart.el){
+      _pressStart.el.classList.remove('pressPulse');
+      _pressStart.el.classList.remove('pressCommit');
+    }
+    _cableTapHighlight = null;
+    _pressStart = null;
+    scheduleCableDraw();
+  }
+
   // Global pointerdown for jacks + cable hit-test + cancel
   document.addEventListener('pointerdown', e => {
     const jack = e.target.closest && e.target.closest('.nodeJack');
@@ -6726,8 +6774,28 @@ requestAnimationFrame(() => {
       const type = jack.dataset.jackType;
       if(!isFinite(nodeId) || !isFinite(idx)) return;
       // If user is NOT armed and taps a jack on the collapsed bottom bar,
-      // let the bottom-bar open-drawer gesture handle it instead of disconnecting.
+      // let the bottom-bar open-drawer gesture handle it instead.
+      // (Long-press on bottom-bar jack still works — started below before this return.)
       if(!mobile.armed && !mobile.drawerOpen && jack.closest('#bottomBarJacks')){
+        // Start long-press disconnect timer even on bottom bar.
+        if(type === 'input'){
+          cancelPressGesture();
+          _pressStart = { kind:'jack', nodeId, idx, el:jack, x:e.clientX, y:e.clientY, pointerId:e.pointerId, committed:false };
+          jack.classList.add('pressPulse');
+          _pressTimer = setTimeout(() => {
+            if(!_pressStart) return;
+            const cableIdx = mobile.cables.findIndex(c => c.toNodeId === nodeId && c.toIdx === idx);
+            if(cableIdx >= 0){
+              _pressStart.committed = true;
+              jack.classList.remove('pressPulse');
+              jack.classList.add('pressCommit');
+              if(navigator.vibrate) navigator.vibrate(25);
+              removeCable(cableIdx);
+              setTimeout(() => { jack.classList.remove('pressCommit'); }, 180);
+            }
+            _pressTimer = null;
+          }, LONGPRESS_MS);
+        }
         return;
       }
       e.preventDefault(); e.stopPropagation();
@@ -6746,16 +6814,31 @@ requestAnimationFrame(() => {
         if(type === 'output'){
           armOutput(nodeId, idx);
         } else if(type === 'input'){
-          // Tap input → disconnect incoming cable (if any)
-          const cableIdx = mobile.cables.findIndex(c => c.toNodeId === nodeId && c.toIdx === idx);
-          if(cableIdx >= 0){
-            removeCable(cableIdx);
-          }
+          // Input jack: start long-press disconnect timer. A short tap does
+          // nothing here (disconnect is long-press only). When the user is
+          // armed, the armed branch above handles connect.
+          cancelPressGesture();
+          _pressStart = { kind:'jack', nodeId, idx, el:jack, x:e.clientX, y:e.clientY, pointerId:e.pointerId, committed:false };
+          jack.classList.add('pressPulse');
+          _pressTimer = setTimeout(() => {
+            if(!_pressStart) return;
+            const cableIdx = mobile.cables.findIndex(c => c.toNodeId === nodeId && c.toIdx === idx);
+            if(cableIdx >= 0){
+              _pressStart.committed = true;
+              jack.classList.remove('pressPulse');
+              jack.classList.add('pressCommit');
+              if(navigator.vibrate) navigator.vibrate(25);
+              removeCable(cableIdx);
+              setTimeout(() => { jack.classList.remove('pressCommit'); }, 180);
+            }
+            _pressTimer = null;
+          }, LONGPRESS_MS);
         }
       }
       return;
     }
-    // Tapping elsewhere: check if a cable segment was tapped (requires DOUBLE-TAP to disconnect)
+    // Tapping elsewhere: check if a cable segment was pressed. Long-press (not
+    // double-tap) disconnects. Double-tap gesture has been removed.
     if(!mobile.armed){
       const x = e.clientX, y = e.clientY;
       let bestIdx = -1, bestD = 14;
@@ -6765,31 +6848,48 @@ requestAnimationFrame(() => {
       }
       if(bestIdx >= 0){
         e.preventDefault();
-        const now = Date.now();
-        const DOUBLE_TAP_MS = 400;
-        if(_lastCableTap && _lastCableTap.cableIdx === bestIdx && (now - _lastCableTap.time) <= DOUBLE_TAP_MS){
-          // Second tap on same cable within window — disconnect
-          _lastCableTap = null;
-          _cableTapHighlight = null;
+        cancelPressGesture();
+        _pressStart = { kind:'cable', cableIdx:bestIdx, x, y, pointerId:e.pointerId, committed:false };
+        // Pulse the cable with the existing highlight channel
+        _cableTapHighlight = { cableIdx: bestIdx, until: Date.now() + LONGPRESS_MS + 50 };
+        scheduleCableDraw();
+        _pressTimer = setTimeout(() => {
+          if(!_pressStart) return;
+          _pressStart.committed = true;
+          if(navigator.vibrate) navigator.vibrate(25);
           removeCable(bestIdx);
-        } else {
-          // First tap: record and show brief highlight
-          _lastCableTap = { cableIdx: bestIdx, time: now };
-          _cableTapHighlight = { cableIdx: bestIdx, until: now + DOUBLE_TAP_MS };
+          _cableTapHighlight = null;
           scheduleCableDraw();
-          setTimeout(() => {
-            if(_cableTapHighlight && _cableTapHighlight.cableIdx === bestIdx){
-              _cableTapHighlight = null;
-              scheduleCableDraw();
-            }
-          }, DOUBLE_TAP_MS + 10);
-        }
+          _pressTimer = null;
+        }, LONGPRESS_MS);
         return;
       }
     }
     // Armed state: only canceled by tapping the output jack again or the banner X.
-    // Tapping elsewhere (page, background) does NOT cancel — user needs to swipe pages to reach the target input.
   }, true);
+
+  // Cancel long-press if the pointer moves too far or lifts before timeout.
+  document.addEventListener('pointermove', e => {
+    if(!_pressStart || _pressStart.committed) return;
+    if(e.pointerId !== _pressStart.pointerId) return;
+    const dx = e.clientX - _pressStart.x;
+    const dy = e.clientY - _pressStart.y;
+    if(Math.hypot(dx, dy) > LONGPRESS_MOVE_TOLERANCE){
+      cancelPressGesture();
+    }
+  }, true);
+  const _pressRelease = e => {
+    if(!_pressStart) return;
+    if(e.pointerId !== _pressStart.pointerId && e.type !== 'pointercancel') return;
+    if(!_pressStart.committed) cancelPressGesture();
+    else {
+      // Committed — already cleaned up, just drop state.
+      clearPressTimer();
+      _pressStart = null;
+    }
+  };
+  document.addEventListener('pointerup', _pressRelease, true);
+  document.addEventListener('pointercancel', _pressRelease, true);
 
   // (ESC cancel removed — arm is only canceled by banner X or re-tap of armed output.)
 
@@ -7162,8 +7262,6 @@ requestAnimationFrame(() => {
     ensurePinnedNodes();
     host.innerHTML = '';
     const nid = mobile.inputMixId;
-    const inputMixNode = (nid != null) ? mobile.mobileNodes[nid] : null;
-    const soloed = (inputMixNode && inputMixNode.soloedInput != null) ? inputMixNode.soloedInput : -1;
     for(let i=0;i<8;i++){
       const cell = el('div','jackCell');
       const j = el('div','nodeJack input');
@@ -7173,22 +7271,9 @@ requestAnimationFrame(() => {
       j.dataset.jackIdx = i;
       j.dataset.nodeId = nid;
       if(mobile.cables && mobile.cables.some(c => c.toNodeId === nid && c.toIdx === i)) j.classList.add('connected');
-      // Solo visual state on bottom-bar INPUT MIX jacks
-      if(soloed >= 0){
-        if(i === soloed) j.classList.add('soloed');
-        else j.classList.add('solo-dim');
-      }
-      // Solo "S" badge
-      const sBtn = el('button','mobSoloBtn','S');
-      sBtn.type = 'button';
-      sBtn.setAttribute('aria-label','Solo channel '+(i+1));
-      if(soloed === i) sBtn.classList.add('active');
-      sBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
-      sBtn.addEventListener('click', (e)=>{
-        e.stopPropagation(); e.preventDefault();
-        if(nid != null) toggleNodeSolo(nid, i);
-      });
-      j.appendChild(sBtn);
+      // NOTE: No solo badge on the collapsed bottom bar — solo for INPUT MIX
+      // happens only inside the open master drawer. Tap arms/patches, long-press
+      // on this jack disconnects (handled by global pointerdown long-press).
       // Page labels (1-based) for any source node whose cable lands on this jack
       const pages = new Set();
       (mobile.cables||[]).forEach(c=>{
