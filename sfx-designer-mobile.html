@@ -302,6 +302,19 @@
     color:#ff4444; font-family:inherit; font-size:18px; cursor:pointer; border-radius:0;
     line-height:1; padding:0;
   }
+  .mobileNode .nodeBypassBtn {
+    position:relative; width:22px; height:22px; min-width:22px; border-radius:11px;
+    border:2px solid #00ffcc66; background:#00ffcc22; cursor:pointer; padding:0;
+    font-size:0; line-height:0; box-sizing:border-box; flex:0 0 auto;
+  }
+  .mobileNode .nodeBypassBtn::before {
+    content:""; position:absolute; inset:-11px; /* 44px hit zone */
+  }
+  .mobileNode .nodeBypassBtn.active {
+    border-color:#ff4444; background:#ff444444;
+  }
+  .mobileNode.bypassed { opacity:0.45; }
+  .mobileNode.bypassed .nodeTitle { text-decoration:line-through; }
   .mobileNode .nodeExpandBtn {
     padding:8px 14px; background:rgba(0,255,204,0.1); color:#00ffcc;
     border:2px solid #00ffcc; font-family:inherit; font-size:18px;
@@ -4099,7 +4112,7 @@ requestAnimationFrame(() => {
         pages: mobile.pages,
         masterBars: mobile.masterBars,
         cables: mobile.cables,
-        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,bypass:!!v.bypass,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
       }));
       if(mobile.history.length > 10) mobile.history.shift();
       mobile.redoStack.length = 0;
@@ -4427,7 +4440,7 @@ requestAnimationFrame(() => {
     if(!node) return null;
     node._renderId = nodeId;
     const expanded = (mobile.expandedNodeId === nodeId);
-    const nodeEl = el('div','mobileNode '+node.cat + (expanded ? ' expandedFull' : ''));
+    const nodeEl = el('div','mobileNode '+node.cat + (expanded ? ' expandedFull' : '') + (node.bypass ? ' bypassed' : ''));
     nodeEl.dataset.nodeId = nodeId;
     if(mobile.armed && mobile.armed.nodeId === nodeId) nodeEl.classList.add('hasArmedSource');
 
@@ -4436,6 +4449,20 @@ requestAnimationFrame(() => {
     if(topJacks) nodeEl.appendChild(topJacks);
 
     const header = el('div','nodeHeader');
+    // Bypass button: only for non-pinned nodes. Matches desktop .bypass-btn behavior.
+    if(!node.pinned){
+      const bypBtn = el('button', 'nodeBypassBtn' + (node.bypass ? ' active' : ''));
+      bypBtn.type = 'button';
+      bypBtn.setAttribute('aria-label', node.bypass ? 'Un-bypass module' : 'Bypass module');
+      bypBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
+      bypBtn.onclick = (e)=>{
+        e.stopPropagation(); e.preventDefault();
+        node.bypass = !node.bypass;
+        renderMobilePages();
+        if(mobile.playing) rebuildMobileIfPlaying();
+      };
+      header.appendChild(bypBtn);
+    }
     header.append(el('div','nodeTitle', (typeof node.type === 'string' && node.type.startsWith('MIX') && node.type !== 'INPUT MIX') ? (node.type + ' / AMP') : node.type));
     const headerBtns = el('div','nodeHeaderBtns');
     headerBtns.style.cssText = 'display:flex;gap:6px;align-items:center;';
@@ -5143,6 +5170,7 @@ requestAnimationFrame(() => {
         dropdowns: Array.isArray(v.dropdowns) ? v.dropdowns : undefined,
         selectedOutput: v.selectedOutput || 0,
         pinned: !!v.pinned,
+        bypass: !!v.bypass,
         soloedInput: (v.soloedInput != null && v.soloedInput >= 0) ? v.soloedInput : null,
       };
     });
@@ -5190,6 +5218,7 @@ requestAnimationFrame(() => {
           : buildInitialDropdownsArray(v.type),
         selectedOutput: v.selectedOutput || 0,
         pinned: !!v.pinned,
+        bypass: !!v.bypass,
         soloedInput: (v.soloedInput != null && v.soloedInput >= 0) ? v.soloedInput : null,
         _renderId: Number(id),
       };
@@ -5671,6 +5700,7 @@ requestAnimationFrame(() => {
           type: nv.type, cat: catName, knobs, isPattern,
           states: nv.states, patternStates: nv.patternStates || null,
           selectedOutput: nv.selectedOutput || 0, pinned: !!nv.pinned,
+          bypass: !!nv.bypass,
         };
       });
       const snap = {
@@ -5693,7 +5723,7 @@ requestAnimationFrame(() => {
         pages: mobile.pages,
         masterBars: mobile.masterBars,
         cables: mobile.cables,
-        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,bypass:!!v.bypass,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
       }));
       if(mobile.history.length > 10) mobile.history.shift();
     } catch(_){}
@@ -5868,7 +5898,7 @@ requestAnimationFrame(() => {
             pages: mobile.pages,
             masterBars: mobile.masterBars,
             cables: mobile.cables,
-            nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
+            nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,bypass:!!v.bypass,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
           }));
           if(mobile.history.length > 10) mobile.history.shift();
           mobile.redoStack.length = 0;
@@ -5939,7 +5969,7 @@ requestAnimationFrame(() => {
               pages: mobile.pages,
               masterBars: mobile.masterBars,
               cables: mobile.cables,
-              nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
+              nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,bypass:!!v.bypass,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
             }));
             if(mobile.history.length > 10) mobile.history.shift();
             mobile.redoStack.length = 0;
@@ -6068,6 +6098,36 @@ requestAnimationFrame(() => {
     const outs = [];
     for(let i=0;i<Math.max(1,outCount);i++){ const g = audioCtx.createGain(); g.gain.value = 1; outs.push(g); }
     const sources = [];
+
+    // Module bypass (desktop parity):
+    //   - Generators: silent (skip building chains; outs stay at default gain
+    //     but no sources feed them).
+    //   - Effects: route input directly to matching output (pass-through),
+    //     mirroring desktop's effect-bypass behavior.
+    //   - Patterns: pass inputs straight through (no step gating).
+    //   - Mixes: silence (no inputs summed through). Matches intent of
+    //     disabling the module.
+    // INPUT MIX / MASTER are pinned and never bypassed (no button rendered).
+    if(node.bypass && !node.pinned){
+      if(node.cat === 'gen'){
+        // Silent: outs have no source connections.
+      } else if(node.cat === 'fx'){
+        // out[0] = mix of all inputs (matches active out[0] behavior)
+        for(let i=0;i<inCount;i++){ try { ins[i].connect(outs[0]); } catch(_){} }
+        // out[i>0] = input[i] direct pass-through
+        for(let o=1;o<outCount;o++){
+          if(ins[o] && outs[o]) { try { ins[o].connect(outs[o]); } catch(_){} }
+        }
+      } else if(node.cat === 'pat'){
+        // Pass through without step gating
+        for(let o=0;o<outCount;o++){
+          if(ins[o] && outs[o]) { try { ins[o].connect(outs[o]); } catch(_){} }
+        }
+      } else if(node.cat === 'mix'){
+        // Silent
+      }
+      return { ins, outs, sources };
+    }
 
     if(node.cat === 'gen'){
       // Generator: 4 independent output chains, each with its own params.
