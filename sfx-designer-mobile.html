@@ -4475,8 +4475,11 @@ requestAnimationFrame(() => {
     if(soloRow) nodeEl.appendChild(soloRow);
 
     const header = el('div','nodeHeader');
-    // Bypass button: only for non-pinned nodes. Matches desktop .bypass-btn behavior.
-    if(!node.pinned){
+    header.append(el('div','nodeTitle', (typeof node.type === 'string' && node.type.startsWith('MIX') && node.type !== 'INPUT MIX') ? (node.type + ' / AMP') : node.type));
+    const headerBtns = el('div','nodeHeaderBtns');
+    headerBtns.style.cssText = 'display:flex;gap:6px;align-items:center;';
+    // Bypass button: only rendered when node is expanded AND not pinned. Placed to the left of the collapse arrow.
+    if(expanded && !node.pinned){
       const bypBtn = el('button', 'nodeBypassBtn' + (node.bypass ? ' active' : ''));
       bypBtn.type = 'button';
       bypBtn.setAttribute('aria-label', node.bypass ? 'Un-bypass module' : 'Bypass module');
@@ -4487,11 +4490,8 @@ requestAnimationFrame(() => {
         renderMobilePages();
         if(mobile.playing) rebuildMobileIfPlaying();
       };
-      header.appendChild(bypBtn);
+      headerBtns.appendChild(bypBtn);
     }
-    header.append(el('div','nodeTitle', (typeof node.type === 'string' && node.type.startsWith('MIX') && node.type !== 'INPUT MIX') ? (node.type + ' / AMP') : node.type));
-    const headerBtns = el('div','nodeHeaderBtns');
-    headerBtns.style.cssText = 'display:flex;gap:6px;align-items:center;';
     const expBtn = el('button','nodeExpandBtn', expanded ? '▲' : '▼');
     expBtn.setAttribute('aria-label', expanded ? 'Collapse' : 'Expand');
     expBtn.onclick = (e)=>{
