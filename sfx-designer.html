@@ -2,6 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+(function(){
+  try {
+    var qs = window.location.search || '';
+    if (/[?&]desktop=1\b/.test(qs)) return;
+    var ua = navigator.userAgent || '';
+    var isMobileUA = /iPhone|iPad|iPod|Android|Mobile/i.test(ua);
+    var isNarrow = window.innerWidth && window.innerWidth < 768;
+    var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (isMobileUA || isNarrow || (isTouch && isNarrow)) {
+      var target = 'sfx-designer-mobile.html' + (qs || '');
+      window.location.replace(target);
+    }
+  } catch(e) {}
+})();
+</script>
 <title>NAVIGATOR — Sound Effects Designer</title>
 <style>
   html, body { height:100%; }
