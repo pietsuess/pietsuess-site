@@ -84,8 +84,18 @@
     touch-action:none; cursor:pointer; position:relative;
   }
   #bottomBarHandle {
-    width:44px; height:4px; background:#00ffcc55; border-radius:1px;
-    margin:2px auto 4px; flex-shrink:0;
+    position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+    width:56px; height:22px; padding:0; margin:0;
+    background:#0a0a14; border:2px solid #ffe000; border-radius:6px;
+    color:#ffe000; font-family:inherit; font-size:14px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; pointer-events:auto; z-index:4;
+    box-shadow:0 0 8px rgba(255,224,0,0.5);
+    text-shadow:0 0 3px #ffe00088;
+  }
+  #bottomBarHandle:active { background:rgba(255,224,0,0.22); }
+  #bottomBarHandle::before {
+    content:""; position:absolute; inset:-14px; /* 44px+ hit target */
   }
   #bottomBarContent {
     display:flex; flex-direction:row; align-items:center;
@@ -788,7 +798,7 @@
     </div>
   </div>
   <div id="mobileBottomBar">
-    <div id="bottomBarHandle" aria-hidden="true"></div>
+    <button id="bottomBarHandle" type="button" aria-label="Open master drawer">&#9650;</button>
     <div id="bottomBarContent">
       <div id="bottomBarJacks" aria-label="Input mix jacks"></div>
       <button id="miniPlayBtn" aria-label="Play"></button>
@@ -6230,6 +6240,49 @@ requestAnimationFrame(() => {
     if(btn){ btn.classList.add('playing'); btn.setAttribute('aria-label','Stop'); }
     const dbtn = $('#drawerPlayBtn');
     if(dbtn){ dbtn.classList.add('playing'); dbtn.setAttribute('aria-label','Stop'); }
+
+    // ── Pattern step indicator (mobile) ─────────────────────────────
+    // For each PATTERN node currently placed, animate the current step cell
+    // in its expanded `.mobPatGrid`. Timing is driven by audioCtx.currentTime
+    // so it stays in sync with triggered sources.
+    mobile.patPlayStart = audioCtx.currentTime;
+    mobile.patAnimId = requestAnimationFrame(function tick(){
+      if(!mobile.playing){ mobile.patAnimId = null; return; }
+      const now = audioCtx.currentTime;
+      const elapsed = now - (mobile.patPlayStart || now);
+      Object.keys(mobile.mobileNodes || {}).forEach(id => {
+        const node = mobile.mobileNodes[id];
+        if(!node || !node.isPattern) return;
+        const bpmKey = (node.knobs || []).find(k => /Bpm$/i.test(k));
+        // Use the currently-displayed output's BPM (same output the grid shows).
+        const outIdx = node.selectedOutput || 0;
+        const state = (node.states && node.states[outIdx]) || node.state || {};
+        const bpm = (bpmKey && state[bpmKey]) || 120;
+        const ps = (node.patternStates && node.patternStates[outIdx])
+          ? node.patternStates[outIdx]
+          : null;
+        const rows = (ps && ps.rows) || node.patternRows || 4;
+        const cols = (ps && ps.cols) || node.patternCols || 4;
+        const total = rows * cols;
+        if(!total) return;
+        const stepDur = 60 / bpm / 4; // seconds per 16th-note step
+        const curStep = Math.floor(elapsed / stepDur) % total;
+        const nodeEl = document.querySelector('.mobileNode[data-node-id="'+id+'"]');
+        if(!nodeEl) return;
+        const grid = nodeEl.querySelector('.mobPatGrid');
+        if(!grid) return;
+        const cells = grid.querySelectorAll('.mobPatStep');
+        if(!cells.length) return;
+        if(grid._curStep !== curStep){
+          if(grid._curStep != null && cells[grid._curStep]){
+            cells[grid._curStep].classList.remove('current');
+          }
+          if(cells[curStep]) cells[curStep].classList.add('current');
+          grid._curStep = curStep;
+        }
+      });
+      mobile.patAnimId = requestAnimationFrame(tick);
+    });
   }
 
   function stopMobilePlay(){
@@ -6260,6 +6313,10 @@ requestAnimationFrame(() => {
     if(btn){ btn.classList.remove('playing'); btn.setAttribute('aria-label','Play'); }
     const dbtn = $('#drawerPlayBtn');
     if(dbtn){ dbtn.classList.remove('playing'); dbtn.setAttribute('aria-label','Play'); }
+    // Stop pattern step animation and clear any highlighted cells.
+    if(mobile.patAnimId){ cancelAnimationFrame(mobile.patAnimId); mobile.patAnimId = null; }
+    document.querySelectorAll('.mobPatStep.current').forEach(s => s.classList.remove('current'));
+    document.querySelectorAll('.mobPatGrid').forEach(g => { g._curStep = null; });
   }
 
   function rebuildMobileIfPlaying(){
@@ -7049,7 +7106,6 @@ requestAnimationFrame(() => {
     const soloed = (inputMixNode && inputMixNode.soloedInput != null) ? inputMixNode.soloedInput : -1;
     for(let i=0;i<8;i++){
       const cell = el('div','jackCell');
-      const num = el('div','jackNum', String(i+1));
       const j = el('div','nodeJack input');
       j.dataset.jack = 'input';
       j.dataset.jackType = 'input';
@@ -7086,7 +7142,6 @@ requestAnimationFrame(() => {
         const plbl = el('div','jackPages', arr.join(','));
         j.appendChild(plbl);
       }
-      cell.appendChild(num);
       cell.appendChild(j);
       host.appendChild(cell);
     }
@@ -7097,10 +7152,22 @@ requestAnimationFrame(() => {
   function wireBottomBarSwipeOpenDrawer(){
     const bar = $('#mobileBottomBar');
     if(!bar) return;
+    // Dedicated up-arrow button opens the drawer.
+    const handle = document.getElementById('bottomBarHandle');
+    if(handle){
+      handle.addEventListener('pointerdown', e=>{ e.stopPropagation(); });
+      handle.addEventListener('click', e=>{
+        e.stopPropagation(); e.preventDefault();
+        if(!mobile.drawerOpen) openMasterDrawer();
+        if(navigator.vibrate) navigator.vibrate(10);
+      });
+    }
     let startY=0, startX=0, t0=0, tracking=false, moved=false;
     bar.addEventListener('pointerdown', e=>{
       // PLAY button always plays — skip.
       if(e.target.closest('#miniPlayBtn')) return;
+      // Up-arrow handle has its own click handler — skip tracking.
+      if(e.target.closest('#bottomBarHandle')) return;
       // When armed, a tap on a jack patches a cable — let that flow run.
       if(mobile.armed && e.target.closest('.nodeJack')) return;
       startY = e.clientY; startX = e.clientX; t0 = Date.now();
@@ -7118,17 +7185,9 @@ requestAnimationFrame(() => {
       }
     });
     bar.addEventListener('pointerup', e=>{
-      if(!tracking) return;
-      const wasTracking = tracking;
+      // Tap-to-open is handled by the dedicated up-arrow button; only swipe-up
+      // on the bar itself opens the drawer now.
       tracking = false;
-      // Tap (no significant drag) opens the drawer — any tap on the bottom bar
-      // counts as long as it's not the PLAY button and we're not mid-arm on a jack.
-      if(wasTracking && !moved && !mobile.drawerOpen){
-        if(e.target.closest('#miniPlayBtn')) return;
-        if(mobile.armed && e.target.closest('.nodeJack')) return;
-        openMasterDrawer();
-        if(navigator.vibrate) navigator.vibrate(10);
-      }
     });
     const stop = ()=>{ tracking=false; };
     bar.addEventListener('pointercancel', stop);
