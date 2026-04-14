@@ -4437,7 +4437,7 @@ requestAnimationFrame(() => {
   // Returns null for modules with no inputs.
   function buildSoloRow(node){
     const [inCount] = jackCountsFor(node);
-    if(inCount <= 0) return null;
+    if(inCount <= 1) return null;
     const nodeId = node._renderId;
     const soloed = (node.soloedInput != null) ? node.soloedInput : -1;
     const row = el('div','nodeSoloRow');
@@ -4475,7 +4475,7 @@ requestAnimationFrame(() => {
     if(soloRow) nodeEl.appendChild(soloRow);
 
     const header = el('div','nodeHeader');
-    header.append(el('div','nodeTitle', (typeof node.type === 'string' && node.type.startsWith('MIX') && node.type !== 'INPUT MIX') ? (node.type + ' / AMP') : node.type));
+    header.append(el('div','nodeTitle', (node.type === 'MASTER') ? 'OUTPUT' : ((typeof node.type === 'string' && node.type.startsWith('MIX') && node.type !== 'INPUT MIX') ? (node.type + ' / AMP') : node.type)));
     const headerBtns = el('div','nodeHeaderBtns');
     headerBtns.style.cssText = 'display:flex;gap:6px;align-items:center;';
     // Bypass button: only rendered when node is expanded AND not pinned. Placed to the left of the collapse arrow.
@@ -4515,7 +4515,7 @@ requestAnimationFrame(() => {
 
     if(expanded){
       const ex = el('div','nodeExpanded');
-      const outs = (node.cat === 'mix') ? 1 : 4;
+      const outs = jackCountsFor(node)[1];
       if(outs > 1){
         const outRow = el('div','mobOutSel');
         for(let i=0;i<outs;i++){
