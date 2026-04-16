@@ -4360,7 +4360,7 @@ requestAnimationFrame(() => {
     if(t === 'INPUT MIX') return [8, 1];
     if(t === 'MASTER' || cat === 'out') return [1, 0];
     if(cat === 'gen') return [4, 4];
-    if(cat === 'mix') return [4, 4];
+    if(cat === 'mix') return [4, 1];
     if(cat === 'fx' || cat === 'pat') return [4, 4];
     return [0, 0];
   }
@@ -4516,9 +4516,11 @@ requestAnimationFrame(() => {
     if(expanded){
       const ex = el('div','nodeExpanded');
       const outs = jackCountsFor(node)[1];
-      if(outs > 1){
+      const showOutSel = (outs > 1 || node.cat === 'mix');
+      const outSelCount = (node.cat === 'mix' && outs <= 1) ? jackCountsFor(node)[0] : outs;
+      if(showOutSel){
         const outRow = el('div','mobOutSel');
-        for(let i=0;i<outs;i++){
+        for(let i=0;i<outSelCount;i++){
           const b = el('button','mobOutBtn', String(i+1));
           if((mobile.currentOut[nodeId]||0) === i) b.classList.add('active');
           b.onclick = ()=>{
@@ -6202,18 +6204,20 @@ requestAnimationFrame(() => {
         }
         sum.connect(outs[0]);
       } else {
-        // MIX / AMP: 4 independent output channels.
-        // Input N feeds through output N's LEVEL/AMP processing -> outs[N].
-        for(let o=0;o<outCount;o++){
-          const p = paramsForOutput(node, o);
+        // MIX / AMP: 4 inputs, each with independent LEVEL/AMP from states[i],
+        // all summed to 1 output.
+        const sum = audioCtx.createGain(); sum.gain.value = 1;
+        for(let i=0;i<inCount;i++){
+          const p = paramsForOutput(node, i);
           const lvl = audioCtx.createGain();
           lvl.gain.value = (p[prefix+'Level'] != null) ? p[prefix+'Level'] : 1;
           const amp = audioCtx.createGain();
           amp.gain.value = (p[prefix+'Amp'] != null) ? p[prefix+'Amp'] : 1;
-          if(ins[o]) { ins[o].connect(lvl); }
+          if(ins[i]) { ins[i].connect(lvl); }
           lvl.connect(amp);
-          amp.connect(outs[o]);
+          amp.connect(sum);
         }
+        sum.connect(outs[0]);
       }
     } else if(node.cat === 'pat'){
       // Pattern: 4 inputs, 4 outputs. Each output has its own grid + BPM.
