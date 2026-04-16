@@ -4360,7 +4360,7 @@ requestAnimationFrame(() => {
     if(t === 'INPUT MIX') return [8, 1];
     if(t === 'MASTER' || cat === 'out') return [1, 0];
     if(cat === 'gen') return [4, 4];
-    if(cat === 'mix') return [4, 1];
+    if(cat === 'mix') return [4, 4];
     if(cat === 'fx' || cat === 'pat') return [4, 4];
     return [0, 0];
   }
@@ -6187,19 +6187,34 @@ requestAnimationFrame(() => {
         sources.push(...srcs);
       }
     } else if(node.cat === 'mix'){
-      // Mixer: single output — keep existing single-channel behavior.
-      const p = paramsForOutput(node, 0);
       const prefixMap = {'MIX 1':'mix','MIX 2':'mix2','MIX 3':'mix3','MIX 4':'mix4','MIX 5':'mix5'};
       const prefix = prefixMap[node.type] || 'mix';
-      const sum = audioCtx.createGain(); sum.gain.value = 1;
-      for(let i=0;i<inCount;i++){
-        const lvl = audioCtx.createGain();
-        lvl.gain.value = (p[prefix+'Level'] != null) ? p[prefix+'Level'] : 1;
-        const amp = audioCtx.createGain();
-        amp.gain.value = (p[prefix+'Amp'] != null) ? p[prefix+'Amp'] : 1;
-        ins[i].connect(lvl); lvl.connect(amp); amp.connect(sum);
+      if(node.type === 'INPUT MIX'){
+        // INPUT MIX: all inputs summed to single output (8 in / 1 out).
+        const p = paramsForOutput(node, 0);
+        const sum = audioCtx.createGain(); sum.gain.value = 1;
+        for(let i=0;i<inCount;i++){
+          const lvl = audioCtx.createGain();
+          lvl.gain.value = (p[prefix+'Level'] != null) ? p[prefix+'Level'] : 1;
+          const amp = audioCtx.createGain();
+          amp.gain.value = (p[prefix+'Amp'] != null) ? p[prefix+'Amp'] : 1;
+          ins[i].connect(lvl); lvl.connect(amp); amp.connect(sum);
+        }
+        sum.connect(outs[0]);
+      } else {
+        // MIX / AMP: 4 independent output channels.
+        // Input N feeds through output N's LEVEL/AMP processing -> outs[N].
+        for(let o=0;o<outCount;o++){
+          const p = paramsForOutput(node, o);
+          const lvl = audioCtx.createGain();
+          lvl.gain.value = (p[prefix+'Level'] != null) ? p[prefix+'Level'] : 1;
+          const amp = audioCtx.createGain();
+          amp.gain.value = (p[prefix+'Amp'] != null) ? p[prefix+'Amp'] : 1;
+          if(ins[o]) { ins[o].connect(lvl); }
+          lvl.connect(amp);
+          amp.connect(outs[o]);
+        }
       }
-      sum.connect(outs[0]);
     } else if(node.cat === 'pat'){
       // Pattern: 4 inputs, 4 outputs. Each output has its own grid + BPM.
       const bpmKey = (node.knobs||[]).find(k => /Bpm$/i.test(k));
