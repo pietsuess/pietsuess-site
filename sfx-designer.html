@@ -2643,13 +2643,12 @@ function loadV2Preset(preset){
     const hint = pi.layoutHints && pi.layoutHints.desktop;
     const isPinned = _isPinnedType(pi.type);
     if(hint){
-      // Skip repositioning originals — they already have correct hardcoded positions,
-      // and mobile-synthesized hints for originals would otherwise pile them on top-left.
-      if(!inst.isOriginal){
-        if(typeof hint.x === 'number') dom.style.left = hint.x + 'px';
-        if(typeof hint.y === 'number') dom.style.top = _clampHintY(hint.y) + 'px';
-        if(hint.w) dom.style.width = hint.w;
-      }
+      // Reposition ALL modules per preset layout hints — including originals.
+      // Mobile presets generate desktop y values starting at 1100+, and
+      // _clampHintY guards against landing inside the original zone.
+      if(typeof hint.x === 'number') dom.style.left = hint.x + 'px';
+      if(typeof hint.y === 'number') dom.style.top = _clampHintY(hint.y) + 'px';
+      if(hint.w) dom.style.width = hint.w;
       // Pinned nodes (INPUT MIX / MASTER) must always be jacks-tb on desktop.
       // Honor tb flag for everyone else; default to current class if flag absent.
       if(isPinned){
