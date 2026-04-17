@@ -2266,6 +2266,32 @@ function liveDesktopKnobUpdate(knobId, value){
   const now = audioCtx.currentTime;
   const tv = liveParamValue(knobId, value);
 
+  // MIX modules: the single LEVEL/AMP knob in the UI represents the currently-selected
+  // input channel. Writing to all 4 channel paramMaps would collapse isolation — so
+  // target only the currently selected channel for MIX types.
+  const modName = (typeof MOD_NAMES !== 'undefined') ? MOD_NAMES[modIdx] : '';
+  const isMixMod = modName && modName.startsWith('MIX') && !modName.startsWith('INPUT MIX');
+  if(isMixMod){
+    const oi = (typeof selectedOutput !== 'undefined' && selectedOutput[modIdx] !== undefined) ? selectedOutput[modIdx] : 0;
+    const pm = mod.paramMaps[oi];
+    if(pm && pm[knobId]){
+      pm[knobId].forEach(entry => {
+        try {
+          const param = entry.p || entry;
+          const mul = entry.m || 1;
+          param.cancelScheduledValues(now);
+          param.setTargetAtTime(tv * mul, now, 0.015);
+          handled = true;
+        } catch(e){}
+      });
+    }
+    // Also persist to modOutputState so rebuild / channel-switch preserves the edit
+    if(typeof modOutputState !== 'undefined' && modOutputState[modIdx] && modOutputState[modIdx][oi]){
+      modOutputState[modIdx][oi][knobId] = value;
+    }
+    return handled;
+  }
+
   // Update all outputs that have this param
   const outIndices = Object.keys(mod.paramMaps).map(Number);
   for(const oi of outIndices){
@@ -2488,14 +2514,38 @@ function morphPruneSnapshots(){
   }
 }
 
+// Throttled rebuild for scheduled modules (MALLET, IMPACT, ARPEGGIO, PLUCK, SWEEP,
+// CRACKLE, METALLIC, etc.) whose knobs have no live AudioParam handles. Morph writes
+// to modOutputState every frame (see morphTick), but for unmapped knobs we need to
+// rebuild the audio graph to pick up the new values. Time-since-last-rebuild throttle
+// ensures continuous morph sweeps still trigger rebuilds (unlike a debounce which
+// would be reset every frame and never fire).
+let _morphRebuildLast = 0;
+const _MORPH_REBUILD_MS = 300; // 300ms = ~3 rebuilds/sec, smooth-enough modulation
+function _scheduleMorphRebuild(){
+  const now = performance.now();
+  if(now - _morphRebuildLast < _MORPH_REBUILD_MS) return;
+  _morphRebuildLast = now;
+  try { rebuildIfPlaying(); } catch(e){}
+}
+
 function _morphLiveWrite(modIdx, outIdx, knobId, value){
   if(!live || !live.playing || typeof audioModules === 'undefined') return;
-  const mod = audioModules[modIdx]; if(!mod || !mod.paramMaps) return;
-  const pm = mod.paramMaps[outIdx]; if(!pm){
-    if(window._morphDebug) console.warn('[morph] _morphLiveWrite: no paramMap for', {modIdx, outIdx, knobId, available: Object.keys(mod.paramMaps)});
+  const mod = audioModules[modIdx]; if(!mod || !mod.paramMaps){
+    // No audio module yet — still trigger throttled rebuild so next graph sees it
+    _scheduleMorphRebuild();
     return;
   }
-  const entries = pm[knobId]; if(!entries) return;
+  const pm = mod.paramMaps[outIdx];
+  const entries = pm ? pm[knobId] : null;
+  if(!entries || !entries.length){
+    // Unmapped knob (scheduled module like MALLET/IMPACT/ARPEGGIO/etc.) — the value
+    // was already written to modOutputState by the morphTick caller. Throttled rebuild
+    // picks it up on the next graph build.
+    if(window._morphDebug) console.warn('[morph] _morphLiveWrite: no paramMap entry for', {modIdx, outIdx, knobId, available: pm ? Object.keys(pm) : null});
+    _scheduleMorphRebuild();
+    return;
+  }
   const now = audioCtx.currentTime;
   entries.forEach(e => {
     try {
