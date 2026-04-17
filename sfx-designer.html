@@ -3601,7 +3601,7 @@ document.getElementById('blurMuteBtn').addEventListener('click', () => {
         try { drawKnob(c, kid); } catch(e){}
       }
     });
-    if(typeof drawAllCables === 'function') drawAllCables();
+    try { if(typeof drawAllCables === 'function') drawAllCables(); } catch(e){}
   };
   const saved = localStorage.getItem('sfxTheme') || 'dark';
   applyTheme(saved);
