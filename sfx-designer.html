@@ -150,6 +150,72 @@
   .preset-item .preset-name { flex:1; }
   .preset-item .preset-del { color:#ff4444; font-size:12px; padding:0 4px; cursor:pointer; opacity:0.5; }
   .preset-item .preset-del:hover { opacity:1; }
+
+  /* ───────────────── Light theme overrides ───────────────── */
+  body.light-theme { background:#f0f0f0; color:#111; }
+  body.light-theme h1 { color:#7a6400; text-shadow:none; }
+  body.light-theme .sub { color:#555; }
+  body.light-theme .top-bar button { background:#fff; color:#111; border-color:#888; }
+  body.light-theme .top-bar button:hover { background:#eee; }
+  body.light-theme .top-bar button.play { background:#e6ffe6; border-color:#0a8a3a; color:#0a8a3a; }
+  body.light-theme .top-bar button.play.active { background:#fff3c4; border-color:#7a6400; color:#7a6400; }
+  body.light-theme .name-input { background:#fff; color:#111; border-color:#999; }
+  body.light-theme .name-input:focus { border-color:#7a6400; }
+  body.light-theme .module { background:#fff; border-color:#888; color:#111; }
+  body.light-theme .module.gen { border-color:#b8296a; background:#fff; }
+  body.light-theme .module.fx { border-color:#007766; background:#fff; }
+  body.light-theme .module.out { border-color:#b38600; background:#fff; }
+  body.light-theme .module.pat { border-color:#7744cc; background:#fff; }
+  body.light-theme .module.mix { border-color:#cc6a1f; background:#fff; }
+  body.light-theme .module.selected { outline-color:#b38600; }
+  body.light-theme .module .mod-title { color:#111; }
+  body.light-theme .module.gen .mod-title { color:#b8296a; }
+  body.light-theme .module.fx .mod-title { color:#007766; }
+  body.light-theme .module.out .mod-title { color:#b38600; }
+  body.light-theme .module.pat .mod-title { color:#7744cc; }
+  body.light-theme .module.mix .mod-title { color:#cc6a1f; }
+  body.light-theme .bypass-btn { border-color:#007766; background:#e6fffa; }
+  body.light-theme .bypass-btn.active { border-color:#cc2222; background:#ffe0e0; }
+  body.light-theme .jack { background:#ddd; border-color:#444; }
+  body.light-theme .jack:hover { border-color:#b38600; background:#eee; }
+  body.light-theme .jack.input { border-color:#007766; }
+  body.light-theme .jack.output { border-color:#b8296a; }
+  body.light-theme .jack.connected { background:#99e6d9; border-color:#007766; }
+  body.light-theme .jack.output.connected { background:#f0a6c8; border-color:#b8296a; }
+  body.light-theme .jack.dragging { border-color:#b38600; box-shadow:0 0 6px #b38600; }
+  body.light-theme .jack.soloed { background:#fff3c4; border-color:#b38600; }
+  body.light-theme .knob-label { color:#333; }
+  body.light-theme .knob-val { color:#7a6400; }
+  body.light-theme .knob-val:hover { text-decoration-color:#7a640088; }
+  body.light-theme .knob-val-input { background:#fff; color:#7a6400; border-color:#7a6400; }
+  body.light-theme .knob-wrap select { background:#fff; color:#7a6400; border:1px solid #00776688; }
+  body.light-theme .out-sel-btn { background:#fff; color:#555; border-color:#999; }
+  body.light-theme .out-sel-btn.active { border-color:#b38600; color:#b38600; background:rgba(179,134,0,0.15); }
+  body.light-theme .out-sel-btn:hover { border-color:#b38600; }
+  body.light-theme .solo-btn { background:#fff; border-color:#999; color:#666; }
+  body.light-theme .solo-btn:hover { border-color:#b38600; }
+  body.light-theme .solo-btn.active { border-color:#b38600; background:#fff3c4; color:#b38600; }
+  body.light-theme .orient-btn { border-color:#aaa; color:#666; }
+  body.light-theme .orient-btn:hover { border-color:#b38600; color:#b38600; }
+  body.light-theme .pat-step { border-color:#7744cc88; background:#f3e8ff; }
+  body.light-theme .pat-step.on { background:#7744cc; border-color:#7744cc; }
+  body.light-theme .pat-step:hover { border-color:#7744cc; }
+  body.light-theme .pat-step.current { box-shadow:0 0 6px #b38600; border-color:#b38600; }
+  body.light-theme .pat-dim-label, body.light-theme .pat-bpm-label { color:#7744cc; }
+  body.light-theme .pat-dim-input, body.light-theme .pat-bpm-input { background:#fff; color:#7a6400; border-color:#7744cc; }
+  body.light-theme .morph-btn { background:#fff; border-color:#7744cc; color:#7744cc; }
+  body.light-theme .morph-btn:hover { background:#f3e8ff; border-color:#7744cc; }
+  body.light-theme .morph-btn.active { background:#7744cc; border-color:#7744cc; color:#fff; }
+  body.light-theme .morph-targets-label { color:#444; }
+  body.light-theme #waveCanvas { border-color:#00776688; background:#fff; }
+  body.light-theme #cableCanvas { opacity:0.55; }
+  body.light-theme .preset-item { color:#7a6400; }
+  body.light-theme .preset-item:hover { background:rgba(179,134,0,0.12); }
+  body.light-theme #presetList { background:#fff !important; border-color:#b8296a !important; color:#111; }
+  body.light-theme #presetToggle { background:#fff !important; color:#b8296a !important; border-color:#b8296a !important; }
+  body.light-theme #cableStyle { background:#fff !important; color:#7a6400 !important; border-color:#999 !important; }
+  body.light-theme #helpOverlay { background:rgba(240,240,240,0.97) !important; color:#222 !important; }
+  body.light-theme #selectBox { border-color:#b38600; background:rgba(179,134,0,0.08); }
 </style>
 </head>
 <body>
@@ -172,6 +238,7 @@
   <button id="undoBtn">UNDO</button>
   <button id="fsBtn" onclick="document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()">FULLSCREEN</button>
   <button id="blurMuteBtn" style="border-color:#00ffcc44;color:#00ffcc;font-size:8px;">BLUR: MUTE</button>
+  <button id="themeBtn" style="border-color:#00ffcc44;color:#00ffcc;font-size:8px;">THEME: DARK</button>
   <button id="helpBtn" style="border-color:#ffe00044;color:#ffe000;font-size:8px;">?</button>
 </div>
 <div id="helpOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);z-index:10000;overflow-y:auto;padding:40px;font-family:inherit;color:#ccc;font-size:11px;letter-spacing:0.5px;line-height:1.6;">
@@ -1093,26 +1160,32 @@ function drawKnob(canvas, id){
   const def = KNOB_DEFS[id];
   const t = (knobState[id] - def.min) / (def.max - def.min);
   const ang = ARC_START + t * (ARC_END - ARC_START);
+  const isLight = document.body.classList.contains('light-theme');
+  const trackColor = isLight ? '#ccc' : '#222';
+  const fillColor = isLight ? '#007766' : '#00ffcc';
+  const pointerColor = isLight ? '#7a6400' : '#ffe000';
+  const centerFill = isLight ? '#fff' : '#111';
+  const centerStroke = isLight ? '#00776688' : '#00ffcc44';
   ctx.clearRect(0, 0, 72, 72);
   // Track
   ctx.beginPath();
   ctx.arc(KNOB_CX, KNOB_CY, KNOB_R, ARC_START, ARC_END);
-  ctx.strokeStyle = '#222'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
+  ctx.strokeStyle = trackColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
   // Fill
   ctx.beginPath();
   ctx.arc(KNOB_CX, KNOB_CY, KNOB_R, ARC_START, ang);
-  ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
+  ctx.strokeStyle = fillColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
   // Pointer
   const px = KNOB_CX + Math.cos(ang) * (KNOB_R - 8);
   const py = KNOB_CY + Math.sin(ang) * (KNOB_R - 8);
   ctx.beginPath();
   ctx.arc(px, py, 4, 0, Math.PI * 2);
-  ctx.fillStyle = '#ffe000'; ctx.fill();
+  ctx.fillStyle = pointerColor; ctx.fill();
   // Center dot
   ctx.beginPath();
   ctx.arc(KNOB_CX, KNOB_CY, 8, 0, Math.PI * 2);
-  ctx.fillStyle = '#111'; ctx.fill();
-  ctx.strokeStyle = '#00ffcc44'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = centerFill; ctx.fill();
+  ctx.strokeStyle = centerStroke; ctx.lineWidth = 1; ctx.stroke();
 }
 
 function updateKnobDisplay(id){
@@ -3508,6 +3581,37 @@ document.getElementById('blurMuteBtn').addEventListener('click', () => {
   btn.style.color = blurMuteEnabled ? '#00ffcc' : '#ff6666';
   btn.style.borderColor = blurMuteEnabled ? '#00ffcc44' : '#ff666644';
 });
+
+// Theme toggle (dark/light mode for outdoor high-contrast visibility)
+(function(){
+  const themeBtn = document.getElementById('themeBtn');
+  if(!themeBtn) return;
+  const applyTheme = (theme) => {
+    if(theme === 'light'){
+      document.body.classList.add('light-theme');
+      themeBtn.textContent = 'THEME: LIGHT';
+    } else {
+      document.body.classList.remove('light-theme');
+      themeBtn.textContent = 'THEME: DARK';
+    }
+    // Re-render all knob canvases to pick up theme colors
+    document.querySelectorAll('.knob-canvas').forEach(c => {
+      const kid = c.dataset.id;
+      if(kid && typeof drawKnob === 'function'){
+        try { drawKnob(c, kid); } catch(e){}
+      }
+    });
+    if(typeof drawAllCables === 'function') drawAllCables();
+  };
+  const saved = localStorage.getItem('sfxTheme') || 'dark';
+  applyTheme(saved);
+  themeBtn.addEventListener('click', () => {
+    const current = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+    const next = current === 'light' ? 'dark' : 'light';
+    localStorage.setItem('sfxTheme', next);
+    applyTheme(next);
+  });
+})();
 
 // Help overlay
 document.getElementById('helpBtn').addEventListener('click', () => {
