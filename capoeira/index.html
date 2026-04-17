@@ -41,25 +41,8 @@
     }
 
     .hero img.logo {
-      height: 100px;
+      height: 125px;
       margin-bottom: 1rem;
-    }
-
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 900;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin-bottom: 0.25rem;
-    }
-    .hero h1 span:nth-child(1) { color: var(--red); }
-    .hero h1 span:nth-child(2) { color: var(--yellow); }
-    .hero h1 span:nth-child(3) { color: var(--blue); }
-
-    .hero .tagline {
-      font-size: 1.1rem;
-      color: var(--text-dim);
-      font-weight: 300;
     }
 
     /* GRID */
@@ -226,9 +209,7 @@
 <body>
 
 <div class="hero">
-  <img class="logo" src="images/logo-tricolor.svg" alt="SSI Capoeira logo" onerror="this.src='images/logo-tricolor.jpg'">
-  <h1><span>SSI </span><span>CAPO</span><span>EIRA</span></h1>
-  <p class="tagline">Custom Sportswear Collection</p>
+  <img class="logo" src="images/logo.svg" alt="SSI Capoeira">
 </div>
 
 <div class="products" id="products"></div>
@@ -253,7 +234,7 @@ const PRODUCTS = [
     colorHex: "#c62828",
     logo: "Yellow (single-color)",
     img: "images/product-01.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-b6008-womens-jersey-racerback-tank/"
+    blankUrl: "https://blankclothing.ca/b6008-bella-canvas-ladies-jersey-racerback-tank-top/"
   },
   {
     id: "bc-8804-black",
@@ -263,7 +244,7 @@ const PRODUCTS = [
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
     img: "images/product-02.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-8804-womens-flowy-muscle-tee-with-rolled-cuff/"
+    blankUrl: "https://blankclothing.ca/8804-bella-canvas-ladies-flowy-muscle-t-shirt-with-rolled-cuff/"
   },
   {
     id: "gildan-64200-red",
@@ -283,7 +264,7 @@ const PRODUCTS = [
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
     img: "images/product-04.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-6400-womens-relaxed-jersey-short-sleeve-tee/"
+    blankUrl: "https://blankclothing.ca/b6400-bella-canvas-missy-jersey-t-shirt/"
   },
   {
     id: "bc-3001-yellow",
@@ -313,7 +294,7 @@ const PRODUCTS = [
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
     img: "images/product-07.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-3483-unisex-jersey-muscle-tank/"
+    blankUrl: "https://blankclothing.ca/bella-canvas-3483-unisex-jersey-muscle-tank-top/"
   }
 ];
 
