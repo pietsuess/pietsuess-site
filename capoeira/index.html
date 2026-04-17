@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSI Capoeira - Merch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #E02020;
+      --yellow: #F5D020;
+      --blue: #2090D0;
+      --black: #0a0a0a;
+      --dark: #111;
+      --card-bg: #1a1a1a;
+      --text: #eee;
+      --text-dim: #999;
+      --border: #333;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Urbanist', sans-serif;
+      background: var(--black);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    p, .desc { text-align: justify; text-align-last: left; }
+
+    /* HEADER */
+    .hero {
+      padding: 3rem 2rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero img.logo {
+      height: 100px;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+    .hero h1 span:nth-child(1) { color: var(--red); }
+    .hero h1 span:nth-child(2) { color: var(--yellow); }
+    .hero h1 span:nth-child(3) { color: var(--blue); }
+
+    .hero .tagline {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+
+    /* GRID */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 0;
+      width: 100%;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card img {
+      width: 100%;
+      aspect-ratio: 1.15;
+      object-fit: cover;
+      display: block;
+    }
+
+    .product-info {
+      padding: 1.25rem 1.5rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .product-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .product-detail {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .product-color {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid #555;
+      display: inline-block;
+    }
+
+    .product-links {
+      margin-top: auto;
+      padding-top: 0.75rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .product-links a {
+      font-size: 0.8rem;
+      color: var(--yellow);
+      text-decoration: none;
+      border: 1px solid var(--yellow);
+      padding: 0.3rem 0.75rem;
+      border-radius: 3px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .product-links a:hover {
+      background: var(--yellow);
+      color: var(--black);
+    }
+
+    /* PRICE INPUT */
+    .price-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .price-row label {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .price-row input {
+      width: 90px;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: #222;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    .price-row input:focus {
+      outline: none;
+      border-color: var(--yellow);
+    }
+
+    /* SUBMIT SECTION */
+    .submit-section {
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .submit-section p {
+      text-align: center;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .submit-btn {
+      display: inline-block;
+      padding: 0.75rem 2.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid var(--yellow);
+      background: transparent;
+      color: var(--yellow);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .submit-btn:hover {
+      background: var(--yellow);
+      color: var(--black);
+    }
+
+    .submit-msg {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #4f4;
+      display: none;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--yellow); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <img class="logo" src="images/logo-tricolor.svg" alt="SSI Capoeira logo" onerror="this.src='images/logo-tricolor.jpg'">
+  <h1><span>SSI </span><span>CAPO</span><span>EIRA</span></h1>
+  <p class="tagline">Custom Sportswear Collection</p>
+</div>
+
+<div class="products" id="products"></div>
+
+<div class="submit-section">
+  <p>Enter your cost per item above, then send the pricing to Piet for review.</p>
+  <button class="submit-btn" onclick="submitPricing()">Send Pricing</button>
+  <div class="submit-msg" id="submitMsg">Pricing sent.</div>
+</div>
+
+<footer>
+  SSI Capoeira &middot; Blanks sourced from <a href="https://blankclothing.ca/" target="_blank">blankclothing.ca</a>
+</footer>
+
+<script>
+const PRODUCTS = [
+  {
+    id: "bc-b6008-red",
+    name: "Women's Jersey Racerback Tank Top",
+    brand: "Bella+Canvas B6008",
+    color: "Red",
+    colorHex: "#c62828",
+    logo: "Yellow (single-color)",
+    img: "images/product-01.jpg",
+    blankUrl: "https://blankclothing.ca/bella-canvas-b6008-womens-jersey-racerback-tank/"
+  },
+  {
+    id: "bc-8804-black",
+    name: "Women's Flowy Muscle T-Shirt",
+    brand: "Bella+Canvas 8804",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-02.jpg",
+    blankUrl: "https://blankclothing.ca/bella-canvas-8804-womens-flowy-muscle-tee-with-rolled-cuff/"
+  },
+  {
+    id: "gildan-64200-red",
+    name: "Men's Softstyle Tank Top",
+    brand: "Gildan 64200",
+    color: "Red",
+    colorHex: "#c62828",
+    logo: "Yellow (single-color)",
+    img: "images/product-03.jpg",
+    blankUrl: "https://blankclothing.ca/gildan-64200-softstyle-tank-top/"
+  },
+  {
+    id: "bc-6400-black",
+    name: "Women's Relaxed Jersey T-Shirt",
+    brand: "Bella+Canvas 6400",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-04.jpg",
+    blankUrl: "https://blankclothing.ca/bella-canvas-6400-womens-relaxed-jersey-short-sleeve-tee/"
+  },
+  {
+    id: "bc-3001-yellow",
+    name: "Unisex Jersey T-Shirt",
+    brand: "Bella+Canvas 3001",
+    color: "Maize Yellow",
+    colorHex: "#F5D020",
+    logo: "Tri-color (black/red/blue)",
+    img: "images/product-05.jpg",
+    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/"
+  },
+  {
+    id: "bc-3001-black",
+    name: "Unisex Jersey T-Shirt",
+    brand: "Bella+Canvas 3001",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-06.jpg",
+    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/"
+  },
+  {
+    id: "bc-3483-black",
+    name: "Unisex Jersey Muscle Tank Top",
+    brand: "Bella+Canvas 3483",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-07.jpg",
+    blankUrl: "https://blankclothing.ca/bella-canvas-3483-unisex-jersey-muscle-tank/"
+  }
+];
+
+const grid = document.getElementById('products');
+
+PRODUCTS.forEach(p => {
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  card.innerHTML = `
+    <img src="${p.img}" alt="${p.brand} ${p.name}" loading="lazy">
+    <div class="product-info">
+      <div class="product-name">${p.name}</div>
+      <div class="product-detail">${p.brand}</div>
+      <div class="product-color">
+        <span class="color-dot" style="background:${p.colorHex}"></span>
+        ${p.color} &middot; ${p.logo}
+      </div>
+      <div class="price-row">
+        <label>Cost $</label>
+        <input type="number" step="0.01" min="0" placeholder="0.00" data-id="${p.id}" class="price-input">
+      </div>
+      <div class="product-links">
+        <a href="${p.blankUrl}" target="_blank">View Blank</a>
+      </div>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+function submitPricing() {
+  const inputs = document.querySelectorAll('.price-input');
+  let lines = [];
+  let hasAny = false;
+  inputs.forEach(inp => {
+    const product = PRODUCTS.find(p => p.id === inp.dataset.id);
+    const val = inp.value.trim();
+    if (val) {
+      lines.push(`${product.brand} ${product.name} (${product.color}): $${parseFloat(val).toFixed(2)}`);
+      hasAny = true;
+    }
+  });
+
+  if (!hasAny) {
+    alert('Enter at least one price before sending.');
+    return;
+  }
+
+  const subject = encodeURIComponent('SSI Capoeira - Merch Pricing');
+  const body = encodeURIComponent(
+    'SSI Capoeira Merch - Producer Pricing\n' +
+    '='.repeat(40) + '\n\n' +
+    lines.join('\n') + '\n\n' +
+    'Sent from pietsuess.com/capoeira'
+  );
+  window.location.href = `mailto:psuess@gmail.com?subject=${subject}&body=${body}`;
+
+  document.getElementById('submitMsg').style.display = 'block';
+}
+</script>
+
+</body>
+</html>
