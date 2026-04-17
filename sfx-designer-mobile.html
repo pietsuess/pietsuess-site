@@ -4525,7 +4525,13 @@ requestAnimationFrame(() => {
       };
       headerBtns.appendChild(bypBtn);
     }
-    const expBtn = el('button','nodeExpandBtn', expanded ? '▲' : '▼');
+    // STATE MORPH has no knob grid, so the expanded panel is short and can be
+    // visually confused with the collapsed state. Label the button explicitly
+    // for morph nodes so the expand/collapse state is unmistakable.
+    const expLabel = (node.type === 'STATE MORPH')
+      ? (expanded ? '▲ CLOSE' : '▼ OPEN')
+      : (expanded ? '▲' : '▼');
+    const expBtn = el('button','nodeExpandBtn', expLabel);
     expBtn.setAttribute('aria-label', expanded ? 'Collapse' : 'Expand');
     expBtn.onclick = (e)=>{
       e.stopPropagation();
