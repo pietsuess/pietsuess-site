@@ -286,6 +286,7 @@
   .mobileNode.fx  { background:rgba(0,0,0,0.6); border:1px solid #00ffcc33; color:#00ffcc; }
   .mobileNode.mix { background:rgba(40,20,10,0.6); border:1px solid #ff994444; color:#00ffcc; }
   .mobileNode.pat { background:rgba(25,10,40,0.6); border:1px solid #aa66ff44; color:#00ffcc; }
+  .mobileNode.morph { background:rgba(35,15,45,0.6); border:1px solid #cc88ff44; color:#00ffcc; }
 
   .mobileNode .nodeHeader {
     display:flex; justify-content:space-between; align-items:center;
@@ -297,6 +298,18 @@
   .mobileNode.fx  .nodeTitle { color:#00ffcc; }
   .mobileNode.mix .nodeTitle { color:#ff9944; }
   .mobileNode.pat .nodeTitle { color:#aa66ff; }
+  .mobileNode.morph .nodeTitle { color:#cc88ff; }
+  .mobMorphControls { display:flex; flex-direction:column; gap:8px; margin-top:8px; padding:8px; border:1px solid #cc88ff44; background:rgba(0,0,0,0.3); }
+  .mobMorphTargets { font-size:11px; color:#cc88ff; letter-spacing:1px; word-break:break-word; }
+  .mobMorphSubLabel { font-size:10px; color:#00ffcc; letter-spacing:2px; margin-bottom:2px; }
+  .mobMorphEasingWrap { display:flex; flex-direction:column; gap:4px; }
+  .mobMorphEasingSelect { background:#111; color:#cc88ff; border:1px solid #cc88ff66; padding:6px 8px; font-family:inherit; font-size:14px; }
+  .mobMorphBtnRow { display:flex; gap:6px; }
+  .mobMorphBtn { flex:1; padding:10px 6px; background:rgba(25,10,40,0.6); border:2px solid #cc88ff88; color:#cc88ff; font-family:inherit; font-size:14px; letter-spacing:2px; cursor:pointer; border-radius:0; }
+  .mobMorphBtn:active { background:rgba(204,136,255,0.2); }
+  .mobMorphPlayBtn { padding:12px 6px; background:rgba(25,10,40,0.6); border:2px solid #cc88ffaa; color:#cc88ff; font-family:inherit; font-size:16px; letter-spacing:3px; cursor:pointer; border-radius:0; }
+  .mobMorphPlayBtn:active { background:rgba(204,136,255,0.25); }
+  .pickerRow.morph { color:#cc88ff; border-color:#cc88ffaa; background:rgba(35,15,45,0.6); }
   .mobileNode .nodeDeleteBtn {
     width:36px; height:36px; border:2px solid #ff4444; background:transparent;
     color:#ff4444; font-family:inherit; font-size:18px; cursor:pointer; border-radius:0;
@@ -4071,6 +4084,8 @@ requestAnimationFrame(() => {
     ['PATTERN 1',    'pat', ['pat1Bpm'], true],
     ['PATTERN 2',    'pat', ['pat2Bpm'], true],
     ['PATTERN 3',    'pat', ['pat3Bpm'], true],
+    // STATE MORPH
+    ['STATE MORPH',  'morph', ['morphRate'], false],
   ];
   const CATALOG_BY_NAME = {};
   MOBILE_NODE_CATALOG.forEach(n => CATALOG_BY_NAME[n[0]] = n);
@@ -4121,7 +4136,7 @@ requestAnimationFrame(() => {
         pages: mobile.pages,
         masterBars: mobile.masterBars,
         cables: mobile.cables,
-        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,bypass:!!v.bypass,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null}]))
+        nodes: Object.fromEntries(Object.entries(mobile.mobileNodes).map(([k,v])=>[k,{type:v.type,states:v.states,patternStates:v.patternStates,selectedOutput:v.selectedOutput||0,pinned:!!v.pinned,bypass:!!v.bypass,soloedInput:(v.soloedInput!=null&&v.soloedInput>=0)?v.soloedInput:null,morphState:v.morphState?{rateKnob:v.morphState.rateKnob,easing:v.morphState.easing,enabled:v.morphState.enabled,snapshots:v.morphState.snapshots}:undefined}]))
       }));
       if(mobile.history.length > 10) mobile.history.shift();
       mobile.redoStack.length = 0;
@@ -4194,8 +4209,10 @@ requestAnimationFrame(() => {
       if(cat === 'other'){
         const mixEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='mix')[0];
         const patEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='pat')[0];
+        const morphEntry = MOBILE_NODE_CATALOG.filter(n=>n[1]==='morph')[0];
         if(mixEntry) rows.push([mixEntry, 'MIX / AMP', 'mix']);
         if(patEntry) rows.push([patEntry, 'PATTERN', 'pat']);
+        if(morphEntry) rows.push([morphEntry, 'STATE MORPH', 'morph']);
       } else {
         MOBILE_NODE_CATALOG.filter(n=>n[1]===cat).forEach(n=>{
           rows.push([n, n[0], cat]);
@@ -4232,14 +4249,15 @@ requestAnimationFrame(() => {
   // by that type; emit an empty object in that slot.
   function buildInitialDropdowns(typeName){
     switch(typeName){
-      case 'OSCILLATOR': return { waveform: 'triangle' };
-      case 'TREMOLO':    return { tremShape: 'sine' };
-      case 'NOISE GEN':  return { noiseType: 'white' };
-      case 'FILTER':     return { filtType: 'lowpass' };
-      case 'PWM OSC':    return { pwmWave: 'square' };
-      case 'FORMANT':    return { formVowel: 'a' };
-      case 'SUB OCTAVE': return { subOct: '0.5' };
-      case 'EQ':         return { eqType: 'peaking' };
+      case 'OSCILLATOR':  return { waveform: 'triangle' };
+      case 'TREMOLO':     return { tremShape: 'sine' };
+      case 'NOISE GEN':   return { noiseType: 'white' };
+      case 'FILTER':      return { filtType: 'lowpass' };
+      case 'PWM OSC':     return { pwmWave: 'square' };
+      case 'FORMANT':     return { formVowel: 'a' };
+      case 'SUB OCTAVE':  return { subOct: '0.5' };
+      case 'EQ':          return { eqType: 'peaking' };
+      case 'STATE MORPH': return { morphEasing: 'sine' };
       default: return {};
     }
   }
@@ -4329,6 +4347,16 @@ requestAnimationFrame(() => {
       _renderId: id,
     };
     attachStateProxy(node);
+    if(typeName === 'STATE MORPH'){
+      node.morphState = {
+        rateKnob: 0.3,
+        easing: 'sine',
+        enabled: false,
+        snapshots: {},
+        _phaseStart: performance.now(),
+        _lastDisplayTick: 0,
+      };
+    }
     mobile.mobileNodes[id] = node;
     mobile.pages[pageIdx].bars[barIdx].cols[colIdx] = id;
     mobile.currentOut[id] = 0;
@@ -4359,6 +4387,7 @@ requestAnimationFrame(() => {
     const t = node.type;
     if(t === 'INPUT MIX') return [8, 1];
     if(t === 'MASTER' || cat === 'out') return [1, 0];
+    if(t === 'STATE MORPH' || cat === 'morph') return [0, 1];
     if(cat === 'gen') return [4, 4];
     if(cat === 'mix') return [4, 1];
     if(cat === 'fx' || cat === 'pat') return [4, 4];
@@ -4802,6 +4831,80 @@ requestAnimationFrame(() => {
         wrap.appendChild(buildDimCol('COLS', 'cols'));
 
         ex.appendChild(wrap);
+      }
+      if(node.type === 'STATE MORPH'){
+        // Ensure morphState exists (older saves / re-render safety)
+        if(!node.morphState){
+          node.morphState = {
+            rateKnob: 0.3, easing: 'sine', enabled: false,
+            snapshots: {}, _phaseStart: performance.now(), _lastDisplayTick: 0,
+          };
+        }
+        const morphControls = el('div','mobMorphControls');
+
+        // Targets label
+        const targetsLabel = el('div','mobMorphTargets');
+        targetsLabel.dataset.morphTargets = String(nodeId);
+        const tgtNames = mobile.cables
+          .filter(c=>c.fromNodeId===nodeId)
+          .map(c=>{ const tn = mobile.mobileNodes[c.toNodeId]; return tn ? tn.type : '?'; });
+        targetsLabel.textContent = 'TARGETS: ' + (tgtNames.length ? tgtNames.join(', ') : '—');
+        morphControls.appendChild(targetsLabel);
+
+        // Easing dropdown
+        const easingWrap = el('div','mobMorphEasingWrap');
+        const easingLabel = el('div','mobMorphSubLabel','EASING');
+        const easingSelect = document.createElement('select');
+        easingSelect.className = 'mobMorphEasingSelect';
+        const curEase = (node.dropdowns && node.dropdowns[0] && node.dropdowns[0].morphEasing)
+          || (node.morphState && node.morphState.easing)
+          || 'sine';
+        ['sine','linear','easeIn','easeOut','easeInOut'].forEach(name=>{
+          const opt = document.createElement('option');
+          opt.value = name; opt.textContent = name;
+          if(curEase === name) opt.selected = true;
+          easingSelect.appendChild(opt);
+        });
+        easingSelect.addEventListener('change', e=>{
+          if(!node.dropdowns[0]) node.dropdowns[0] = {};
+          node.dropdowns[0].morphEasing = e.target.value;
+          if(node.morphState) node.morphState.easing = e.target.value;
+        });
+        easingWrap.append(easingLabel, easingSelect);
+        morphControls.appendChild(easingWrap);
+
+        // SET A / SET B button row
+        const btnRow = el('div','mobMorphBtnRow');
+        const setA = document.createElement('button');
+        setA.className = 'mobMorphBtn';
+        setA.textContent = 'SET A';
+        setA.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          mobileMorphSetSnapshot(nodeId, 'A');
+        });
+        const setB = document.createElement('button');
+        setB.className = 'mobMorphBtn';
+        setB.textContent = 'SET B';
+        setB.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          mobileMorphSetSnapshot(nodeId, 'B');
+        });
+        btnRow.append(setA, setB);
+        morphControls.appendChild(btnRow);
+
+        // PLAY / PAUSE
+        const playBtn = document.createElement('button');
+        playBtn.className = 'mobMorphPlayBtn';
+        playBtn.dataset.morphPlay = String(nodeId);
+        playBtn.textContent = (node.morphState && node.morphState.enabled) ? 'PAUSE' : 'PLAY';
+        playBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          mobileMorphTogglePlay(nodeId);
+          playBtn.textContent = (node.morphState && node.morphState.enabled) ? 'PAUSE' : 'PLAY';
+        });
+        morphControls.appendChild(playBtn);
+
+        ex.appendChild(morphControls);
       }
       // CLOSE button removed — the collapse arrow in the header is the only way to collapse
       nodeEl.appendChild(ex);
@@ -5266,6 +5369,23 @@ requestAnimationFrame(() => {
         soloedInput: (v.soloedInput != null && v.soloedInput >= 0) ? v.soloedInput : null,
         _renderId: Number(id),
       };
+      if(v.type === 'STATE MORPH'){
+        if(v.morphState){
+          node.morphState = {
+            rateKnob: (v.morphState.rateKnob != null) ? v.morphState.rateKnob : 0.3,
+            easing: v.morphState.easing || 'sine',
+            enabled: false, // never auto-resume on restore
+            snapshots: v.morphState.snapshots || {},
+            _phaseStart: performance.now(),
+            _lastDisplayTick: 0,
+          };
+        } else {
+          node.morphState = {
+            rateKnob: 0.3, easing: 'sine', enabled: false,
+            snapshots: {}, _phaseStart: performance.now(), _lastDisplayTick: 0,
+          };
+        }
+      }
       attachStateProxy(node);
       newNodes[Number(id)] = node;
     });
@@ -5380,6 +5500,22 @@ requestAnimationFrame(() => {
         layoutHints: { desktop: deskHint, mobile: mobHint || { page: 0, bar: 0, col: 0 } },
       };
       if(patternStates) inst.patternStates = patternStates;
+      // STATE MORPH: emit morphState with snapshot keys remapped to 'm_<nid>'
+      // string ids so desktop round-trip can resolve targets by V2 uuid.
+      if(v.type === 'STATE MORPH' && v.morphState){
+        const srcSnaps = v.morphState.snapshots || {};
+        const outSnaps = {};
+        Object.keys(srcSnaps).forEach(tid => {
+          // tid is a mobile numeric node id (possibly in string form)
+          outSnaps['m_' + Number(tid)] = srcSnaps[tid];
+        });
+        inst.morphState = {
+          rateKnob: (v.morphState.rateKnob != null) ? v.morphState.rateKnob : 0.3,
+          easing: v.morphState.easing || 'sine',
+          enabled: !!v.morphState.enabled,
+          snapshots: outSnaps,
+        };
+      }
       instances.push(inst);
     });
 
@@ -5704,6 +5840,36 @@ requestAnimationFrame(() => {
       });
     });
 
+    // STATE MORPH: second pass — attach morphState to restored morph nodes and
+    // remap snapshot keys from V2 preset ids (desktop uuids or 'm_<nid>' from
+    // mobile saves) to the NEWLY-assigned mobile numeric node ids.
+    (preset.instances || []).forEach(presetInst => {
+      if(!presetInst || presetInst.type !== 'STATE MORPH' || !presetInst.morphState) return;
+      const newId = idMap[presetInst.id];
+      if(newId == null) return;
+      const node = mobile.mobileNodes[newId];
+      if(!node) return;
+      const srcSnaps = presetInst.morphState.snapshots || {};
+      const newSnaps = {};
+      Object.keys(srcSnaps).forEach(oldKey => {
+        const remappedId = idMap[oldKey];
+        if(remappedId != null){
+          newSnaps[remappedId] = srcSnaps[oldKey];
+        }
+      });
+      node.morphState = {
+        rateKnob: (presetInst.morphState.rateKnob != null) ? presetInst.morphState.rateKnob : 0.3,
+        easing: presetInst.morphState.easing || 'sine',
+        enabled: false, // always load paused
+        snapshots: newSnaps,
+        _phaseStart: performance.now(),
+        _lastDisplayTick: 0,
+      };
+      // Mirror easing into dropdowns[0] so the expanded-body UI reflects it
+      if(!node.dropdowns[0]) node.dropdowns[0] = {};
+      node.dropdowns[0].morphEasing = node.morphState.easing;
+    });
+
     mobile.audio = {};
     mobile.cableDirty = true;
 
@@ -5745,6 +5911,7 @@ requestAnimationFrame(() => {
           states: nv.states, patternStates: nv.patternStates || null,
           selectedOutput: nv.selectedOutput || 0, pinned: !!nv.pinned,
           bypass: !!nv.bypass,
+          morphState: nv.morphState || null,
         };
       });
       const snap = {
@@ -6090,6 +6257,7 @@ requestAnimationFrame(() => {
     if(node.cat === 'fx')  return '#00ffcc';
     if(node.cat === 'mix') return '#ffe000';
     if(node.cat === 'pat') return PAT_COLORS[(fromIdx||0) % PAT_COLORS.length];
+    if(node.cat === 'morph') return '#cc88ff';
     return '#88ff44';
   }
 
@@ -6867,6 +7035,178 @@ requestAnimationFrame(() => {
   mobile.stopPlay = stopMobilePlay;
   mobile.rebuildIfPlaying = rebuildMobileIfPlaying;
 
+  // ─── STATE MORPH runtime (mobile) ───────────────────────────────────
+  // Mirrors desktop morphState behavior: per-target A/B snapshots, triangle-wave
+  // ping-pong, log-mapped rate (0.5s..10min), easing curves. Runs on its own
+  // rAF loop so morph animates even when pattern playback is stopped.
+  const MOBILE_EASINGS = {
+    linear:    p => p,
+    easeIn:    p => p*p,
+    easeOut:   p => 1 - (1-p)*(1-p),
+    easeInOut: p => p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2)/2,
+    sine:      p => 0.5 - 0.5 * Math.cos(Math.PI * p),
+  };
+  const MOBILE_MORPH_DISPLAY_INTERVAL = 100; // ms — 10Hz UI refresh
+
+  function mobileMorphEnsure(mNode){
+    if(!mNode.morphState){
+      mNode.morphState = {
+        rateKnob: 0.3, easing: 'sine', enabled: false,
+        snapshots: {}, _phaseStart: performance.now(), _lastDisplayTick: 0,
+      };
+    }
+    return mNode.morphState;
+  }
+
+  function mobileMorphSetSnapshot(morphNodeId, slot){
+    const mNode = mobile.mobileNodes[morphNodeId]; if(!mNode) return;
+    const ms = mobileMorphEnsure(mNode);
+    const targets = (mobile.cables || []).filter(c => c.fromNodeId === morphNodeId);
+    targets.forEach(c => {
+      const tNode = mobile.mobileNodes[c.toNodeId]; if(!tNode) return;
+      if(tNode.type === 'STATE MORPH') return; // skip morph-to-morph
+      const selOut = tNode.selectedOutput || 0;
+      const state = tNode.states && tNode.states[selOut];
+      if(!state) return;
+      const snap = {};
+      Object.keys(state).forEach(kid => {
+        if(KD[kid]) snap[kid] = state[kid];
+      });
+      if(!ms.snapshots[c.toNodeId]){
+        ms.snapshots[c.toNodeId] = { A: null, B: null, selOutputAtCapture: selOut };
+      }
+      ms.snapshots[c.toNodeId][slot] = snap;
+      ms.snapshots[c.toNodeId].selOutputAtCapture = selOut;
+    });
+    mobileMorphRefreshLabel(morphNodeId);
+  }
+
+  function mobileMorphTogglePlay(morphNodeId){
+    const mNode = mobile.mobileNodes[morphNodeId]; if(!mNode) return;
+    const ms = mobileMorphEnsure(mNode);
+    ms.enabled = !ms.enabled;
+    ms._phaseStart = performance.now();
+    if(ms.enabled) mobileMorphKickRaf();
+  }
+
+  function mobileMorphRefreshLabel(morphNodeId){
+    const el = document.querySelector('[data-morph-targets="'+morphNodeId+'"]');
+    if(!el) return;
+    const names = (mobile.cables || [])
+      .filter(c => c.fromNodeId === morphNodeId)
+      .map(c => { const tn = mobile.mobileNodes[c.toNodeId]; return tn ? tn.type : '?'; });
+    el.textContent = 'TARGETS: ' + (names.length ? names.join(', ') : '—');
+  }
+
+  function mobileMorphRefreshAllLabels(){
+    Object.keys(mobile.mobileNodes).forEach(id => {
+      const n = mobile.mobileNodes[id];
+      if(n && n.type === 'STATE MORPH') mobileMorphRefreshLabel(Number(id));
+    });
+  }
+
+  function mobileMorphPruneSnapshots(){
+    Object.keys(mobile.mobileNodes).forEach(id => {
+      const n = mobile.mobileNodes[id]; if(!n || !n.morphState) return;
+      const liveTargets = new Set(
+        (mobile.cables || [])
+          .filter(c => c.fromNodeId === Number(id))
+          .map(c => c.toNodeId)
+      );
+      Object.keys(n.morphState.snapshots).forEach(tid => {
+        if(!liveTargets.has(Number(tid))) delete n.morphState.snapshots[tid];
+      });
+    });
+  }
+
+  function mobileMorphRemoveTarget(targetNodeId){
+    const tid = Number(targetNodeId);
+    Object.values(mobile.mobileNodes).forEach(n => {
+      if(n && n.morphState && n.morphState.snapshots && n.morphState.snapshots[tid]){
+        delete n.morphState.snapshots[tid];
+      }
+    });
+  }
+
+  function mobileMorphTick(now){
+    Object.keys(mobile.mobileNodes).forEach(id => {
+      const mNode = mobile.mobileNodes[id];
+      if(!mNode || mNode.type !== 'STATE MORPH') return;
+      const ms = mNode.morphState;
+      if(!ms || !ms.enabled) return;
+      const liveRate = (mNode.states && mNode.states[0] && mNode.states[0].morphRate !== undefined)
+        ? mNode.states[0].morphRate
+        : (ms.rateKnob != null ? ms.rateKnob : 0.3);
+      const period = 0.5 * Math.pow(1200, liveRate); // seconds — matches desktop log-map
+      const t = (now - (ms._phaseStart || now)) / 1000;
+      const tri = Math.abs(((t / period) % 2) - 1); // 0→1→0 triangle
+      const easeFn = MOBILE_EASINGS[ms.easing || 'sine'] || MOBILE_EASINGS.sine;
+      const p = easeFn(tri);
+      const shouldDisplayTick = (now - (ms._lastDisplayTick || 0)) > MOBILE_MORPH_DISPLAY_INTERVAL;
+
+      Object.keys(ms.snapshots).forEach(targetId => {
+        const snap = ms.snapshots[targetId];
+        if(!snap || !snap.A || !snap.B) return;
+        const tNode = mobile.mobileNodes[targetId]; if(!tNode) return;
+        const selOut = snap.selOutputAtCapture | 0;
+        Object.keys(snap.A).forEach(kid => {
+          if(!(kid in snap.B)) return;
+          const v = snap.A[kid] + (snap.B[kid] - snap.A[kid]) * p;
+          if(tNode.states && tNode.states[selOut]){
+            tNode.states[selOut][kid] = v;
+          }
+          // Live audio write (only if this output is the currently-selected/active one)
+          if((tNode.selectedOutput || 0) === selOut){
+            try { liveKnobUpdate(Number(targetId), kid, v); } catch(_){}
+          }
+        });
+        // Throttled knob UI refresh (only when the expanded node is showing the morphed output)
+        if(shouldDisplayTick && (tNode.selectedOutput || 0) === selOut){
+          const nodeEl = document.querySelector('.mobileNode[data-node-id="'+targetId+'"]');
+          if(nodeEl){
+            const canvases = nodeEl.querySelectorAll('canvas.mobKnobCanvas');
+            canvases.forEach((cv, idx) => {
+              // Match canvas to knob by position in knob list (knobs[] order) — the
+              // expanded body emits one canvas per knob in node.knobs order (minus
+              // pattern BPM knobs). Map via the parent wrap's sibling label text.
+              const wrap = cv.parentElement;
+              const labelEl = wrap && wrap.querySelector('.mobKnobLabel');
+              if(!labelEl) return;
+              const kid = labelEl.textContent;
+              if(kid && (kid in snap.A) && KD[kid]){
+                const val = tNode.states[selOut][kid];
+                try { drawMobKnob(cv, KD[kid], val); } catch(_){}
+                const valEl = wrap.querySelector('.mobKnobVal');
+                if(valEl && !valEl.querySelector('input')){
+                  const def = KD[kid];
+                  valEl.textContent = def.fmt ? def.fmt(val) : String(val);
+                }
+              }
+            });
+          }
+        }
+      });
+      if(shouldDisplayTick) ms._lastDisplayTick = now;
+    });
+  }
+
+  let _mobileMorphRaf = null;
+  function mobileMorphRafLoop(){
+    const anyEnabled = Object.values(mobile.mobileNodes).some(
+      n => n && n.type === 'STATE MORPH' && n.morphState && n.morphState.enabled
+    );
+    if(anyEnabled){
+      try { mobileMorphTick(performance.now()); } catch(e){ try{console.warn('[morph tick]',e);}catch(_){} }
+      _mobileMorphRaf = requestAnimationFrame(mobileMorphRafLoop);
+    } else {
+      _mobileMorphRaf = null;
+    }
+  }
+  function mobileMorphKickRaf(){
+    if(_mobileMorphRaf === null) _mobileMorphRaf = requestAnimationFrame(mobileMorphRafLoop);
+  }
+  mobile.morphKickRaf = mobileMorphKickRaf;
+
   // ─── Cable rendering ───────────────────────────────────────────────
   const mobCableCanvas = document.getElementById('mobileCableCanvas');
   const mobCableCtx = mobCableCanvas ? mobCableCanvas.getContext('2d') : null;
@@ -7161,6 +7501,8 @@ requestAnimationFrame(() => {
       // Rebuild to honor implicit -> explicit routing change
       rebuildMobileIfPlaying();
     }
+    // Keep STATE MORPH target labels fresh
+    try { mobileMorphRefreshAllLabels(); } catch(_){}
     cancelArm();
   }
 
@@ -7169,6 +7511,7 @@ requestAnimationFrame(() => {
     saveHistory();
     mobile.cables.splice(cableIdx, 1);
     if(mobile.playing) rebuildMobileIfPlaying();
+    try { mobileMorphPruneSnapshots(); mobileMorphRefreshAllLabels(); } catch(_){}
     renderMobilePages();
     scheduleCableDraw();
   }
@@ -7182,14 +7525,18 @@ requestAnimationFrame(() => {
         mobile.cables.splice(i, 1);
       }
     }
+    try { mobileMorphPruneSnapshots(); mobileMorphRefreshAllLabels(); } catch(_){}
     return removed;
   }
 
   // Wrap deleteNode to clean cables
   const _origDeleteNode = deleteNode;
   deleteNode = function(nodeId){
-    removeCablesForNode(Number(nodeId));
-    if(mobile.armed && mobile.armed.nodeId === Number(nodeId)) cancelArm();
+    const rmId = Number(nodeId);
+    removeCablesForNode(rmId);
+    // Drop morph snapshots that reference the deleted node
+    try { mobileMorphRemoveTarget(rmId); mobileMorphRefreshAllLabels(); } catch(_){}
+    if(mobile.armed && mobile.armed.nodeId === rmId) cancelArm();
     _origDeleteNode(nodeId);
     scheduleCableDraw();
     if(mobile.playing) rebuildMobileIfPlaying();
