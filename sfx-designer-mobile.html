@@ -4900,7 +4900,14 @@ requestAnimationFrame(() => {
           e.stopPropagation();
           mobileMorphSetSnapshot(nodeId, 'B');
         });
-        btnRow.append(setA, setB);
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'mobMorphBtn';
+        clearBtn.textContent = 'CLEAR';
+        clearBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          mobileMorphClearSnapshots(nodeId);
+        });
+        btnRow.append(setA, setB, clearBtn);
         morphControls.appendChild(btnRow);
 
         ex.appendChild(morphControls);
@@ -6914,6 +6921,15 @@ requestAnimationFrame(() => {
     });
 
     mobile.playing = true;
+    const _now = performance.now();
+    Object.values(mobile.mobileNodes).forEach(n => {
+      if(n && n.type === 'STATE MORPH' && n.morphState && n.morphState.outputs){
+        n.morphState.outputs.forEach(oms => {
+          if(oms){ oms._phaseStart = _now; oms._lastDisplayTick = 0; }
+        });
+      }
+    });
+    try { mobileMorphKickRaf(); } catch(_){}
     const btn = $('#miniPlayBtn');
     if(btn){ btn.classList.add('playing'); btn.setAttribute('aria-label','Stop'); }
     const dbtn = $('#drawerPlayBtn');
@@ -7155,6 +7171,18 @@ requestAnimationFrame(() => {
     });
   }
 
+  function mobileMorphClearSnapshots(morphNodeId){
+    const mNode = mobile.mobileNodes[morphNodeId]; if(!mNode || !mNode.morphState) return;
+    const srcOut = (typeof mobile.currentOut !== 'undefined' && mobile.currentOut[morphNodeId] !== undefined)
+      ? mobile.currentOut[morphNodeId]
+      : (mNode.selectedOutput || 0);
+    const oms = mNode.morphState.outputs[srcOut]; if(!oms) return;
+    oms.snapshots = {};
+    oms._phaseStart = performance.now();
+    oms._lastDisplayTick = 0;
+    mobileMorphRefreshLabel(morphNodeId);
+  }
+
   function mobileMorphPruneSnapshots(){
     Object.keys(mobile.mobileNodes).forEach(id => {
       const n = mobile.mobileNodes[id]; if(!n || !n.morphState || !n.morphState.outputs) return;
@@ -7195,6 +7223,7 @@ requestAnimationFrame(() => {
   }
 
   function mobileMorphTick(now){
+    if(!mobile.playing) return;
     Object.keys(mobile.mobileNodes).forEach(id => {
       const mNode = mobile.mobileNodes[id];
       if(!mNode || mNode.type !== 'STATE MORPH') return;
