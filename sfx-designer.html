@@ -2375,8 +2375,34 @@ function morphSetSnapshot(morphUuid, slot){
   const srcIdx = mInst.modIdx;
   const srcOut = _morphCurOut(srcIdx);
   const ms = mInst.morphState.outputs[srcOut]; if(!ms) return;
-  const srcUuid = _uuidForModIdx(srcIdx);
+  // Sync live knobState back to modOutputState for the CURRENTLY VIEWED module before snapshot,
+  // so user can adjust-then-SET without clicking the output selector first. Bake relied on
+  // users pressing PLAY or output-selector between edits to sync; do it here so SET captures
+  // the visible values.
+  try {
+    if(typeof modKnobIds !== 'undefined' && typeof knobState !== 'undefined'){
+      modKnobIds.forEach((ids, mi) => {
+        const o = (selectedOutput && selectedOutput[mi] !== undefined) ? selectedOutput[mi] : 0;
+        if(modOutputState[mi] && modOutputState[mi][o]){
+          ids.forEach(id => { if(knobState[id] !== undefined) modOutputState[mi][o][id] = knobState[id]; });
+        }
+      });
+    }
+  } catch(e){}
+  // Use the morphUuid arg directly — _uuidForModIdx(srcIdx) round-trips but can return null
+  // if desktopInstances is stale (e.g., deleted clone mid-flight). Prefer the known-good UUID.
+  const srcUuid = morphUuid;
   const targets = cables.filter(c => c.fromUuid === srcUuid && c.fromIdx === srcOut);
+  if(window._morphDebug){
+    console.warn('[morph] setSnapshot', slot, 'uuid=', morphUuid, 'srcIdx=', srcIdx, 'srcOut=', srcOut,
+      'cables.len=', cables.length, 'matches=', targets.length,
+      'sample=', cables.slice(0,3).map(c=>({fromUuid:c.fromUuid, fromIdx:c.fromIdx, toUuid:c.toUuid, toIdx:c.toIdx})));
+  }
+  if(targets.length === 0){
+    console.warn('[morph] SET ' + slot + ': no cables from morph output ' + (srcOut+1) +
+      '. Wire a cable from this morph output to a target module first. (morphUuid=' + morphUuid +
+      ', cables=' + cables.length + ')');
+  }
   targets.forEach(c => {
     const tUuid = c.toUuid; if(!tUuid) return;
     const tInst = di[tUuid]; if(!tInst) return;
@@ -2465,7 +2491,10 @@ function morphPruneSnapshots(){
 function _morphLiveWrite(modIdx, outIdx, knobId, value){
   if(!live || !live.playing || typeof audioModules === 'undefined') return;
   const mod = audioModules[modIdx]; if(!mod || !mod.paramMaps) return;
-  const pm = mod.paramMaps[outIdx]; if(!pm) return;
+  const pm = mod.paramMaps[outIdx]; if(!pm){
+    if(window._morphDebug) console.warn('[morph] _morphLiveWrite: no paramMap for', {modIdx, outIdx, knobId, available: Object.keys(mod.paramMaps)});
+    return;
+  }
   const entries = pm[knobId]; if(!entries) return;
   const now = audioCtx.currentTime;
   entries.forEach(e => {
@@ -2473,24 +2502,29 @@ function _morphLiveWrite(modIdx, outIdx, knobId, value){
       const param = e.p || e;
       const mul = e.m || 1;
       param.cancelScheduledValues(now);
-      param.setValueAtTime(value * mul, now);
+      // setTargetAtTime gives smooth exponential follow (matches pre-UUID bake behavior).
+      param.setTargetAtTime(value * mul, now, 0.015);
     } catch(err){}
   });
 }
 
 let _morphRaf = null;
+let _morphTickLoggedEmpty = false;
 function morphTick(){
   if(typeof live === 'undefined' || !live || !live.playing){ _morphRaf = requestAnimationFrame(morphTick); return; }
   if(!window.desktopInstances){ _morphRaf = requestAnimationFrame(morphTick); return; }
   const now = performance.now();
   const di = window.desktopInstances;
+  let sawMorph = false, sawReady = false;
   for(const u in di){
     const inst = di[u];
     if(!_isMorphType(inst.type) || !inst.morphState || !inst.morphState.outputs) continue;
+    sawMorph = true;
     for(let outIdx = 0; outIdx < 4; outIdx++){
       const ms = inst.morphState.outputs[outIdx]; if(!ms) continue;
       const hasReady = Object.values(ms.snapshots || {}).some(s => s && s.A && s.B);
       if(!hasReady) continue;
+      sawReady = true;
       const rateKnob = _morphGetRateKnob(inst, outIdx);
       const period = 0.5 * Math.pow(1200, rateKnob);
       const t = (now - ms._phaseStart) / 1000;
@@ -2539,6 +2573,12 @@ function morphTick(){
       if(shouldDisplayTick) ms._lastDisplayTick = now;
     }
   }
+  // One-shot diagnostic: first play after cable-wiring, if no morph has ready snapshots,
+  // tell the user why. (Don't spam — only log once per play session.)
+  if(sawMorph && !sawReady && !_morphTickLoggedEmpty){
+    _morphTickLoggedEmpty = true;
+    console.warn('[morph] Tick running but no morph has BOTH A and B snapshots. Press SET A and SET B on the morph with a cable wired to a target. Enable window._morphDebug=true for per-SET logs.');
+  }
   _morphRaf = requestAnimationFrame(morphTick);
 }
 _morphRaf = requestAnimationFrame(morphTick);
@@ -2557,6 +2597,7 @@ window._morphRefreshEasingDropdown = _morphRefreshEasingDropdown;
 function startPlay(){
   if(live && live.playing) return;
   if(audioCtx.state === 'suspended') audioCtx.resume();
+  _morphTickLoggedEmpty = false; // re-enable one-shot morph diagnostic per play session
   live = buildLive();
   const now = audioCtx.currentTime;
   const targetGain = knobState.masterGain || 0.6;
