@@ -124,6 +124,11 @@
       background: var(--yellow);
       color: var(--black);
     }
+    .blank-price {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      align-self: center;
+    }
 
     /* PRICE INPUT */
     .price-row {
@@ -326,7 +331,8 @@ const PRODUCTS = [
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
     img: "images/product-06.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/"
+    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/",
+    blankPrice: 10.04
   },
   {
     id: "bc-6400-black",
@@ -336,7 +342,8 @@ const PRODUCTS = [
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
     img: "images/product-04.jpg",
-    blankUrl: "https://blankclothing.ca/b6400-bella-canvas-missy-jersey-t-shirt/"
+    blankUrl: "https://blankclothing.ca/b6400-bella-canvas-missy-jersey-t-shirt/",
+    blankPrice: 10.21
   },
   {
     id: "bc-3483-black",
@@ -346,7 +353,8 @@ const PRODUCTS = [
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
     img: "images/product-07.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-3483-unisex-jersey-muscle-tank-top/"
+    blankUrl: "https://blankclothing.ca/bella-canvas-3483-unisex-jersey-muscle-tank-top/",
+    blankPrice: 13.62
   },
   {
     id: "bc-8804-black",
@@ -356,7 +364,8 @@ const PRODUCTS = [
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
     img: "images/product-02.jpg",
-    blankUrl: "https://blankclothing.ca/8804-bella-canvas-ladies-flowy-muscle-t-shirt-with-rolled-cuff/"
+    blankUrl: "https://blankclothing.ca/8804-bella-canvas-ladies-flowy-muscle-t-shirt-with-rolled-cuff/",
+    blankPrice: 16.37
   },
   // RED
   {
@@ -367,7 +376,8 @@ const PRODUCTS = [
     colorHex: "#c62828",
     logo: "Yellow (single-color)",
     img: "images/product-03.jpg",
-    blankUrl: "https://blankclothing.ca/gildan-64200-softstyle-tank-top/"
+    blankUrl: "https://blankclothing.ca/gildan-64200-softstyle-tank-top/",
+    blankPrice: 6.25
   },
   {
     id: "bc-b6008-red",
@@ -377,7 +387,8 @@ const PRODUCTS = [
     colorHex: "#c62828",
     logo: "Yellow (single-color)",
     img: "images/product-01.jpg",
-    blankUrl: "https://blankclothing.ca/b6008-bella-canvas-ladies-jersey-racerback-tank-top/"
+    blankUrl: "https://blankclothing.ca/b6008-bella-canvas-ladies-jersey-racerback-tank-top/",
+    blankPrice: 9.83
   },
   // YELLOW
   {
@@ -388,7 +399,8 @@ const PRODUCTS = [
     colorHex: "#F5D020",
     logo: "Tri-color (black/red/blue)",
     img: "images/product-05.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/"
+    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/",
+    blankPrice: 10.04
   }
 ];
 
@@ -412,6 +424,7 @@ PRODUCTS.forEach(p => {
       </div>
       <div class="product-links">
         <a href="${p.blankUrl}" target="_blank">View Blank</a>
+        <span class="blank-price">$${p.blankPrice.toFixed(2)}</span>
       </div>
     </div>
   `;
