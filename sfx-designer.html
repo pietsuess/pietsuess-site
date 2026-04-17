@@ -2604,19 +2604,15 @@ function _scheduleMorphRebuild(){
 
 function _morphLiveWrite(modIdx, outIdx, knobId, value){
   if(!live || !live.playing || typeof audioModules === 'undefined') return;
-  const mod = audioModules[modIdx]; if(!mod || !mod.paramMaps){
-    // No audio module yet — still trigger throttled rebuild so next graph sees it
-    _scheduleMorphRebuild();
-    return;
-  }
+  const mod = audioModules[modIdx]; if(!mod || !mod.paramMaps) return;
   const pm = mod.paramMaps[outIdx];
   const entries = pm ? pm[knobId] : null;
   if(!entries || !entries.length){
-    // Unmapped knob (scheduled module like MALLET/IMPACT/ARPEGGIO/etc.) — the value
-    // was already written to modOutputState by the morphTick caller. Throttled rebuild
-    // picks it up on the next graph build.
-    if(window._morphDebug) console.warn('[morph] _morphLiveWrite: no paramMap entry for', {modIdx, outIdx, knobId, available: pm ? Object.keys(pm) : null});
-    _scheduleMorphRebuild();
+    // Unmapped knob (scheduled module like MALLET/IMPACT/ARPEGGIO/PLUCK/etc.) — cannot
+    // modulate without rebuilding the graph, and rebuilding every 300ms restarts
+    // pattern triggers and re-triggers scheduled voices. modOutputState is still
+    // updated by morphTick so the next natural rebuild (stop/play, knob edit,
+    // structural change) will pick up the morphed values.
     return;
   }
   const now = audioCtx.currentTime;
