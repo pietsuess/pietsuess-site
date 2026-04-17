@@ -195,6 +195,26 @@
       display: none;
     }
 
+    /* LIGHTBOX */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.92);
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img {
+      max-width: 95vw;
+      max-height: 95vh;
+      object-fit: contain;
+    }
+
+    .product-card img { cursor: zoom-in; }
+
     /* DOWNLOADS */
     .downloads-section {
       padding: 2rem 2rem 1.5rem;
@@ -254,6 +274,10 @@
   </style>
 </head>
 <body>
+
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('active')">
+  <img id="lightboxImg" src="" alt="">
+</div>
 
 <div class="hero">
   <img class="logo" src="images/logo.svg" alt="SSI Capoeira">
@@ -391,6 +415,10 @@ PRODUCTS.forEach(p => {
       </div>
     </div>
   `;
+  card.querySelector('img').addEventListener('click', () => {
+    document.getElementById('lightboxImg').src = p.img;
+    document.getElementById('lightbox').classList.add('active');
+  });
   grid.appendChild(card);
 });
 
