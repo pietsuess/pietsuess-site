@@ -2236,7 +2236,10 @@ function updateLive(){
   // Master gain always direct (masterOut is persistent)
   masterOut.gain.setTargetAtTime(knobState.masterGain, audioCtx.currentTime, 0.02);
   if(!live || !live.playing) return;
-  // Live param updates are handled per-knob in the drag handler; no rebuild needed here
+  // Fallback for knobs without live param mapping (scheduled/complex modules like
+  // ARPEGGIO, IMPACT, PLUCK, etc.) — crossfade rebuild so changes take effect.
+  if(_rebuildTimer) clearTimeout(_rebuildTimer);
+  _rebuildTimer = setTimeout(() => { _rebuildTimer=null; rebuildIfPlaying(); }, 120);
 }
 
 function startPlay(){
