@@ -809,6 +809,174 @@
     box-shadow:0 0 14px #ff4444 !important;
   }
 
+  /* ──── Light theme (mobile) ──── */
+  body.light-theme #mobileShell { background:#f0f0f0; color:#111; }
+  body.light-theme #mobileTitle { color:#7a6400 !important; text-shadow:none !important; }
+  body.light-theme #mobileTopBar { border-bottom-color:#00776633; }
+  body.light-theme #mobileTopBar button { background:#fff; color:#111; border-color:#888; }
+  body.light-theme #mobileTopBar button:hover { background:#eee; }
+  body.light-theme #pageBoxes .pageBox { background:#fff; color:#aaa; border-color:#bbb; }
+  body.light-theme #pageBoxes .pageBox.populated { color:#007766; border-color:#007766; }
+  body.light-theme #pageBoxes .pageBox.active { background:rgba(179,134,0,0.15); border-color:#b38600; color:#b38600; }
+  body.light-theme .pageLabel { color:#666; }
+
+  /* Mobile nodes */
+  body.light-theme .mobileNode.gen { background:#fff; border-color:#b8296a; color:#111; }
+  body.light-theme .mobileNode.fx  { background:#fff; border-color:#007766; color:#111; }
+  body.light-theme .mobileNode.mix { background:#fff; border-color:#cc6a1f; color:#111; }
+  body.light-theme .mobileNode.pat { background:#fff; border-color:#7744cc; color:#111; }
+  body.light-theme .mobileNode.morph { background:#fff; border-color:#7744cc; color:#111; }
+  body.light-theme .mobileNode.gen .nodeTitle { color:#b8296a; }
+  body.light-theme .mobileNode.fx  .nodeTitle { color:#007766; }
+  body.light-theme .mobileNode.mix .nodeTitle { color:#cc6a1f; }
+  body.light-theme .mobileNode.pat .nodeTitle { color:#7744cc; }
+  body.light-theme .mobileNode.morph .nodeTitle { color:#7744cc; }
+
+  /* Jacks */
+  body.light-theme .mobileNode .nodeJack { background:#ddd; border-color:#666; }
+  body.light-theme .mobileNode .nodeJack.input { border-color:#007766; background:rgba(0,119,102,0.12); }
+  body.light-theme .mobileNode .nodeJack.output { border-color:#b8296a; background:rgba(184,41,106,0.12); }
+  body.light-theme .mobileNode .nodeJack.input.connected { background:#99e6d9; border-color:#007766; box-shadow:0 0 6px #007766; }
+  body.light-theme .mobileNode .nodeJack.output.connected { background:#f0a6c8; border-color:#b8296a; box-shadow:0 0 6px #b8296a; }
+
+  /* Knob labels / values */
+  body.light-theme .mobileNode .mobKnobLabel { color:#333; }
+  body.light-theme .mobileNode .mobKnobVal { color:#7a6400; }
+  body.light-theme .mobileNode .mobKnobValInput { background:#fff; color:#7a6400; border-color:#7a6400; }
+
+  /* Output selector */
+  body.light-theme .mobileNode .mobOutBtn { background:#fff; color:#555; border-color:#999; }
+  body.light-theme .mobileNode .mobOutBtn.active { border-color:#b38600; color:#b38600; background:rgba(179,134,0,0.15); }
+  body.light-theme .mobileNode .mobOutBtn:hover { border-color:#b38600; }
+
+  /* Bypass, delete, expand, close buttons inside nodes */
+  body.light-theme .mobileNode .nodeBypassBtn { background:#e6fffa; border-color:#007766; }
+  body.light-theme .mobileNode .nodeBypassBtn.active { background:#ffd6d6; border-color:#cc2222; }
+  body.light-theme .mobileNode .nodeDeleteBtn { background:#fff; color:#cc2222; border-color:#cc2222; }
+  body.light-theme .mobileNode .nodeExpandBtn { background:#fff; color:#007766; border-color:#007766; }
+  body.light-theme .mobileNode.expandedFull .nodeExpandBtn { background:rgba(0,119,102,0.18); color:#004d40; }
+  body.light-theme .mobileNode .nodeCloseBtn { background:#fff; color:#cc2222; border-color:#cc2222; }
+
+  /* Solo buttons */
+  body.light-theme .mobileNode .mobSoloBtn { background:#fff; color:#777; border-color:#999; }
+  body.light-theme .mobileNode .mobSoloBtn.active { background:rgba(179,134,0,0.2); border-color:#b38600; color:#b38600; box-shadow:0 0 6px #b3860088; }
+  body.light-theme .mobileNode .nodeJack.input.soloed { background:rgba(179,134,0,0.25) !important; border-color:#b38600 !important; box-shadow:0 0 8px #b3860088 !important; }
+
+  /* Pattern steps */
+  body.light-theme .mobPatStep { background:#f3e8ff; border-color:#7744cc; }
+  body.light-theme .mobPatStep.on { background:#7744cc; border-color:#7744cc; }
+  body.light-theme .mobPatStep.current { box-shadow:0 0 6px #b38600; border-color:#b38600; }
+  body.light-theme .mobPatDimLabel { color:#7744cc; }
+  body.light-theme .mobPatDimVal { color:#7a6400; }
+  body.light-theme .mobPatDimInput { background:#fff; color:#7a6400; border-color:#7744cc; }
+
+  /* Morph controls */
+  body.light-theme .mobMorphControls { background:#fff; border-color:#7744cc; }
+  body.light-theme .mobMorphTargets { color:#7744cc; }
+  body.light-theme .mobMorphSubLabel { color:#007766; }
+  body.light-theme .mobMorphEasingSelect { background:#fff; color:#7744cc; border-color:#7744cc; }
+  body.light-theme .mobMorphBtn { background:#fff; color:#7744cc; border-color:#7744cc; }
+  body.light-theme .mobMorphBtn:active { background:rgba(119,68,204,0.15); }
+
+  /* Bars / columns */
+  body.light-theme .mobileBar { background:#fafafa; border-color:#00776633; }
+  body.light-theme .mobileBarHeader { color:#007766; border-bottom-color:#00776633; }
+  body.light-theme .mobileBarHeader button { background:#fff; color:#007766; border-color:#007766; }
+  body.light-theme .mobileBarHeader button.danger { color:#cc2222; border-color:#cc2222; }
+  body.light-theme .mobileBarHeader button:hover { background:#eee; }
+  body.light-theme .mobileCol.empty { background:#fafafa; border-color:#007766aa; color:#888; }
+  body.light-theme .mobileCol.empty:active { background:rgba(179,134,0,0.1); border-color:#b38600; }
+  body.light-theme .mobileCol.addMini { background:#fafafa; border-color:#007766aa; color:#888; }
+  body.light-theme .mobileCol.addMini:active { background:rgba(179,134,0,0.1); border-color:#b38600; }
+  body.light-theme .mobileCol .colDelBtn { background:#fff; color:#cc2222; border-color:#cc2222; }
+  body.light-theme .barDelX { color:#007766; text-shadow:none; }
+
+  /* Picker modal */
+  body.light-theme .modalOverlay { background:rgba(255,255,255,0.85); }
+  body.light-theme .modalBox { background:#fff; border-color:#b38600; color:#111; }
+  body.light-theme .modalHeader { color:#7a6400; border-bottom-color:#ccc; }
+  body.light-theme .modalClose { color:#cc2222; border-color:#cc2222; }
+  body.light-theme .modalTab { background:#eee; color:#666; border-color:#bbb; }
+  body.light-theme .modalTab.active { color:#b38600; border-color:#b38600; background:#fff; }
+  body.light-theme .pickerRow { background:#fff; color:#111; border-color:#007766; }
+  body.light-theme .pickerRow.gen { color:#b8296a; border-color:#b8296a; background:#fff; }
+  body.light-theme .pickerRow.fx  { color:#007766; border-color:#007766; background:#fff; }
+  body.light-theme .pickerRow.mix { color:#cc6a1f; border-color:#cc6a1f; background:#fff; }
+  body.light-theme .pickerRow.pat { color:#7744cc; border-color:#7744cc; background:#fff; }
+  body.light-theme .pickerRow.morph { color:#7744cc; border-color:#7744cc; background:#fff; }
+  body.light-theme .pickerRow:active { background:rgba(179,134,0,0.12); }
+
+  /* Knob modal */
+  body.light-theme .knobModalRotary { background:#fff; border-color:#b38600; }
+  body.light-theme .knobModalValue { color:#7a6400; }
+  body.light-theme .knobModalLabel { color:#007766; }
+  body.light-theme .knobModalInput { background:#fff; color:#7a6400; border-color:#b38600; }
+  body.light-theme .knobModalButtons button { background:#fff; color:#007766; border-color:#007766; }
+  body.light-theme .knobModalButtons button.primary { background:#e6ffe6; color:#0a8a3a; border-color:#0a8a3a; }
+
+  /* Confirm popup */
+  body.light-theme .confirmPop { background:rgba(255,255,255,0.85); }
+  body.light-theme .confirmBox { background:#fff; color:#222; border-color:#cc2222; }
+  body.light-theme .confirmBox button { background:#fff; color:#007766; border-color:#007766; }
+  body.light-theme .confirmBox button.danger { color:#cc2222; border-color:#cc2222; background:#fff; }
+
+  /* Hamburger drawer menu */
+  body.light-theme .mobMenuOverlay { background:rgba(0,0,0,0.4); }
+  body.light-theme .mobMenuDrawer { background:#fff; border-right-color:#b38600; }
+  body.light-theme .mobMenuHeader { border-bottom-color:#ccc; }
+  body.light-theme .mobMenuTitle { color:#7a6400; text-shadow:none; }
+  body.light-theme .mobMenuBack { color:#007766; border-color:#007766; }
+  body.light-theme .mobMenuClose { color:#cc2222; border-color:#cc2222; }
+  body.light-theme .mobMenuItem { background:#fff; color:#007766; border-color:#007766; }
+  body.light-theme .mobMenuItem:active { background:rgba(0,119,102,0.12); }
+  body.light-theme .mobMenuItem.warn { color:#cc6a1f; border-color:#cc6a1f; background:#fff; }
+  body.light-theme .mobMenuItem.danger { color:#cc2222; border-color:#cc2222; background:#fff; }
+  body.light-theme .mobMenuItem.accent { color:#b38600; border-color:#b38600; background:#fff; }
+  body.light-theme .mobMenuEmpty { color:#888; }
+  body.light-theme .mobPromptBox { background:#fff; color:#222; border-color:#b38600; }
+  body.light-theme .mobPromptBox input { background:#fff; color:#7a6400; border-color:#b38600; }
+
+  /* Master drawer */
+  body.light-theme #masterDrawer { background:#f0f0f0; border-top-color:#b38600; }
+  body.light-theme #masterDrawerHeader { background:rgba(179,134,0,0.1); border-bottom-color:#b38600; }
+  body.light-theme #masterDrawerHeader .drawerTitle { color:#7a6400; }
+  body.light-theme #masterDrawerHeader .drawerHandle { background:#b3860088; }
+  body.light-theme #masterDrawerClose { color:#7a6400; }
+  body.light-theme #masterDrawerClose:active { background:rgba(179,134,0,0.15); }
+  body.light-theme #masterPinTop, body.light-theme #masterPinBottom { background:#fff; border-color:#b38600; }
+  body.light-theme #masterPinTop .pinLabel, body.light-theme #masterPinBottom .pinLabel { color:#7a6400; }
+  body.light-theme #masterAddBarBtn { background:#fff; color:#007766; border-color:#007766; }
+  body.light-theme #drawerPlayBtn { background:#fff; color:#0a8a3a; border-color:#0a8a3a; box-shadow:0 0 10px rgba(10,138,58,0.25); }
+  body.light-theme #drawerPlayBtn.playing { background:#e6ffe6; color:#0a8a3a; border-color:#0a8a3a; }
+
+  /* Bottom bar */
+  body.light-theme #mobileBottomBar { background:rgba(255,255,255,0.6); border-top-color:#00776633; }
+  body.light-theme #bottomBarHandle { background:#fff; color:#b38600; border-color:#b38600; box-shadow:0 0 6px rgba(179,134,0,0.4); text-shadow:none; }
+  body.light-theme #bottomBarHandle:active { background:rgba(179,134,0,0.18); }
+  body.light-theme #miniPlayBtn { background:#fff; color:#0a8a3a; border-color:#0a8a3a; }
+  body.light-theme #miniPlayBtn.playing { background:#e6ffe6; color:#0a8a3a; border-color:#0a8a3a; }
+  body.light-theme #bottomBarJacks .jackCell .jackNum { color:#7a6400; text-shadow:none; }
+  body.light-theme #bottomBarJacks .nodeJack { background:rgba(0,119,102,0.12); border-color:#007766; }
+  body.light-theme #bottomBarJacks .nodeJack.connected { background:#99e6d9; box-shadow:0 0 6px #007766; }
+  body.light-theme #bottomBarJacks .nodeJack .jackPages { color:#7a6400; text-shadow:none; }
+
+  /* Drawer INPUT MIX */
+  body.light-theme .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack { background:rgba(0,119,102,0.15); border-color:#007766; color:#7a6400; text-shadow:none; }
+  body.light-theme .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack.connected { background:#99e6d9; box-shadow:0 0 8px #007766; }
+  body.light-theme .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack .jackNum { color:#7a6400; }
+  body.light-theme .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack .jackPages { color:#7a6400aa; }
+  body.light-theme .mobileNode.inputMixDrawer .nodeJacks.top .nodeJack.soloed { background:rgba(179,134,0,0.3) !important; border-color:#b38600 !important; box-shadow:0 0 10px #b38600 !important; }
+
+  /* Armed banner */
+  body.light-theme #armedBanner { background:#fff; color:#b38600; border-top-color:#b38600; border-bottom-color:#b38600; }
+  body.light-theme #armedBanner .armedCancel { color:#b38600; }
+  body.light-theme #armedBanner .armedCancel:active { background:rgba(179,134,0,0.15); }
+  body.light-theme body.armed .nodeJack.input { outline-color:#b38600; box-shadow:0 0 10px #b38600aa; }
+  body.light-theme body.armed .nodeJack.armed-source { outline-color:#b8296a; box-shadow:0 0 14px #b8296a; }
+
+  /* Cable canvas — darken slightly so cables stay visible on light bg */
+  body.light-theme #mobileCableCanvas { opacity:0.75; }
+
 </style>
 </head>
 <body>
@@ -4164,17 +4332,23 @@ requestAnimationFrame(() => {
     ctx.clearRect(0,0,w,h);
     const cx = w/2, cy = h/2, r = Math.min(w,h)/2 - 6;
     const startA = Math.PI * 0.75, endA = Math.PI * 2.25;
+    const isLight = document.body.classList.contains('light-theme');
+    const trackColor   = isLight ? '#ccc'    : '#222';
+    const fillColor    = isLight ? '#007766' : '#00ffcc';
+    const pointerColor = isLight ? '#b38600' : '#ffe000';
+    const centerFill   = isLight ? '#fff'    : '#111';
+    const centerStroke = isLight ? '#00776666' : '#00ffcc66';
     ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.strokeStyle = '#222';
+    ctx.strokeStyle = trackColor;
     ctx.beginPath(); ctx.arc(cx,cy,r,startA,endA); ctx.stroke();
     const t = (val - def.min) / (def.max - def.min);
     const curA = startA + (endA - startA) * Math.max(0,Math.min(1,t));
-    ctx.strokeStyle = '#00ffcc';
+    ctx.strokeStyle = fillColor;
     ctx.beginPath(); ctx.arc(cx,cy,r,startA,curA); ctx.stroke();
-    ctx.fillStyle = '#ffe000';
+    ctx.fillStyle = pointerColor;
     ctx.beginPath();
     ctx.arc(cx + Math.cos(curA)*(r-2), cy + Math.sin(curA)*(r-2), 3, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#111'; ctx.strokeStyle = '#00ffcc66'; ctx.lineWidth = 1;
+    ctx.fillStyle = centerFill; ctx.strokeStyle = centerStroke; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI*2); ctx.fill(); ctx.stroke();
   }
 
@@ -6079,6 +6253,20 @@ requestAnimationFrame(() => {
     body.appendChild(makeMenuItem('EXPORT', '', doMobExport));
     body.appendChild(makeMenuItem('IMPORT', '', doMobImport));
     body.appendChild(makeMenuItem('DELETE PRESET', 'danger', showMobMenuDeletePreset));
+
+    // Theme toggle (outdoor high-contrast visibility)
+    const themeIsLight = document.body.classList.contains('light-theme');
+    const themeLabel = themeIsLight ? 'THEME: LIGHT' : 'THEME: DARK';
+    body.appendChild(makeMenuItem(themeLabel, 'accent', ()=>{
+      try {
+        const current = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+        const next = current === 'light' ? 'dark' : 'light';
+        try { localStorage.setItem('sfxTheme', next); } catch(_){}
+        if(typeof applyMobTheme === 'function') applyMobTheme(next);
+        // Re-render this menu so label updates
+        showMobMenuRoot();
+      } catch(e){}
+    }));
   }
 
   function showMobMenuSavePreset(){
@@ -8244,6 +8432,23 @@ requestAnimationFrame(() => {
     renderBottomBarJacks();
   };
 
+  // Theme toggle (dark/light for outdoor high-contrast visibility)
+  function applyMobTheme(theme){
+    try {
+      if(theme === 'light') document.body.classList.add('light-theme');
+      else document.body.classList.remove('light-theme');
+      // Re-render pages so mobileNode CSS + knob canvases pick up new theme
+      try { if(typeof renderMobilePages === 'function') renderMobilePages(); } catch(_){}
+      // Walk any canvases still present (covers open modal knob etc.)
+      try {
+        document.querySelectorAll('.mobKnobCanvas').forEach(c => {
+          // renderMobilePages will already redraw most; this is a safety pass
+        });
+      } catch(_){}
+      // Trigger cable redraw — cables are drawn on a rAF loop so no explicit call needed
+    } catch(e){}
+  }
+
   function init(){
     ensurePinnedNodes();
     wireTopBar();
@@ -8254,6 +8459,11 @@ requestAnimationFrame(() => {
     wireMasterDrawerUI();
     wireArmedBannerCancel();
     sizeMobCanvas();
+    // Apply saved theme BEFORE first render so knobs draw with correct colors
+    try {
+      const savedTheme = (localStorage.getItem('sfxTheme') === 'light') ? 'light' : 'dark';
+      if(savedTheme === 'light') document.body.classList.add('light-theme');
+    } catch(_){}
     renderMobilePages();
     renderBottomBarJacks();
     requestAnimationFrame(cableRAF);
