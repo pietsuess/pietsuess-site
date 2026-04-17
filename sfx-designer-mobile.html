@@ -4600,9 +4600,11 @@ requestAnimationFrame(() => {
           node.state[kid] = v;
           drawMobKnob(canvas, def, v);
           valEl.textContent = fmtVal(v);
-          // Live-update audio param on the running graph (no rebuild)
-          if(!liveKnobUpdate(nodeId, kid, v)){
-            mobile._needsRebuildOnRelease = true;
+          // Live-update audio param on the running graph
+          if(!liveKnobUpdate(nodeId, kid, v) && mobile.playing){
+            // Unmapped knob (scheduled/complex module) — debounced crossfade rebuild
+            clearTimeout(mobile._knobRebuildT);
+            mobile._knobRebuildT = setTimeout(() => { mobile._suppressRebuild = false; rebuildMobileIfPlaying(); }, 120);
           }
         });
         function endDrag(e){
@@ -4611,10 +4613,7 @@ requestAnimationFrame(() => {
           mobile._suppressRebuild = false; // re-enable rebuilds now that drag is done
           canvas.classList.remove('dragging');
           try { canvas.releasePointerCapture(e.pointerId); } catch(_){}
-          // Values are already written to node.states; liveKnobUpdate handled what it could.
-          // Do NOT rebuild here — it re-triggers all sounds. Unmapped knob changes
-          // will take effect on the next structural rebuild (cable/node/play-stop).
-          mobile._needsRebuildOnRelease = false;
+          // Let any pending debounced crossfade rebuild from unmapped knobs fire naturally
         }
         canvas.addEventListener('pointerup', endDrag);
         canvas.addEventListener('pointercancel', endDrag);
