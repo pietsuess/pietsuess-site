@@ -122,6 +122,9 @@
   .solo-btn:hover { border-color:#ffe000; }
   .solo-btn.active { border-color:#ffe000; background:#ffe00033; color:#ffe000; }
   .module.collapsed-knobs .solo-btn { display:none; }
+  /* STATE MORPH controls (TARGETS label, easing dropdown, SET/CLEAR buttons) hide on collapse */
+  .module.collapsed-knobs .morph-targets-label,
+  .module.collapsed-knobs .morph-controls-row { display:none; }
   /* Cable overlay */
   #cableCanvas { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:0; opacity:0.25; }
   .out-sel-row { display:flex; gap:3px; margin-bottom:4px; justify-content:center; }
@@ -767,7 +770,7 @@
       <div class="knob-row">
         <div class="knob-wrap"><canvas class="knob-canvas" data-id="morphRate" width="72" height="72"></canvas><div class="knob-val" id="morphRateV">—</div><div class="knob-label">RATE</div></div>
       </div>
-      <div style="padding:4px 6px;display:flex;flex-direction:column;gap:3px;">
+      <div class="morph-controls-row" style="padding:4px 6px;display:flex;flex-direction:column;gap:3px;">
         <select class="morph-easing" style="background:#1a1a1a;color:#ddd;border:1px solid #555;font-size:10px;padding:2px;font-family:inherit;">
           <option value="sine">sine</option>
           <option value="linear">linear</option>
