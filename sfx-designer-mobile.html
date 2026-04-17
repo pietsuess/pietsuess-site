@@ -4574,7 +4574,7 @@ requestAnimationFrame(() => {
             valEl.textContent = fmtVal(resetVal);
             // Live-update the audio param; fall back to rebuild if unmapped
             if(!liveKnobUpdate(nodeId, kid, resetVal)){
-              rebuildMobileIfPlaying();
+              if(!mobile._suppressRebuild) rebuildMobileIfPlaying();
             }
             return;
           }
@@ -4609,6 +4609,7 @@ requestAnimationFrame(() => {
         function endDrag(e){
           if(!dragging) return;
           dragging = false;
+          mobile._suppressRebuild = false; // re-enable rebuilds now that drag is done
           canvas.classList.remove('dragging');
           try { canvas.releasePointerCapture(e.pointerId); } catch(_){}
           // value already written live; nothing more to persist
@@ -4644,7 +4645,7 @@ requestAnimationFrame(() => {
               valEl.textContent = fmtVal(v);
               // Live-update audio; fall back to rebuild if unmapped
               if(!liveKnobUpdate(nodeId, kid, v)){
-                rebuildMobileIfPlaying();
+                if(!mobile._suppressRebuild) rebuildMobileIfPlaying();
               }
             } else {
               valEl.textContent = prevText;
@@ -7393,7 +7394,7 @@ requestAnimationFrame(() => {
       clearTimeout(mobile._rebuildT);
       mobile._rebuildT = setTimeout(() => { rebuildMobileIfPlaying(); }, 120);
     }
-    mobile._suppressRebuild = false;
+    // suppress flag is reset on pointerup (endDrag), not here
   };
 
   // ════════════════════════════════════════════════════════════════════
