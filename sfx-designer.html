@@ -109,6 +109,13 @@
   .jack.output.connected { background:#ff69b444; border-color:#ff69b4; }
   .jack.dragging { border-color:#ffe000; box-shadow:0 0 6px #ffe000; }
   .jack.soloed { background:#ffe00066; border-color:#ffe000; }
+  .jack.flash-reject { border-color:#ff4444 !important; background:#ff444444 !important; box-shadow:0 0 8px #ff4444; }
+  .morph-warn-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:10001; display:flex; align-items:center; justify-content:center; font-family:inherit; }
+  .morph-warn-box { background:#0a0a14; border:2px solid #00ffcc; color:#ccc; padding:24px 28px; max-width:420px; font-family:inherit; }
+  .morph-warn-title { color:#ffe000; font-size:13px; letter-spacing:2px; margin-bottom:14px; }
+  .morph-warn-body { font-size:11px; line-height:1.6; color:#ccc; margin-bottom:18px; }
+  .morph-warn-btn { background:transparent; color:#00ffcc; border:1px solid #00ffcc; font-family:inherit; font-size:10px; letter-spacing:2px; padding:8px 18px; cursor:pointer; }
+  .morph-warn-btn:hover { background:rgba(0,255,204,0.12); }
   /* Top/bottom jack layout */
   .module.jacks-tb .jack-row { flex-direction:row; left:10px; right:10px; top:auto; bottom:auto; }
   .module.jacks-tb .jack-row.inputs { top:-9px; bottom:auto; }
@@ -184,6 +191,7 @@
   body.light-theme .jack.output.connected { background:#f0a6c8; border-color:#b8296a; }
   body.light-theme .jack.dragging { border-color:#b38600; box-shadow:0 0 6px #b38600; }
   body.light-theme .jack.soloed { background:#fff3c4; border-color:#b38600; }
+  body.light-theme .jack.flash-reject { border-color:#cc2222 !important; background:#ffdddd !important; box-shadow:0 0 8px #cc2222; }
   body.light-theme .knob-label { color:#333; }
   body.light-theme .knob-val { color:#7a6400; }
   body.light-theme .knob-val:hover { text-decoration-color:#7a640088; }
@@ -216,6 +224,13 @@
   body.light-theme #cableStyle { background:#fff !important; color:#7a6400 !important; border-color:#999 !important; }
   body.light-theme #helpOverlay { background:rgba(240,240,240,0.97) !important; color:#222 !important; }
   body.light-theme #selectBox { border-color:#b38600; background:rgba(179,134,0,0.08); }
+  /* Morph warning popup — light theme overrides */
+  body.light-theme #morphWarnOverlay { background:rgba(255,255,255,0.55) !important; }
+  body.light-theme #morphWarnOverlay .morph-warn-box { background:#fff !important; border-color:#00776688 !important; color:#222 !important; box-shadow:0 4px 20px rgba(0,0,0,0.15); }
+  body.light-theme #morphWarnOverlay .morph-warn-title { color:#b38600 !important; }
+  body.light-theme #morphWarnOverlay .morph-warn-body  { color:#333 !important; }
+  body.light-theme #morphWarnOverlay .morph-warn-btn   { color:#007766 !important; border-color:#00776688 !important; }
+  body.light-theme #morphWarnOverlay .morph-warn-btn:hover { background:rgba(0,119,102,0.08) !important; }
 </style>
 </head>
 <body>
@@ -399,6 +414,17 @@
         <div style="color:#ff9944;margin:10px 0 6px;letter-spacing:1px;">AUTO PATCH</div>
         <p style="text-align:justify;margin:0;">Drag modules below the shelf into columns. AUTO PATCH chains each column top-to-bottom. Columns detected by X proximity.</p>
       </div>
+    </div>
+
+    <div style="max-width:600px;margin:32px auto 0;">
+      <h3 style="color:#ffe000;font-size:12px;letter-spacing:2px;margin-top:0;margin-bottom:12px;">STATE MORPH</h3>
+      <p style="text-align:justify;margin:0 0 10px 0;">Captures A and B snapshots of a target module's knob state, then sweeps between them continuously during PLAY at the rate you set (seconds to minutes, easing selectable). Fan-out: one morph output can drive many targets; four outputs per morph, each independent. Morph only runs during playback.</p>
+      <p style="margin:0 0 6px 0;color:#ffe000;letter-spacing:1px;">Targets that morph animates live:</p>
+      <p style="text-align:justify;margin:0 0 10px 0;">Generators (OSC, SUB, NOISE, FM, PWM, DRONE, WIND), all effects (TREMOLO, RING MOD, FILTER, DETUNE/CHORUS, DISTORTION, DELAY, PHASER, REVERB, COMPRESSOR, EQ, BITCRUSHER, FLANGER, GATE, PANNER), and mixers (MIX 1-5, INPUT MIX).</p>
+      <p style="margin:0 0 6px 0;color:#ffe000;letter-spacing:1px;">Partial (some knobs animate, others need stop/play):</p>
+      <p style="text-align:justify;margin:0 0 10px 0;">FORMANT (vowel dropdown), SHIMMER (FREQ, LAYERS), BOW (BRIGHT, PRESS).</p>
+      <p style="margin:0 0 6px 0;color:#ff4444;letter-spacing:1px;">Blocked - morph connection refused:</p>
+      <p style="text-align:justify;margin:0;">IMPACT, CRACKLE, MALLET, SWEEP, PLUCK, BELL, ARPEGGIO, METALLIC. These are pre-scheduled voices and would re-trigger if their audio graph rebuilt mid-play.</p>
     </div>
   </div>
 </div>
@@ -2984,6 +3010,65 @@ function _isSingleOutputType(type){
   return t.startsWith('MIX') || t === 'INPUT MIX' || t === 'MASTER' || t === 'OUTPUT' || t === 'THROUGH';
 }
 
+// ───── STATE MORPH connection guardrails ─────
+const MORPH_BLOCKED_TYPES = ['IMPACT','CRACKLE','MALLET','SWEEP','PLUCK','BELL','ARPEGGIO','METALLIC'];
+const MORPH_PARTIAL_TYPES = {
+  'FORMANT': 'Morph will animate FREQ Hz and GAIN in real-time. The vowel dropdown (A/E/I/O/U) requires stop/play to change.',
+  'SHIMMER': 'Morph will animate DETUNE and GAIN in real-time. FREQ Hz and LAYERS require stop/play to change.',
+  'BOW':     'Morph will animate FREQ Hz and GAIN in real-time. BRIGHT and PRESS require stop/play to change.'
+};
+const _morphWarnShown = new Set();
+
+function _showMorphPopup(title, body){
+  const ex = document.getElementById('morphWarnOverlay'); if(ex) ex.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'morphWarnOverlay';
+  overlay.className = 'morph-warn-overlay';
+  const box = document.createElement('div');
+  box.className = 'morph-warn-box';
+  const t = document.createElement('div'); t.className = 'morph-warn-title'; t.textContent = title;
+  const b = document.createElement('div'); b.className = 'morph-warn-body'; b.textContent = body;
+  const btn = document.createElement('button'); btn.className = 'morph-warn-btn'; btn.textContent = 'OK, GOT IT';
+  btn.addEventListener('click', () => overlay.remove());
+  box.append(t, b, btn);
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function _morphFlashJack(modIdx, jackIdx){
+  try {
+    const el = findJackEl(modIdx, jackIdx, 'input');
+    if(!el) return;
+    el.classList.add('flash-reject');
+    setTimeout(() => el.classList.remove('flash-reject'), 600);
+  } catch(e){}
+}
+
+// Returns true if the cable should be blocked.
+function _morphCheckConnection(fromUuid, toUuid, toModIdx, toJackIdx){
+  const di = window.desktopInstances || {};
+  const fromInst = di[fromUuid]; const toInst = di[toUuid];
+  if(!fromInst || !toInst) return false;
+  if(!_isMorphType(fromInst.type)) return false;
+  const ttype = (toInst.type || '').trim();
+  if(MORPH_BLOCKED_TYPES.includes(ttype)){
+    _morphFlashJack(toModIdx, toJackIdx);
+    _showMorphPopup('MORPH LIMITATION',
+      'STATE MORPH can\u2019t drive ' + ttype + ' live - all its knobs require a rebuild. Connect morph to modules with live parameters (OSC, FILTER, EQ, DELAY, REVERB, MIX, etc.) for real-time sweeps.');
+    return true;
+  }
+  if(MORPH_PARTIAL_TYPES[ttype]){
+    const key = fromUuid + '|' + ttype;
+    if(!_morphWarnShown.has(key)){
+      _morphWarnShown.add(key);
+      _showMorphPopup('MORPH - PARTIAL ANIMATION', MORPH_PARTIAL_TYPES[ttype]);
+    }
+  }
+  return false;
+}
+window._morphCheckConnection = _morphCheckConnection;
+
 // Cluster X positions into bars using 92px threshold (matches autopatch),
 // then sort modules within each bar by Y. Returns {bars: [[modArr], ...]}
 // where each modArr is sorted top-to-bottom.
@@ -4165,6 +4250,15 @@ document.addEventListener('mouseup', e => {
     const fromUuid = _modIdxToUuid(fromMod);
     const toUuid = _modIdxToUuid(toMod);
     if(fromUuid && toUuid && !cables.some(c => c.toUuid === toUuid && c.toIdx === toIdx)){
+      // STATE MORPH connection guardrail: block connection to types whose audio
+      // graph would rebuild on every morph tick. Fires partial-animation popup
+      // for FORMANT/SHIMMER/BOW but returns false (cable proceeds).
+      if(_morphCheckConnection(fromUuid, toUuid, toMod, toIdx)){
+        dragCable.fromJack.classList.remove('dragging');
+        dragCable = null;
+        drawAllCables();
+        return;
+      }
       pushUndo();
       const color = CABLE_COLORS[cableColorIdx % CABLE_COLORS.length];
       cableColorIdx++;
@@ -4260,6 +4354,9 @@ document.getElementById('autoPatchBtn').addEventListener('click', () => {
     const fromUuid = _modIdxToUuid(from);
     const toUuid = _modIdxToUuid(to);
     if(!fromUuid || !toUuid) return;
+    // STATE MORPH guardrail: skip blocked morph targets in autopatch.
+    // Use a generic per-type key so the popup only fires once across an autopatch burst.
+    if(_morphCheckConnection(fromUuid, toUuid, to, toIn)) return;
     const color = CABLE_COLORS[cableColorIdx % CABLE_COLORS.length];
     cableColorIdx++;
     cables.push({ fromUuid, fromIdx: fromOut, toUuid, toIdx: toIn, color });

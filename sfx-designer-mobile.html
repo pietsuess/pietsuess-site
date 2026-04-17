@@ -184,6 +184,7 @@
   .nodeJack { touch-action:none; }
   .mobileNode .nodeJack.input.connected { background:#00ffcc66; box-shadow:0 0 6px #00ffcc; }
   .mobileNode .nodeJack.output.connected { background:#ff69b466; box-shadow:0 0 6px #ff69b4; }
+  .nodeJack.flash-reject { border-color:#ff4444 !important; background:#ff444444 !important; box-shadow:0 0 8px #ff4444; }
   /* Page-edge ghost endpoint (cross-page cable) */
   .pageEdgeStub { position:absolute; width:12px; height:12px; border-radius:50%; pointer-events:none; z-index:4; }
   .out-sel-row { display:flex; gap:3px; margin-bottom:4px; justify-content:center; }
@@ -838,6 +839,7 @@
   body.light-theme .mobileNode .nodeJack.output { border-color:#b8296a; background:rgba(184,41,106,0.12); }
   body.light-theme .mobileNode .nodeJack.input.connected { background:#99e6d9; border-color:#007766; box-shadow:0 0 6px #007766; }
   body.light-theme .mobileNode .nodeJack.output.connected { background:#f0a6c8; border-color:#b8296a; box-shadow:0 0 6px #b8296a; }
+  body.light-theme .nodeJack.flash-reject { border-color:#cc2222 !important; background:#ffdddd !important; box-shadow:0 0 8px #cc2222; }
 
   /* Knob labels / values */
   body.light-theme .mobileNode .mobKnobLabel { color:#333; }
@@ -7294,6 +7296,68 @@ requestAnimationFrame(() => {
     return mNode.morphState;
   }
 
+  const MORPH_BLOCKED_TYPES = ['IMPACT','CRACKLE','MALLET','SWEEP','PLUCK','BELL','ARPEGGIO','METALLIC'];
+  const MORPH_PARTIAL_TYPES = {
+    'FORMANT': 'Morph will animate FREQ Hz and GAIN in real-time. The vowel dropdown (A/E/I/O/U) requires stop/play to change.',
+    'SHIMMER': 'Morph will animate DETUNE and GAIN in real-time. FREQ Hz and LAYERS require stop/play to change.',
+    'BOW':     'Morph will animate FREQ Hz and GAIN in real-time. BRIGHT and PRESS require stop/play to change.'
+  };
+  const _mobMorphWarnShown = new Set();
+
+  function _showMobMorphPopup(title, body){
+    const overlay = el('div','modalOverlay');
+    const box = el('div','modalBox'); box.style.maxWidth = '420px';
+    const header = el('div','modalHeader'); header.append(el('span', null, title));
+    box.appendChild(header);
+    const bodyEl = el('div','modalBody');
+    const bodyText = el('div', null, body);
+    bodyText.style.cssText = 'padding:12px 4px;font-size:12px;line-height:1.6;letter-spacing:0.5px;';
+    bodyEl.appendChild(bodyText);
+    const okBtn = document.createElement('button');
+    okBtn.className = 'mobMorphBtn';
+    okBtn.textContent = 'OK, GOT IT';
+    okBtn.style.cssText = 'margin-top:8px;padding:10px 18px;';
+    okBtn.addEventListener('click', () => overlay.remove());
+    bodyEl.appendChild(okBtn);
+    box.appendChild(bodyEl);
+    overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  function _mobMorphFlashJack(toNodeId, toIdx){
+    try {
+      // Mobile jacks use class-based input/output markers, not data-jack-type (that's desktop only).
+      let jack = document.querySelector('.mobileNode[data-node-id="'+toNodeId+'"] .nodeJack.input[data-jack-idx="'+toIdx+'"]');
+      if(!jack) jack = document.querySelector('#bottomBarJacks .nodeJack[data-node-id="'+toNodeId+'"][data-jack-idx="'+toIdx+'"]');
+      if(!jack) return;
+      jack.classList.add('flash-reject');
+      setTimeout(() => jack.classList.remove('flash-reject'), 600);
+    } catch(e){}
+  }
+
+  function _mobMorphCheckConnection(fromNodeId, toNodeId, toIdx){
+    const fromNode = mobile.mobileNodes[fromNodeId];
+    const toNode = mobile.mobileNodes[toNodeId];
+    if(!fromNode || !toNode) return false;
+    if(fromNode.type !== 'STATE MORPH') return false;
+    const ttype = toNode.type;
+    if(MORPH_BLOCKED_TYPES.includes(ttype)){
+      _mobMorphFlashJack(toNodeId, toIdx);
+      _showMobMorphPopup('MORPH LIMITATION',
+        'STATE MORPH can\u2019t drive ' + ttype + ' live \u2014 all its knobs require a rebuild. Connect morph to modules with live parameters (OSC, FILTER, EQ, DELAY, REVERB, MIX, etc.) for real-time sweeps.');
+      return true;
+    }
+    if(MORPH_PARTIAL_TYPES[ttype]){
+      const key = fromNodeId + '|' + ttype;
+      if(!_mobMorphWarnShown.has(key)){
+        _mobMorphWarnShown.add(key);
+        _showMobMorphPopup('MORPH \u2014 PARTIAL ANIMATION', MORPH_PARTIAL_TYPES[ttype]);
+      }
+    }
+    return false;
+  }
+
   function mobileMorphSetSnapshot(morphNodeId, slot){
     const mNode = mobile.mobileNodes[morphNodeId]; if(!mNode) return;
     mobileMorphEnsure(mNode);
@@ -7759,6 +7823,12 @@ requestAnimationFrame(() => {
       c.fromNodeId === fromNodeId && c.fromIdx === fromIdx &&
       c.toNodeId === Number(toNodeId) && c.toIdx === Number(toIdx));
     if(dupe){ cancelArm(); return; }
+    // STATE MORPH guardrails: block fully-baked targets, warn on partially-animated targets
+    if(_mobMorphCheckConnection(fromNodeId, Number(toNodeId), Number(toIdx))){
+      try { document.body.classList.remove('armed'); } catch(e){}
+      mobile.armed = null;
+      return;
+    }
     saveHistory();
     const cable = {
       fromNodeId, fromIdx,
