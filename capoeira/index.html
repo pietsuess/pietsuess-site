@@ -195,6 +195,53 @@
       display: none;
     }
 
+    /* DOWNLOADS */
+    .downloads-section {
+      padding: 2rem 2rem 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .downloads-section h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+    .downloads-desc {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .download-cards {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .download-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1.25rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.2s;
+      min-width: 140px;
+    }
+    .download-card:hover { border-color: var(--yellow); }
+    .download-card img {
+      height: 50px;
+      width: auto;
+    }
+    .download-card span {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
     /* FOOTER */
     footer {
       padding: 1.5rem 2rem;
@@ -214,6 +261,25 @@
 
 <div class="products" id="products"></div>
 
+<div class="downloads-section">
+  <h2>Logo Files</h2>
+  <p class="downloads-desc">Download print-ready SVG logos for production.</p>
+  <div class="download-cards">
+    <a href="images/Logo_onBlack.svg" download="SSI_Capoeira_Logo_onBlack.svg" class="download-card" style="background:#111;">
+      <img src="images/Logo_onBlack.svg" alt="Logo on Black">
+      <span>On Black</span>
+    </a>
+    <a href="images/Logo_onRed.svg" download="SSI_Capoeira_Logo_onRed.svg" class="download-card" style="background:#c62828;">
+      <img src="images/Logo_onRed.svg" alt="Logo on Red">
+      <span>On Red</span>
+    </a>
+    <a href="images/Logo_onYellow.svg" download="SSI_Capoeira_Logo_onYellow.svg" class="download-card" style="background:#F5D020;">
+      <img src="images/Logo_onYellow.svg" alt="Logo on Yellow">
+      <span>On Yellow</span>
+    </a>
+  </div>
+</div>
+
 <div class="submit-section">
   <p>Enter your cost per item above, then send the pricing to Piet for review.</p>
   <button class="submit-btn" onclick="submitPricing()">Send Pricing</button>
@@ -226,35 +292,16 @@
 
 <script>
 const PRODUCTS = [
+  // BLACK
   {
-    id: "bc-b6008-red",
-    name: "Women's Jersey Racerback Tank Top",
-    brand: "Bella+Canvas B6008",
-    color: "Red",
-    colorHex: "#c62828",
-    logo: "Yellow (single-color)",
-    img: "images/product-01.jpg",
-    blankUrl: "https://blankclothing.ca/b6008-bella-canvas-ladies-jersey-racerback-tank-top/"
-  },
-  {
-    id: "bc-8804-black",
-    name: "Women's Flowy Muscle T-Shirt",
-    brand: "Bella+Canvas 8804",
+    id: "bc-3001-black",
+    name: "Unisex Jersey T-Shirt",
+    brand: "Bella+Canvas 3001",
     color: "Black",
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
-    img: "images/product-02.jpg",
-    blankUrl: "https://blankclothing.ca/8804-bella-canvas-ladies-flowy-muscle-t-shirt-with-rolled-cuff/"
-  },
-  {
-    id: "gildan-64200-red",
-    name: "Men's Softstyle Tank Top",
-    brand: "Gildan 64200",
-    color: "Red",
-    colorHex: "#c62828",
-    logo: "Yellow (single-color)",
-    img: "images/product-03.jpg",
-    blankUrl: "https://blankclothing.ca/gildan-64200-softstyle-tank-top/"
+    img: "images/product-06.jpg",
+    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/"
   },
   {
     id: "bc-6400-black",
@@ -267,26 +314,6 @@ const PRODUCTS = [
     blankUrl: "https://blankclothing.ca/b6400-bella-canvas-missy-jersey-t-shirt/"
   },
   {
-    id: "bc-3001-yellow",
-    name: "Unisex Jersey T-Shirt",
-    brand: "Bella+Canvas 3001",
-    color: "Maize Yellow",
-    colorHex: "#F5D020",
-    logo: "Tri-color (black/red/blue)",
-    img: "images/product-05.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/"
-  },
-  {
-    id: "bc-3001-black",
-    name: "Unisex Jersey T-Shirt",
-    brand: "Bella+Canvas 3001",
-    color: "Black",
-    colorHex: "#111",
-    logo: "Tri-color (red/yellow/blue)",
-    img: "images/product-06.jpg",
-    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/"
-  },
-  {
     id: "bc-3483-black",
     name: "Unisex Jersey Muscle Tank Top",
     brand: "Bella+Canvas 3483",
@@ -295,6 +322,48 @@ const PRODUCTS = [
     logo: "Tri-color (red/yellow/blue)",
     img: "images/product-07.jpg",
     blankUrl: "https://blankclothing.ca/bella-canvas-3483-unisex-jersey-muscle-tank-top/"
+  },
+  {
+    id: "bc-8804-black",
+    name: "Women's Flowy Muscle T-Shirt",
+    brand: "Bella+Canvas 8804",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-02.jpg",
+    blankUrl: "https://blankclothing.ca/8804-bella-canvas-ladies-flowy-muscle-t-shirt-with-rolled-cuff/"
+  },
+  // RED
+  {
+    id: "gildan-64200-red",
+    name: "Men's Softstyle Tank Top",
+    brand: "Gildan 64200",
+    color: "Red",
+    colorHex: "#c62828",
+    logo: "Yellow (single-color)",
+    img: "images/product-03.jpg",
+    blankUrl: "https://blankclothing.ca/gildan-64200-softstyle-tank-top/"
+  },
+  {
+    id: "bc-b6008-red",
+    name: "Women's Jersey Racerback Tank Top",
+    brand: "Bella+Canvas B6008",
+    color: "Red",
+    colorHex: "#c62828",
+    logo: "Yellow (single-color)",
+    img: "images/product-01.jpg",
+    blankUrl: "https://blankclothing.ca/b6008-bella-canvas-ladies-jersey-racerback-tank-top/"
+  },
+  // YELLOW
+  {
+    id: "bc-3001-yellow",
+    name: "Unisex Jersey T-Shirt",
+    brand: "Bella+Canvas 3001",
+    color: "Maize Yellow",
+    colorHex: "#F5D020",
+    logo: "Tri-color (black/red/blue)",
+    img: "images/product-05.jpg",
+    blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/"
   }
 ];
 
