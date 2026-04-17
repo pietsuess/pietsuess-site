@@ -3490,11 +3490,12 @@ document.getElementById('vizToggle').addEventListener('click', () => {
 // Cables are UUID-keyed: {fromUuid, fromIdx, toUuid, toIdx, color}.
 // Seeds are populated AFTER desktopInstances is assigned (see requestAnimationFrame
 // block below) by converting these legacy index-based defaults to UUID form.
+// Type-name based: robust against MOD_NAMES reordering when modules are added/removed in the source HTML.
 const DEFAULT_CABLE_SEEDS = [
-  {fromMod:35, fromIdx:0, toMod:47, toIdx:0, color:'#ff69b4'},
-  {fromMod:36, fromIdx:0, toMod:47, toIdx:1, color:'#00ffcc'},
-  {fromMod:37, fromIdx:0, toMod:47, toIdx:2, color:'#ffe000'},
-  {fromMod:47, fromIdx:0, toMod:48, toIdx:0, color:'#ffe000'}
+  {fromType:'MIX 1', fromIdx:0, toType:'INPUT MIX', toIdx:0, color:'#ff69b4'},
+  {fromType:'MIX 2', fromIdx:0, toType:'INPUT MIX', toIdx:1, color:'#00ffcc'},
+  {fromType:'MIX 3', fromIdx:0, toType:'INPUT MIX', toIdx:2, color:'#ffe000'},
+  {fromType:'INPUT MIX', fromIdx:0, toType:'MASTER', toIdx:0, color:'#ffe000'}
 ];
 const cables = [];
 let dragCable = null; // { fromJack, mx, my }
@@ -4550,11 +4551,16 @@ requestAnimationFrame(() => {
     desktopInstances[uuid] = { modIdx: i, domEl: mod, type: MOD_NAMES[i], isOriginal: true };
   });
 
-  // Hydrate default cables from index-based seeds into the UUID-keyed runtime shape.
-  // Must run AFTER desktopInstances is populated so _modIdxToUuid resolves.
+  // Hydrate default cables from type-name seeds. Must run AFTER desktopInstances is populated.
+  function _uuidForType(typeName){
+    for(const u in desktopInstances){
+      if(desktopInstances[u].type === typeName) return u;
+    }
+    return null;
+  }
   DEFAULT_CABLE_SEEDS.forEach(s => {
-    const fromUuid = _modIdxToUuid(s.fromMod);
-    const toUuid = _modIdxToUuid(s.toMod);
+    const fromUuid = _uuidForType(s.fromType);
+    const toUuid = _uuidForType(s.toType);
     if(!fromUuid || !toUuid) return;
     cables.push({ fromUuid, fromIdx: s.fromIdx, toUuid, toIdx: s.toIdx, color: s.color });
   });
