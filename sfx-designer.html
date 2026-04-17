@@ -73,6 +73,9 @@
   .module.out .mod-title { color:#ffe000; }
   .module.pat { border-color:#aa66ff44; background:rgba(25,10,40,0.6); }
   .module.pat .mod-title { color:#aa66ff; }
+  .morph-btn { background:#2a2a2a; border:1px solid #555; color:#ddd; cursor:pointer; border-radius:2px; font-family:inherit; letter-spacing:1px; }
+  .morph-btn:hover { background:#3a3a3a; border-color:#aa66ff; }
+  .morph-btn.active { background:#aa66ff44; border-color:#aa66ff; color:#fff; }
   .module.mix { border-color:#ff994444; background:rgba(40,20,10,0.6); }
   .module.mix .mod-title { color:#ff9944; }
   .pat-grid { display:grid; gap:2px; }
@@ -757,6 +760,12 @@
       </div>
     </div>
 
+    <!-- STATE MORPH (purple) — logical-only, no audio. Drives knob values on target modules via ping-pong tween.
+         Body is intentionally minimal; all controls live in openMorphModal() (click body to open). -->
+    <div class="module pat morph-module" data-no-inputs="true" style="cursor:pointer;">
+      <div class="mod-title">STATE MORPH</div>
+    </div>
+
     <!-- INPUT MIX (yellow) — 8 inputs, 1 output -->
     <div class="module out" style="display:flex;flex-direction:column;gap:0;align-items:stretch;">
       <div class="mod-title" style="height:6px;margin-bottom:0;cursor:grab;font-size:0;overflow:hidden;">INPUT MIX</div>
@@ -950,6 +959,8 @@ const KNOB_DEFS = {
   pat1Bpm:    { min:30,   max:300,  step:1,    val:120,   fmt:v=>v.toString() },
   pat2Bpm:    { min:30,   max:300,  step:1,    val:120,   fmt:v=>v.toString() },
   pat3Bpm:    { min:30,   max:300,  step:1,    val:120,   fmt:v=>v.toString() },
+  // STATE MORPH (rate stored 0..1, displayed as seconds/minutes via log curve 0.5s..600s)
+  morphRate:  { min:0,    max:1,    step:0.001, val:0.3,  fmt:v=>{const s=0.5*Math.pow(1200,v); return s<60?s.toFixed(1)+'s':(s/60).toFixed(2)+'m';} },
   // MIX
   mixBlend:   { min:0,    max:1,    step:0.01, val:0.5,   fmt:v=>v.toFixed(2) },
   mixLevel:   { min:0,    max:2,    step:0.01, val:1.0,   fmt:v=>v.toFixed(2) },
@@ -1033,6 +1044,16 @@ document.querySelectorAll('.module').forEach((mod, modIdx) => {
         });
         // Update button styles
         row.querySelectorAll('.out-sel-btn').forEach((b, bi) => b.classList.toggle('active', bi === o));
+        // STATE MORPH: refresh easing dropdown + targets label + capture UI for new output
+        try {
+          const uuid = mod.dataset.uuid;
+          const di = window.desktopInstances || {};
+          if(uuid && di[uuid] && window._isMorphType && window._isMorphType(di[uuid].type)){
+            window._morphRefreshEasingDropdown && window._morphRefreshEasingDropdown(uuid);
+            window.morphRefreshLabel && window.morphRefreshLabel(uuid);
+            window._morphUpdateCaptureUI && window._morphUpdateCaptureUI(uuid);
+          }
+        } catch(e){}
       });
       row.appendChild(btn);
     }
@@ -2029,6 +2050,12 @@ function buildModule(name, modIdx, patternInfo){
     return { ins, outs, sources: allSources, paramMaps };
   }
 
+  if(name.startsWith('STATE MORPH')){
+    // Logical-only: no audio graph, no sources. Cables from its output drive
+    // snapshot tweens on target modules' knob values. Runtime lives in morphTick.
+    return { ins, outs, sources: allSources, paramMaps, isMorph: true };
+  }
+
   if(name.startsWith('PATTERN')){
     // Pattern effect: each output has its own configurable grid and BPM
     const patNum = name.split(' ')[1];
@@ -2242,6 +2269,418 @@ function updateLive(){
   _rebuildTimer = setTimeout(() => { _rebuildTimer=null; rebuildIfPlaying(); }, 120);
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// STATE MORPH runtime
+// ═══════════════════════════════════════════════════════════════════
+const EASINGS = {
+  linear:    p => p,
+  easeIn:    p => p*p,
+  easeOut:   p => 1 - (1-p)*(1-p),
+  easeInOut: p => p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2)/2,
+  sine:      p => 0.5 - 0.5 * Math.cos(Math.PI * p)
+};
+const _MORPH_DISPLAY_INTERVAL = 100; // 10Hz throttle for knob UI refresh
+
+function _morphDefaultState(){
+  return {
+    outputs: [0,1,2,3].map(()=>({
+      easing: 'sine',
+      snapshots: {},
+      _phaseStart: performance.now(),
+      _lastDisplayTick: 0
+    }))
+  };
+}
+
+function _uuidForModIdx(mi){
+  if(!window.desktopInstances) return null;
+  for(const u in window.desktopInstances){
+    if(window.desktopInstances[u].modIdx === mi) return u;
+  }
+  return null;
+}
+
+function _morphGetRateKnob(inst, outIdx){
+  // Per-output morphRate lives in modOutputState[mi][outIdx].morphRate. For the
+  // currently-selected output on the original instance, overlay live knobState.
+  const mi = inst.modIdx;
+  const oi = (typeof outIdx === 'number') ? outIdx : 0;
+  const curSel = (selectedOutput && selectedOutput[mi] !== undefined) ? selectedOutput[mi] : 0;
+  if(modOutputState[mi] && modOutputState[mi][oi] && modOutputState[mi][oi].morphRate !== undefined){
+    if(oi === curSel && inst.isOriginal && typeof knobState !== 'undefined' && knobState.morphRate !== undefined){
+      return knobState.morphRate;
+    }
+    return modOutputState[mi][oi].morphRate;
+  }
+  if(oi === curSel && typeof knobState !== 'undefined' && knobState.morphRate !== undefined) return knobState.morphRate;
+  return 0.3;
+}
+
+function _morphCurOut(modIdx){
+  return (selectedOutput && selectedOutput[modIdx] !== undefined) ? selectedOutput[modIdx] : 0;
+}
+
+// ─── STATE MORPH modal (desktop) ────────────────────────────────────
+// Body of morph module shows only title + jacks. Clicking the body opens
+// this modal with RATE knob, EASING dropdown, SET A/B/CLEAR buttons,
+// output selector 1/2/3/4, and TARGETS label.
+function openMorphModal(morphUuid){
+  const di = window.desktopInstances || {};
+  const mInst = di[morphUuid]; if(!mInst) return;
+
+  // Tear down any existing modal first
+  const existing = document.getElementById('morphModalOverlay');
+  if(existing) existing.remove();
+
+  // Ensure morphState shape
+  if(!mInst.morphState || !mInst.morphState.outputs){
+    mInst.morphState = _morphDefaultState();
+  }
+
+  const curOut = _morphCurOut(mInst.modIdx);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'morphModalOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:10000;display:flex;align-items:center;justify-content:center;font-family:inherit;';
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#0a0a14;border:2px solid #aa66ff;color:#aa66ff;padding:18px;min-width:360px;max-width:90vw;box-shadow:0 0 24px rgba(170,102,255,0.25);';
+
+  // Header
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;';
+  const titleEl = document.createElement('div');
+  titleEl.textContent = 'STATE MORPH';
+  titleEl.style.cssText = 'font-size:14px;letter-spacing:2px;';
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'X';
+  closeBtn.style.cssText = 'background:transparent;border:1px solid #aa66ff;color:#aa66ff;cursor:pointer;padding:4px 10px;font-family:inherit;';
+  closeBtn.onclick = ()=> overlay.remove();
+  header.append(titleEl, closeBtn);
+  box.appendChild(header);
+
+  // Output selector 1/2/3/4
+  const outRow = document.createElement('div');
+  outRow.style.cssText = 'display:flex;gap:6px;margin-bottom:10px;';
+  for(let i=0; i<4; i++){
+    const b = document.createElement('button');
+    b.textContent = String(i+1);
+    b.style.cssText = `flex:1;padding:8px;background:${i===curOut?'rgba(170,102,255,0.25)':'transparent'};border:1px solid #aa66ff;color:#aa66ff;cursor:pointer;font-family:inherit;font-size:12px;`;
+    b.onclick = ()=>{
+      // Use existing clone out-sel-row handler path if available to keep parity
+      // with per-output state flush (knobState <-> modOutputState).
+      try {
+        const outBtns = mInst.domEl && mInst.domEl.querySelectorAll('.out-sel-row .out-sel-btn');
+        if(outBtns && outBtns[i]) outBtns[i].click();
+        else if(typeof selectedOutput !== 'undefined') selectedOutput[mInst.modIdx] = i;
+      } catch(_){
+        if(typeof selectedOutput !== 'undefined') selectedOutput[mInst.modIdx] = i;
+      }
+      overlay.remove();
+      openMorphModal(morphUuid);
+    };
+    outRow.appendChild(b);
+  }
+  box.appendChild(outRow);
+
+  // TARGETS label (per currently-viewed output)
+  const tgtNames = (typeof cables !== 'undefined' ? cables : [])
+    .filter(c => c.fromMod === mInst.modIdx && c.fromIdx === curOut)
+    .map(c => (typeof MOD_NAMES !== 'undefined' && MOD_NAMES[c.toMod]) || '?');
+  const tgtLabel = document.createElement('div');
+  tgtLabel.textContent = 'TARGETS [' + (curOut+1) + ']: ' + (tgtNames.length ? tgtNames.join(', ') : '—');
+  tgtLabel.style.cssText = 'font-size:10px;margin-bottom:14px;color:#c9a8ff;letter-spacing:1px;';
+  box.appendChild(tgtLabel);
+
+  // RATE slider (writes into modOutputState for runtime + syncs knobState when viewing this output)
+  const rateDef = (typeof KNOB_DEFS !== 'undefined') ? KNOB_DEFS['morphRate'] : null;
+  if(rateDef){
+    if(!modOutputState[mInst.modIdx]) modOutputState[mInst.modIdx] = [{},{},{},{}];
+    if(!modOutputState[mInst.modIdx][curOut]) modOutputState[mInst.modIdx][curOut] = {};
+    const curRate = (modOutputState[mInst.modIdx][curOut].morphRate != null)
+      ? modOutputState[mInst.modIdx][curOut].morphRate
+      : ((typeof knobState !== 'undefined' && knobState.morphRate != null) ? knobState.morphRate : rateDef.val);
+    const rateWrap = document.createElement('div');
+    rateWrap.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:12px;';
+    const rateLabel = document.createElement('div');
+    rateLabel.textContent = 'RATE';
+    rateLabel.style.cssText = 'font-size:11px;min-width:56px;letter-spacing:1px;';
+    const rateInput = document.createElement('input');
+    rateInput.type = 'range';
+    rateInput.min = rateDef.min;
+    rateInput.max = rateDef.max;
+    rateInput.step = rateDef.step;
+    rateInput.value = curRate;
+    rateInput.style.cssText = 'flex:1;accent-color:#aa66ff;';
+    const rateValEl = document.createElement('div');
+    rateValEl.style.cssText = 'min-width:70px;font-size:11px;text-align:right;';
+    rateValEl.textContent = rateDef.fmt ? rateDef.fmt(curRate) : String(curRate);
+    rateInput.addEventListener('input', e=>{
+      let v = parseFloat(e.target.value);
+      v = Math.max(rateDef.min, Math.min(rateDef.max, v));
+      modOutputState[mInst.modIdx][curOut].morphRate = v;
+      // Sync live knobState if user is viewing this output on the original
+      if(typeof knobState !== 'undefined' && mInst.isOriginal
+         && typeof selectedOutput !== 'undefined'
+         && selectedOutput[mInst.modIdx] === curOut){
+        knobState.morphRate = v;
+        try { if(typeof updateKnobDisplay === 'function') updateKnobDisplay('morphRate'); } catch(_){}
+      }
+      rateValEl.textContent = rateDef.fmt ? rateDef.fmt(v) : String(v);
+    });
+    rateWrap.append(rateLabel, rateInput, rateValEl);
+    box.appendChild(rateWrap);
+  }
+
+  // EASING dropdown
+  const easingWrap = document.createElement('div');
+  easingWrap.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:16px;';
+  const easingLabel = document.createElement('div');
+  easingLabel.textContent = 'EASING';
+  easingLabel.style.cssText = 'font-size:11px;min-width:56px;letter-spacing:1px;';
+  const easingSelect = document.createElement('select');
+  easingSelect.style.cssText = 'flex:1;background:#1a1a1a;color:#aa66ff;border:1px solid #aa66ff;font-family:inherit;font-size:11px;padding:4px;';
+  const curEasing = (mInst.morphState.outputs[curOut] && mInst.morphState.outputs[curOut].easing) || 'sine';
+  ['sine','linear','easeIn','easeOut','easeInOut'].forEach(name=>{
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    if(name === curEasing) opt.selected = true;
+    easingSelect.appendChild(opt);
+  });
+  easingSelect.addEventListener('change', e=>{
+    if(!mInst.morphState.outputs[curOut]){
+      mInst.morphState.outputs[curOut] = { easing:'sine', snapshots:{}, _phaseStart: performance.now(), _lastDisplayTick: 0 };
+    }
+    mInst.morphState.outputs[curOut].easing = e.target.value;
+  });
+  easingWrap.append(easingLabel, easingSelect);
+  box.appendChild(easingWrap);
+
+  // SET A / SET B / CLEAR row
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:6px;';
+  ['A','B','CLEAR'].forEach(act=>{
+    const b = document.createElement('button');
+    b.textContent = (act === 'CLEAR') ? 'CLEAR' : ('SET ' + act);
+    b.style.cssText = 'flex:1;padding:10px;background:transparent;border:1px solid #aa66ff;color:#aa66ff;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:1px;';
+    b.onclick = ()=>{
+      if(act === 'CLEAR'){ if(typeof morphClearSnapshots === 'function') morphClearSnapshots(morphUuid); }
+      else { if(typeof morphSetSnapshot === 'function') morphSetSnapshot(morphUuid, act); }
+      // Refresh targets label inline
+      const sel = _morphCurOut(mInst.modIdx);
+      const refreshTgt = (typeof cables !== 'undefined' ? cables : [])
+        .filter(c => c.fromMod === mInst.modIdx && c.fromIdx === sel)
+        .map(c => (typeof MOD_NAMES !== 'undefined' && MOD_NAMES[c.toMod]) || '?');
+      tgtLabel.textContent = 'TARGETS [' + (sel+1) + ']: ' + (refreshTgt.length ? refreshTgt.join(', ') : '—');
+    };
+    btnRow.appendChild(b);
+  });
+  box.appendChild(btnRow);
+
+  // Click backdrop to close
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) overlay.remove(); });
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+window.openMorphModal = openMorphModal;
+
+function morphClearSnapshots(morphUuid){
+  const di = window.desktopInstances || {};
+  const mInst = di[morphUuid]; if(!mInst || !mInst.morphState) return;
+  const srcOut = (typeof selectedOutput !== 'undefined' && selectedOutput[mInst.modIdx] !== undefined)
+    ? selectedOutput[mInst.modIdx]
+    : 0;
+  const oms = mInst.morphState.outputs[srcOut]; if(!oms) return;
+  oms.snapshots = {};
+  oms._phaseStart = performance.now();
+  oms._lastDisplayTick = 0;
+  morphRefreshLabel(morphUuid);
+  if(typeof _morphUpdateCaptureUI === 'function') _morphUpdateCaptureUI(morphUuid);
+}
+window.morphClearSnapshots = morphClearSnapshots;
+
+function morphSetSnapshot(morphUuid, slot){
+  const di = window.desktopInstances || {};
+  const mInst = di[morphUuid]; if(!mInst) return;
+  mInst.morphState = mInst.morphState || _morphDefaultState();
+  const srcIdx = mInst.modIdx;
+  const srcOut = _morphCurOut(srcIdx);
+  const ms = mInst.morphState.outputs[srcOut]; if(!ms) return;
+  const targets = cables.filter(c => c.fromMod === srcIdx && c.fromIdx === srcOut);
+  targets.forEach(c => {
+    const tUuid = _uuidForModIdx(c.toMod); if(!tUuid) return;
+    const tInst = di[tUuid]; if(!tInst) return;
+    if(_isMorphType(tInst.type)) return; // skip morph-to-morph
+    const tIdx = tInst.modIdx;
+    const selOut = _morphCurOut(tIdx);
+    const snap = {};
+    (modKnobIds[tIdx] || []).forEach(id => {
+      if(!KNOB_DEFS[id]) return;
+      if(modOutputState[tIdx] && modOutputState[tIdx][selOut] && modOutputState[tIdx][selOut][id] !== undefined){
+        snap[id] = modOutputState[tIdx][selOut][id];
+      }
+    });
+    ms.snapshots[tUuid] = ms.snapshots[tUuid] || { A:null, B:null, selOutputAtCapture: selOut };
+    ms.snapshots[tUuid][slot] = snap;
+    ms.snapshots[tUuid].selOutputAtCapture = selOut;
+  });
+  morphRefreshLabel(morphUuid);
+  _morphUpdateCaptureUI(morphUuid);
+}
+
+function _morphUpdateCaptureUI(morphUuid){
+  const di = window.desktopInstances || {};
+  const inst = di[morphUuid]; if(!inst || !inst.domEl) return;
+  if(inst.morphState){
+    const oi = _morphCurOut(inst.modIdx);
+    const ms = inst.morphState.outputs && inst.morphState.outputs[oi];
+    const snaps = ms ? Object.values(ms.snapshots || {}) : [];
+    const aAny = snaps.some(s => s && s.A);
+    const bAny = snaps.some(s => s && s.B);
+    const aBtn = inst.domEl.querySelector('[data-morph-act="A"]');
+    const bBtn = inst.domEl.querySelector('[data-morph-act="B"]');
+    if(aBtn) aBtn.classList.toggle('active', aAny);
+    if(bBtn) bBtn.classList.toggle('active', bAny);
+  }
+}
+
+function _morphRefreshEasingDropdown(morphUuid){
+  const di = window.desktopInstances || {};
+  const inst = di[morphUuid]; if(!inst || !inst.domEl || !inst.morphState) return;
+  const oi = _morphCurOut(inst.modIdx);
+  const ms = inst.morphState.outputs && inst.morphState.outputs[oi]; if(!ms) return;
+  const sel = inst.domEl.querySelector('.morph-easing');
+  if(sel) sel.value = ms.easing || 'sine';
+}
+
+function morphRefreshLabel(morphUuid){
+  const di = window.desktopInstances || {};
+  const inst = di[morphUuid]; if(!inst || !inst.domEl) return;
+  const label = inst.domEl.querySelector('.morph-targets-label'); if(!label) return;
+  const srcIdx = inst.modIdx;
+  const oi = _morphCurOut(srcIdx);
+  const names = cables.filter(c => c.fromMod === srcIdx && c.fromIdx === oi)
+    .map(c => (typeof MOD_NAMES !== 'undefined' && MOD_NAMES[c.toMod]) || '?');
+  label.textContent = 'TARGETS [' + (oi + 1) + ']: ' + (names.length ? names.join(', ') : '—');
+}
+
+function morphRefreshAllTargetLabels(){
+  const di = window.desktopInstances || {};
+  for(const u in di){
+    if(_isMorphType(di[u].type)) morphRefreshLabel(u);
+  }
+}
+
+function morphPruneSnapshots(){
+  const di = window.desktopInstances || {};
+  for(const u in di){
+    const inst = di[u]; if(!inst.morphState || !inst.morphState.outputs) continue;
+    for(let oi = 0; oi < 4; oi++){
+      const ms = inst.morphState.outputs[oi]; if(!ms) continue;
+      const liveTargets = new Set();
+      cables.filter(c => c.fromMod === inst.modIdx && c.fromIdx === oi).forEach(c => {
+        const tu = _uuidForModIdx(c.toMod); if(tu) liveTargets.add(tu);
+      });
+      for(const tu in ms.snapshots){
+        if(!liveTargets.has(tu)) delete ms.snapshots[tu];
+      }
+    }
+  }
+}
+
+function _morphLiveWrite(modIdx, outIdx, knobId, value){
+  if(!live || !live.playing || typeof audioModules === 'undefined') return;
+  const mod = audioModules[modIdx]; if(!mod || !mod.paramMaps) return;
+  const pm = mod.paramMaps[outIdx]; if(!pm) return;
+  const entries = pm[knobId]; if(!entries) return;
+  const now = audioCtx.currentTime;
+  entries.forEach(e => {
+    try {
+      const param = e.p || e;
+      const mul = e.m || 1;
+      param.cancelScheduledValues(now);
+      param.setTargetAtTime(value * mul, now, 0.015);
+    } catch(err){}
+  });
+}
+
+let _morphRaf = null;
+function morphTick(){
+  if(typeof live === 'undefined' || !live || !live.playing){ _morphRaf = requestAnimationFrame(morphTick); return; }
+  if(!window.desktopInstances){ _morphRaf = requestAnimationFrame(morphTick); return; }
+  const now = performance.now();
+  const di = window.desktopInstances;
+  for(const u in di){
+    const inst = di[u];
+    if(!_isMorphType(inst.type) || !inst.morphState || !inst.morphState.outputs) continue;
+    for(let outIdx = 0; outIdx < 4; outIdx++){
+      const ms = inst.morphState.outputs[outIdx]; if(!ms) continue;
+      const hasReady = Object.values(ms.snapshots || {}).some(s => s && s.A && s.B);
+      if(!hasReady) continue;
+      const rateKnob = _morphGetRateKnob(inst, outIdx);
+      const period = 0.5 * Math.pow(1200, rateKnob);
+      const t = (now - ms._phaseStart) / 1000;
+      const tri = Math.abs(((t / period) % 2) - 1);
+      const p = EASINGS[ms.easing || 'sine'](tri);
+      const shouldDisplayTick = (now - (ms._lastDisplayTick || 0)) > _MORPH_DISPLAY_INTERVAL;
+      for(const tUuid in ms.snapshots){
+        const snap = ms.snapshots[tUuid];
+        if(!snap || !snap.A || !snap.B) continue;
+        const tInst = di[tUuid]; if(!tInst) continue;
+        const tIdx = tInst.modIdx;
+        for(const kid in snap.A){
+          if(!(kid in snap.B)) continue;
+          const a = snap.A[kid], b = snap.B[kid];
+          let v = a + (b - a) * p;
+          const def = KNOB_DEFS[kid];
+          if(def && def.step){
+            v = Math.round(v / def.step) * def.step;
+            if(typeof def.min === 'number' && v < def.min) v = def.min;
+            if(typeof def.max === 'number' && v > def.max) v = def.max;
+          }
+          if(modOutputState[tIdx] && modOutputState[tIdx][snap.selOutputAtCapture]){
+            modOutputState[tIdx][snap.selOutputAtCapture][kid] = v;
+          }
+          _morphLiveWrite(tIdx, snap.selOutputAtCapture, kid, v);
+        }
+        if(shouldDisplayTick && tInst.domEl){
+          const currentSelOut = (selectedOutput && selectedOutput[tIdx] !== undefined) ? selectedOutput[tIdx] : 0;
+          if(currentSelOut === snap.selOutputAtCapture){
+            tInst.domEl.querySelectorAll('.knob-canvas').forEach(c => {
+              const kid = c.dataset.id;
+              if(!(kid in snap.A)) return;
+              const v = modOutputState[tIdx][snap.selOutputAtCapture][kid];
+              if(typeof knobState !== 'undefined') knobState[kid] = v;
+              try { drawKnob(c, kid); } catch(e){}
+              const def = KNOB_DEFS[kid];
+              const fmt = (def && def.fmt) ? def.fmt : (x => (+x).toFixed(2));
+              const globalValEl = document.getElementById(kid + 'V');
+              if(globalValEl) globalValEl.textContent = fmt(v);
+              const sibVal = c.parentElement && c.parentElement.querySelector('.knob-val');
+              if(sibVal && sibVal !== globalValEl) sibVal.textContent = fmt(v);
+            });
+          }
+        }
+      }
+      if(shouldDisplayTick) ms._lastDisplayTick = now;
+    }
+  }
+  _morphRaf = requestAnimationFrame(morphTick);
+}
+_morphRaf = requestAnimationFrame(morphTick);
+
+// Expose for _wireClone closures (spawnModule path and initial DOM pass)
+window._isMorphType = _isMorphType;
+window.morphSetSnapshot = morphSetSnapshot;
+window.morphRefreshLabel = morphRefreshLabel;
+window.morphRefreshAllTargetLabels = morphRefreshAllTargetLabels;
+window.morphPruneSnapshots = morphPruneSnapshots;
+window._morphUpdateCaptureUI = _morphUpdateCaptureUI;
+window._morphDefaultState = _morphDefaultState;
+window._morphRefreshEasingDropdown = _morphRefreshEasingDropdown;
+// ═══════════════════════════════════════════════════════════════════
+
 function startPlay(){
   if(live && live.playing) return;
   if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -2253,6 +2692,17 @@ function startPlay(){
   console.log('play: sources:', live.sources.length, 'cables:', cables.length);
   live.sources.forEach(s => { try { s.start(now); } catch(e){ console.error('start fail:', e); } });
   live.playing = true;
+  // Reset all morph animation phases so visual + audio restart cleanly on play.
+  const _now = performance.now();
+  const di = (typeof window !== 'undefined' && window.desktopInstances) ? window.desktopInstances : (typeof desktopInstances !== 'undefined' ? desktopInstances : {});
+  for(const u in di){
+    const inst = di[u];
+    if(inst && inst.morphState && inst.morphState.outputs){
+      inst.morphState.outputs.forEach(oms => {
+        if(oms){ oms._phaseStart = _now; oms._lastDisplayTick = 0; }
+      });
+    }
+  }
   document.getElementById('playIcon').style.display='none';
   document.getElementById('stopIcon').style.display='';
   document.getElementById('playLabel').textContent='STOP';
@@ -2495,6 +2945,7 @@ function _isPinnedType(type){
   return t === 'INPUT MIX' || t === 'MASTER' || t === 'OUTPUT';
 }
 function _isPatternType(type){ return (type || '').trim().startsWith('PATTERN'); }
+function _isMorphType(type){ return (type || '').trim().startsWith('STATE MORPH'); }
 function _isSingleOutputType(type){
   const t = (type || '').trim();
   return t.startsWith('MIX') || t === 'INPUT MIX' || t === 'MASTER' || t === 'OUTPUT' || t === 'THROUGH';
@@ -2632,6 +3083,15 @@ function buildV2Preset(name){
       layoutHints
     };
     if(patternStatesArr) obj.patternStates = patternStatesArr;
+    // STATE MORPH: serialize morphState per-output so targets + A/B snapshots survive save/load
+    if(_isMorphType(type) && inst.morphState && inst.morphState.outputs){
+      obj.morphState = {
+        outputs: inst.morphState.outputs.map(o => ({
+          easing: (o && o.easing) || 'sine',
+          snapshots: JSON.parse(JSON.stringify((o && o.snapshots) || {}))
+        }))
+      };
+    }
     return obj;
   });
 
@@ -2798,6 +3258,30 @@ function loadV2Preset(preset){
       }));
       try { refreshPatGrid(gridId); } catch(e){}
     }
+    // STATE MORPH: restore morphState (per-output snapshots + easing). Handles
+    // both new 4-output shape and legacy single-output shape.
+    if(_isMorphType(pi.type) && pi.morphState){
+      const ds = window._morphDefaultState
+        ? window._morphDefaultState()
+        : { outputs: [0,1,2,3].map(()=>({ easing:'sine', snapshots:{}, _phaseStart: performance.now(), _lastDisplayTick: 0 })) };
+      if(Array.isArray(pi.morphState.outputs)){
+        // New per-output shape
+        pi.morphState.outputs.forEach((o, i) => {
+          if(i < 4 && o){
+            ds.outputs[i].easing = o.easing || 'sine';
+            ds.outputs[i].snapshots = o.snapshots || {};
+          }
+        });
+      } else if(pi.morphState.snapshots){
+        // Legacy single-output preset — hydrate output 0
+        ds.outputs[0].easing = pi.morphState.easing || 'sine';
+        ds.outputs[0].snapshots = pi.morphState.snapshots || {};
+      }
+      inst.morphState = ds;
+      try { window._morphRefreshEasingDropdown && window._morphRefreshEasingDropdown(pi.id); } catch(e){}
+      try { window.morphRefreshLabel && window.morphRefreshLabel(pi.id); } catch(e){}
+      try { window._morphUpdateCaptureUI && window._morphUpdateCaptureUI(pi.id); } catch(e){}
+    }
     // Bypass
     dom.classList.toggle('bypassed', !!pi.bypass);
     const bypassBtn = dom.querySelector('.bypass-btn');
@@ -2878,6 +3362,9 @@ function loadV2Preset(preset){
     if(te) te.classList.add('connected');
   });
   drawAllCables();
+
+  // Refresh morph target labels after cable rebuild
+  try { window.morphRefreshAllTargetLabels && window.morphRefreshAllTargetLabels(); } catch(e){}
 
   // 10. Rebuild audio if was playing
   if(wasPlaying) setTimeout(startPlay, 100);
@@ -3085,12 +3572,29 @@ function getModPositions(){
   return Array.from(document.querySelectorAll('.module')).map(m => ({left:m.style.left, top:m.style.top, w:m.style.width, tb:m.classList.contains('jacks-tb')?1:0}));
 }
 function pushUndo(){
+  // Snapshot morph state (uuid -> {outputs:[{easing,snapshots}, ...]})
+  const morphStates = {};
+  try {
+    const di = window.desktopInstances || {};
+    for(const u in di){
+      const inst = di[u];
+      if(inst && inst.morphState && inst.morphState.outputs){
+        morphStates[u] = {
+          outputs: inst.morphState.outputs.map(o => ({
+            easing: (o && o.easing) || 'sine',
+            snapshots: JSON.parse(JSON.stringify((o && o.snapshots) || {}))
+          }))
+        };
+      }
+    }
+  } catch(e){}
   undoStack.push({
     cables: JSON.parse(JSON.stringify(cables)),
     positions: getModPositions(),
     knobs: JSON.parse(JSON.stringify(knobState)),
     dropdownState: JSON.parse(JSON.stringify(dropdowns)),
-    modOutput: JSON.parse(JSON.stringify(modOutputState))
+    modOutput: JSON.parse(JSON.stringify(modOutputState)),
+    morphStates
   });
   if(undoStack.length > 5) undoStack.shift();
 }
@@ -3135,6 +3639,36 @@ function popUndo(){
       }
     }
   }
+  // Restore morph states (handles new per-output + legacy shapes)
+  if(prev.morphStates){
+    try {
+      const di = window.desktopInstances || {};
+      for(const u in prev.morphStates){
+        if(di[u]){
+          const prior = prev.morphStates[u];
+          const ds = window._morphDefaultState ? window._morphDefaultState()
+            : { outputs: [0,1,2,3].map(()=>({ easing:'sine', snapshots:{}, _phaseStart: performance.now(), _lastDisplayTick: 0 })) };
+          if(prior && Array.isArray(prior.outputs)){
+            prior.outputs.forEach((o, i) => {
+              if(i < 4 && o){
+                ds.outputs[i].easing = o.easing || 'sine';
+                ds.outputs[i].snapshots = o.snapshots || {};
+              }
+            });
+          } else if(prior && prior.snapshots){
+            // Legacy undo frame
+            ds.outputs[0].easing = prior.easing || 'sine';
+            ds.outputs[0].snapshots = prior.snapshots || {};
+          }
+          di[u].morphState = ds;
+          try { window._morphRefreshEasingDropdown && window._morphRefreshEasingDropdown(u); } catch(e){}
+          try { window.morphRefreshLabel && window.morphRefreshLabel(u); } catch(e){}
+          try { window._morphUpdateCaptureUI && window._morphUpdateCaptureUI(u); } catch(e){}
+        }
+      }
+    } catch(e){}
+  }
+  try { window.morphRefreshAllTargetLabels && window.morphRefreshAllTargetLabels(); } catch(e){}
   drawAllCables();
   rebuildIfPlaying();
 }
@@ -3483,6 +4017,8 @@ document.addEventListener('mousedown', e => {
         const fromEl = findJackEl(c.fromMod, c.fromIdx, 'output');
         if(fromEl && !cables.some(cc => cc.fromMod===c.fromMod && cc.fromIdx===c.fromIdx)) fromEl.classList.remove('connected');
         jack.classList.remove('connected');
+        try { window.morphPruneSnapshots && window.morphPruneSnapshots(); } catch(e){}
+        try { window.morphRefreshAllTargetLabels && window.morphRefreshAllTargetLabels(); } catch(e){}
         drawAllCables();
         rebuildIfPlaying();
       }
@@ -3559,6 +4095,7 @@ document.addEventListener('mouseup', e => {
           }
         }
       }
+      try { window.morphRefreshAllTargetLabels && window.morphRefreshAllTargetLabels(); } catch(e){}
       rebuildIfPlaying();
     }
   }
@@ -3663,6 +4200,8 @@ document.getElementById('clearPatchBtn').addEventListener('click', () => {
   cables.length = 0;
   cableColorIdx = 0;
   document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
+  try { window.morphPruneSnapshots && window.morphPruneSnapshots(); } catch(e){}
+  try { window.morphRefreshAllTargetLabels && window.morphRefreshAllTargetLabels(); } catch(e){}
   drawAllCables();
   rebuildIfPlaying();
 });
@@ -3740,8 +4279,9 @@ requestAnimationFrame(() => {
     {left:"314px", top:"362px", w:"184px",  tb:0},  // 44 PATTERN 1
     {left:"422px", top:"413px", w:"184px",  tb:0},  // 45 PATTERN 2
     {left:"539px", top:"464px", w:"184px",  tb:0},  // 46 PATTERN 3
-    {left:"304px", top:"796px", w:"",       tb:1},  // 47 INPUT MIX
-    {left:"604px", top:"1023px",w:"",       tb:1}   // 48 MASTER
+    {left:"730px", top:"464px", w:"184px",  tb:0},  // 47 STATE MORPH
+    {left:"304px", top:"796px", w:"",       tb:1},  // 48 INPUT MIX
+    {left:"604px", top:"1023px",w:"",       tb:1}   // 49 MASTER
   ];
 
   // Selection state
@@ -4048,13 +4588,76 @@ requestAnimationFrame(() => {
   window.desktopInstances = {};
   function _uuid(){ return 'm_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
 
-  // Tag all existing 49 modules with UUIDs
+  // Tag all existing modules with UUIDs
   document.querySelectorAll('#moduleContainer .module').forEach((mod, i) => {
     const uuid = _uuid();
     mod.dataset.uuid = uuid;
     mod.dataset.isOriginal = '1';
     desktopInstances[uuid] = { modIdx: i, domEl: mod, type: MOD_NAMES[i], isOriginal: true };
   });
+
+  // Wire STATE MORPH controls (SET A / SET B / PLAY / easing). Runs on originals & clones.
+  function _wireMorphControls(mod){
+    const getUuid = () => mod.dataset.uuid;
+    mod.querySelectorAll('[data-morph-act]').forEach(btn => {
+      if(btn.dataset.morphWired === '1') return;
+      btn.dataset.morphWired = '1';
+      btn.addEventListener('mousedown', e => { e.stopPropagation(); e.preventDefault(); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const u = getUuid(); if(!u) return;
+        const act = btn.dataset.morphAct;
+        if(act === 'A') window.morphSetSnapshot(u, 'A');
+        else if(act === 'B') window.morphSetSnapshot(u, 'B');
+        else if(act === 'clear') window.morphClearSnapshots(u);
+      });
+    });
+    mod.querySelectorAll('.morph-easing').forEach(sel => {
+      if(sel.dataset.morphWired === '1') return;
+      sel.dataset.morphWired = '1';
+      sel.addEventListener('mousedown', e => { e.stopPropagation(); });
+      sel.addEventListener('change', () => {
+        const u = getUuid(); if(!u) return;
+        const inst = desktopInstances[u]; if(!inst) return;
+        inst.morphState = inst.morphState || window._morphDefaultState();
+        const oi = (selectedOutput && selectedOutput[inst.modIdx] !== undefined) ? selectedOutput[inst.modIdx] : 0;
+        if(inst.morphState.outputs && inst.morphState.outputs[oi]){
+          inst.morphState.outputs[oi].easing = sel.value;
+        }
+      });
+    });
+    // Seed morphState on originals so label shows fresh on load
+    const u = getUuid();
+    if(u && desktopInstances[u] && _isMorphType(desktopInstances[u].type)){
+      desktopInstances[u].morphState = desktopInstances[u].morphState || window._morphDefaultState();
+      try { window._morphRefreshEasingDropdown(u); } catch(e){}
+      try { window.morphRefreshLabel(u); } catch(e){}
+      try { window._morphUpdateCaptureUI(u); } catch(e){}
+      // Tap-to-open: clicking the morph body anywhere except jacks / output selector /
+      // delete-X / bypass opens the modal with all controls.
+      _wireMorphTapToOpen(mod);
+    }
+  }
+
+  // Clicking the STATE MORPH module body opens openMorphModal.
+  // Ignores clicks on jacks, output selector buttons, delete X, bypass button, orient button.
+  function _wireMorphTapToOpen(mod){
+    if(mod._morphTapWired) return;
+    mod._morphTapWired = true;
+    mod.addEventListener('click', (e)=>{
+      if(e.target.closest('.jack')) return;
+      if(e.target.closest('.out-sel-btn')) return;
+      if(e.target.closest('.x-del-btn')) return;
+      if(e.target.closest('.bypass-btn')) return;
+      if(e.target.closest('.orient-btn')) return;
+      if(e.target.closest('#morphModalOverlay')) return;
+      const uuid = mod.dataset.uuid;
+      if(uuid && typeof openMorphModal === 'function') openMorphModal(uuid);
+    });
+  }
+
+  // Wire morph on all originals now
+  document.querySelectorAll('#moduleContainer .module').forEach(mod => _wireMorphControls(mod));
 
   // Find an original (template) module by type name
   function _findOriginalByType(type){
@@ -4179,6 +4782,16 @@ requestAnimationFrame(() => {
             }
           });
           row.querySelectorAll('.out-sel-btn').forEach((b, bi) => b.classList.toggle('active', bi === o));
+          // STATE MORPH: refresh per-output UI on this clone
+          try {
+            const uuid = mod.dataset.uuid;
+            const di = window.desktopInstances || {};
+            if(uuid && di[uuid] && window._isMorphType && window._isMorphType(di[uuid].type)){
+              window._morphRefreshEasingDropdown && window._morphRefreshEasingDropdown(uuid);
+              window.morphRefreshLabel && window.morphRefreshLabel(uuid);
+              window._morphUpdateCaptureUI && window._morphUpdateCaptureUI(uuid);
+            }
+          } catch(e){}
         });
         row.appendChild(btn);
       }
@@ -4389,6 +5002,9 @@ requestAnimationFrame(() => {
     clone.dataset.uuid = uuid;
     desktopInstances[uuid] = { modIdx: newIdx, domEl: clone, type, isOriginal: false };
 
+    // Wire morph controls if this clone is a STATE MORPH (must run after uuid is set)
+    try { _wireMorphControls(clone); } catch(e){}
+
     // Delete (X) button — only on clones
     const xBtn = document.createElement('div');
     xBtn.className = 'x-del-btn';
@@ -4412,6 +5028,7 @@ requestAnimationFrame(() => {
     const inst = desktopInstances[uuid];
     if(!inst || inst.isOriginal) return;
     const rmIdx = inst.modIdx;
+    const rmUuid = uuid;
 
     // Drop cables touching this module; shift others
     for(let i = cables.length - 1; i >= 0; i--){
@@ -4430,6 +5047,16 @@ requestAnimationFrame(() => {
     // Remove DOM
     inst.domEl.remove();
     delete desktopInstances[uuid];
+
+    // Purge morph snapshots on ANY morph instance that referenced this target uuid
+    for(const u in desktopInstances){
+      const mi = desktopInstances[u];
+      if(mi && mi.morphState && Array.isArray(mi.morphState.outputs)){
+        mi.morphState.outputs.forEach(o => {
+          if(o && o.snapshots && o.snapshots[rmUuid]) delete o.snapshots[rmUuid];
+        });
+      }
+    }
 
     // Reindex remaining modules: any module whose modIdx was > rmIdx drops by 1
     Object.keys(desktopInstances).forEach(k => {
@@ -4454,6 +5081,7 @@ requestAnimationFrame(() => {
       if(te) te.classList.add('connected');
     });
 
+    try { window.morphRefreshAllTargetLabels && window.morphRefreshAllTargetLabels(); } catch(e){}
     rebuildIfPlaying();
     drawAllCables();
   }
