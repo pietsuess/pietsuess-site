@@ -4525,20 +4525,19 @@ requestAnimationFrame(() => {
       };
       headerBtns.appendChild(bypBtn);
     }
-    // STATE MORPH has no knob grid, so the expanded panel is short and can be
-    // visually confused with the collapsed state. Label the button explicitly
-    // for morph nodes so the expand/collapse state is unmistakable.
-    const expLabel = (node.type === 'STATE MORPH')
-      ? (expanded ? '▲ CLOSE' : '▼ OPEN')
-      : (expanded ? '▲' : '▼');
-    const expBtn = el('button','nodeExpandBtn', expLabel);
-    expBtn.setAttribute('aria-label', expanded ? 'Collapse' : 'Expand');
-    expBtn.onclick = (e)=>{
-      e.stopPropagation();
-      mobile.expandedNodeId = expanded ? null : nodeId;
-      renderMobilePages();
-    };
-    headerBtns.appendChild(expBtn);
+    // STATE MORPH never renders controls inline — its entire UI lives in a modal.
+    // No expand button; tapping the node body opens openMorphModal (wired below).
+    if(node.type !== 'STATE MORPH'){
+      const expLabel = (expanded ? '▲' : '▼');
+      const expBtn = el('button','nodeExpandBtn', expLabel);
+      expBtn.setAttribute('aria-label', expanded ? 'Collapse' : 'Expand');
+      expBtn.onclick = (e)=>{
+        e.stopPropagation();
+        mobile.expandedNodeId = expanded ? null : nodeId;
+        renderMobilePages();
+      };
+      headerBtns.appendChild(expBtn);
+    }
     // Delete button only shown when collapsed and node isn't pinned (INPUT MIX / MASTER)
     if(!expanded && !node.pinned){
       const delBtn = el('button','nodeDeleteBtn','X');
@@ -4552,7 +4551,11 @@ requestAnimationFrame(() => {
     header.appendChild(headerBtns);
     nodeEl.appendChild(header);
 
-    if(expanded){
+    // Safety: morph nodes must never enter expanded body. Controls live in modal.
+    if(expanded && (node.type === 'STATE MORPH' || node.cat === 'morph')){
+      mobile.expandedNodeId = null;
+    }
+    if(expanded && node.type !== 'STATE MORPH' && node.cat !== 'morph'){
       const ex = el('div','nodeExpanded');
       const outs = jackCountsFor(node)[1];
       const showOutSel = (outs > 1 || node.cat === 'mix');
@@ -4843,87 +4846,23 @@ requestAnimationFrame(() => {
 
         ex.appendChild(wrap);
       }
-      if(node.type === 'STATE MORPH'){
-        // Ensure morphState exists (older saves / re-render safety) — 4-output shape.
-        if(!node.morphState || !node.morphState.outputs){
-          node.morphState = {
-            outputs: [0,1,2,3].map(()=>({
-              snapshots: {}, _phaseStart: performance.now(), _lastDisplayTick: 0,
-            })),
-          };
-        }
-        // Guarantee per-output easing dropdowns exist.
-        for(let i = 0; i < 4; i++){
-          if(!node.dropdowns[i]) node.dropdowns[i] = {};
-          if(!node.dropdowns[i].morphEasing) node.dropdowns[i].morphEasing = 'sine';
-        }
-        const morphControls = el('div','mobMorphControls');
-
-        // Targets label (per currently-viewed output)
-        const curOut0 = node.selectedOutput || 0;
-        const targetsLabel = el('div','mobMorphTargets');
-        targetsLabel.dataset.morphTargets = String(nodeId);
-        const tgtNames = mobile.cables
-          .filter(c=>c.fromNodeId===nodeId && c.fromIdx===curOut0)
-          .map(c=>{ const tn = mobile.mobileNodes[c.toNodeId]; return tn ? tn.type : '?'; });
-        targetsLabel.textContent = 'TARGETS [' + (curOut0+1) + ']: ' + (tgtNames.length ? tgtNames.join(', ') : '—');
-        morphControls.appendChild(targetsLabel);
-
-        // Easing dropdown — reads/writes per-output dropdowns[selectedOutput].morphEasing
-        const easingWrap = el('div','mobMorphEasingWrap');
-        const easingLabel = el('div','mobMorphSubLabel','EASING');
-        const easingSelect = document.createElement('select');
-        easingSelect.className = 'mobMorphEasingSelect';
-        easingSelect.dataset.morphEasingSelect = String(nodeId);
-        const curEase = (node.dropdowns[curOut0] && node.dropdowns[curOut0].morphEasing) || 'sine';
-        ['sine','linear','easeIn','easeOut','easeInOut'].forEach(name=>{
-          const opt = document.createElement('option');
-          opt.value = name; opt.textContent = name;
-          if(curEase === name) opt.selected = true;
-          easingSelect.appendChild(opt);
-        });
-        easingSelect.addEventListener('change', e=>{
-          const sel = node.selectedOutput || 0;
-          if(!node.dropdowns[sel]) node.dropdowns[sel] = {};
-          node.dropdowns[sel].morphEasing = e.target.value;
-        });
-        easingWrap.append(easingLabel, easingSelect);
-        morphControls.appendChild(easingWrap);
-
-        // SET A / SET B button row
-        const btnRow = el('div','mobMorphBtnRow');
-        const setA = document.createElement('button');
-        setA.className = 'mobMorphBtn';
-        setA.textContent = 'SET A';
-        setA.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          mobileMorphSetSnapshot(nodeId, 'A');
-        });
-        const setB = document.createElement('button');
-        setB.className = 'mobMorphBtn';
-        setB.textContent = 'SET B';
-        setB.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          mobileMorphSetSnapshot(nodeId, 'B');
-        });
-        const clearBtn = document.createElement('button');
-        clearBtn.className = 'mobMorphBtn';
-        clearBtn.textContent = 'CLEAR';
-        clearBtn.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          mobileMorphClearSnapshots(nodeId);
-        });
-        btnRow.append(setA, setB, clearBtn);
-        morphControls.appendChild(btnRow);
-
-        ex.appendChild(morphControls);
-      }
+      // STATE MORPH: no inline controls — all controls live in openMorphModal.
       // CLOSE button removed — the collapse arrow in the header is the only way to collapse
       nodeEl.appendChild(ex);
     }
     // Bottom jack row (outputs), always shown if applicable — both collapsed AND expanded.
     const botJacks = buildJackRow(node, 'bottom');
     if(botJacks) nodeEl.appendChild(botJacks);
+    // STATE MORPH: tap the node body (except jacks / delete X) to open the control modal.
+    if(node.type === 'STATE MORPH'){
+      nodeEl.addEventListener('click', (e)=>{
+        if(e.target.closest('.nodeJack')) return;
+        if(e.target.closest('.mobileJack')) return;
+        if(e.target.closest('.nodeDeleteBtn')) return;
+        if(e.target.closest('.nodeBypassBtn')) return;
+        if(typeof openMorphModal === 'function') openMorphModal(nodeId);
+      });
+    }
     return nodeEl;
   }
 
@@ -7091,6 +7030,171 @@ requestAnimationFrame(() => {
   mobile.startPlay = startMobilePlay;
   mobile.stopPlay = stopMobilePlay;
   mobile.rebuildIfPlaying = rebuildMobileIfPlaying;
+
+  // ─── STATE MORPH modal (mobile) ─────────────────────────────────────
+  // The morph node body renders only title + output jacks. Tapping the body
+  // opens this modal, which hosts all morph controls (output selector,
+  // TARGETS label, RATE knob, EASING dropdown, SET A / SET B / CLEAR).
+  function openMorphModal(nodeId){
+    const node = mobile.mobileNodes[nodeId];
+    if(!node) return;
+
+    // Ensure morph state and per-output easing dropdowns exist.
+    if(!node.morphState || !node.morphState.outputs){
+      node.morphState = {
+        outputs: [0,1,2,3].map(()=>({
+          snapshots: {}, _phaseStart: performance.now(), _lastDisplayTick: 0,
+        })),
+      };
+    }
+    if(!Array.isArray(node.dropdowns)) node.dropdowns = [{},{},{},{}];
+    for(let i=0; i<4; i++){
+      if(!node.dropdowns[i]) node.dropdowns[i] = {};
+      if(!node.dropdowns[i].morphEasing) node.dropdowns[i].morphEasing = 'sine';
+    }
+
+    const curOut = node.selectedOutput || 0;
+
+    const overlay = el('div','modalOverlay');
+    const box = el('div','modalBox morphModal');
+
+    const header = el('div','modalHeader');
+    header.append(el('span', null, 'STATE MORPH'));
+    const closeBtn = el('button','modalClose','X');
+    closeBtn.onclick = ()=> overlay.remove();
+    header.appendChild(closeBtn);
+    box.appendChild(header);
+
+    const body = el('div','modalBody');
+
+    // Output selector 1/2/3/4
+    const outRow = el('div','mobOutSel');
+    for(let i=0; i<4; i++){
+      const b = el('button','mobOutBtn', String(i+1));
+      if(curOut === i) b.classList.add('active');
+      b.onclick = ()=>{
+        mobile.currentOut[nodeId] = i;
+        node.selectedOutput = i;
+        overlay.remove();
+        openMorphModal(nodeId);
+      };
+      outRow.appendChild(b);
+    }
+    body.appendChild(outRow);
+
+    // TARGETS label (per currently-viewed output)
+    const tgtNames = (mobile.cables || [])
+      .filter(c=>c.fromNodeId===nodeId && c.fromIdx===curOut)
+      .map(c=>{ const tn = mobile.mobileNodes[c.toNodeId]; return tn ? tn.type : '?'; });
+    const targetsLabel = el('div','mobMorphTargets');
+    targetsLabel.dataset.morphTargets = String(nodeId);
+    targetsLabel.textContent = 'TARGETS [' + (curOut+1) + ']: ' + (tgtNames.length ? tgtNames.join(', ') : '—');
+    body.appendChild(targetsLabel);
+
+    // RATE knob — written into node.states[curOut].morphRate so the runtime reads it live.
+    const rateDef = KD['morphRate'];
+    if(rateDef){
+      if(!node.states) node.states = [{},{},{},{}];
+      if(!node.states[curOut]) node.states[curOut] = {};
+      const wrap = el('div','mobKnobWrap');
+      const canvas = document.createElement('canvas');
+      canvas.className = 'mobKnobCanvas';
+      canvas.width = 128; canvas.height = 128;
+      const initVal = (node.states[curOut].morphRate != null) ? node.states[curOut].morphRate : rateDef.val;
+      node.states[curOut].morphRate = initVal;
+      drawMobKnob(canvas, rateDef, initVal);
+      const valEl = el('div','mobKnobVal', rateDef.fmt ? rateDef.fmt(initVal) : String(initVal));
+      const labelEl = el('div','mobKnobLabel', 'RATE');
+
+      function clampSnap(v){
+        v = Math.max(rateDef.min, Math.min(rateDef.max, v));
+        if(rateDef.step) v = Math.round(v / rateDef.step) * rateDef.step;
+        if(rateDef.step && rateDef.step < 1){
+          const d = (rateDef.step < 0.01) ? 3 : 2;
+          v = parseFloat(v.toFixed(d));
+        }
+        return v;
+      }
+
+      let dragging = false, startY = 0, startVal = 0;
+      canvas.addEventListener('pointerdown', e=>{
+        e.preventDefault();
+        dragging = true;
+        startY = e.clientY;
+        startVal = node.states[curOut].morphRate;
+        try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+        canvas.classList.add('dragging');
+      });
+      canvas.addEventListener('pointermove', e=>{
+        if(!dragging) return;
+        const dy = startY - e.clientY;
+        const range = rateDef.max - rateDef.min;
+        let v = startVal + (dy / 150) * range;
+        v = clampSnap(v);
+        node.states[curOut].morphRate = v;
+        drawMobKnob(canvas, rateDef, v);
+        valEl.textContent = rateDef.fmt ? rateDef.fmt(v) : String(v);
+      });
+      function endDrag(e){
+        if(!dragging) return;
+        dragging = false;
+        canvas.classList.remove('dragging');
+        try { canvas.releasePointerCapture(e.pointerId); } catch(_){}
+      }
+      canvas.addEventListener('pointerup', endDrag);
+      canvas.addEventListener('pointercancel', endDrag);
+
+      wrap.append(canvas, valEl, labelEl);
+      body.appendChild(wrap);
+    }
+
+    // EASING dropdown
+    const easingWrap = el('div','mobMorphEasingWrap');
+    const easingLabel = el('div','mobMorphSubLabel','EASING');
+    const easingSelect = document.createElement('select');
+    easingSelect.className = 'mobMorphEasingSelect';
+    easingSelect.dataset.morphEasingSelect = String(nodeId);
+    const curEase = (node.dropdowns[curOut] && node.dropdowns[curOut].morphEasing) || 'sine';
+    ['sine','linear','easeIn','easeOut','easeInOut'].forEach(name=>{
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      if(curEase === name) opt.selected = true;
+      easingSelect.appendChild(opt);
+    });
+    easingSelect.addEventListener('change', e=>{
+      if(!node.dropdowns[curOut]) node.dropdowns[curOut] = {};
+      node.dropdowns[curOut].morphEasing = e.target.value;
+    });
+    easingWrap.append(easingLabel, easingSelect);
+    body.appendChild(easingWrap);
+
+    // SET A / SET B / CLEAR row
+    const btnRow = el('div','mobMorphBtnRow');
+    ['A','B','CLEAR'].forEach(action=>{
+      const btn = document.createElement('button');
+      btn.className = 'mobMorphBtn';
+      btn.textContent = (action === 'CLEAR') ? 'CLEAR' : ('SET ' + action);
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(action === 'CLEAR') mobileMorphClearSnapshots(nodeId);
+        else mobileMorphSetSnapshot(nodeId, action);
+        // Refresh targets label inside modal after capture/clear.
+        const sel = node.selectedOutput || 0;
+        const refreshTgt = (mobile.cables || [])
+          .filter(c=>c.fromNodeId===nodeId && c.fromIdx===sel)
+          .map(c=>{ const tn = mobile.mobileNodes[c.toNodeId]; return tn ? tn.type : '?'; });
+        targetsLabel.textContent = 'TARGETS [' + (sel+1) + ']: ' + (refreshTgt.length ? refreshTgt.join(', ') : '—');
+      });
+      btnRow.appendChild(btn);
+    });
+    body.appendChild(btnRow);
+
+    box.appendChild(body);
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+  window.openMorphModal = openMorphModal;
 
   // ─── STATE MORPH runtime (mobile) ───────────────────────────────────
   // Mirrors desktop morphState behavior: per-target A/B snapshots, triangle-wave
