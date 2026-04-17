@@ -2198,28 +2198,34 @@ function buildLive(){
   const patternInfoMap = {}; // modIdx -> [input0, input1, input2, input3] each null or {pattern, stepDur}
   const modEls = document.querySelectorAll('.module');
   cables.forEach(c => {
-    const srcName = MOD_NAMES[c.fromMod];
+    const fromMod = _uuidToModIdx(c.fromUuid);
+    const toMod = _uuidToModIdx(c.toUuid);
+    if(fromMod < 0 || toMod < 0) return;
+    const srcName = MOD_NAMES[fromMod];
     if(!srcName || !srcName.startsWith('PATTERN')) return;
-    if(!modEls[c.toMod]?.classList.contains('gen')) return;
+    if(!modEls[toMod]?.classList.contains('gen')) return;
     const gridId = 'patGrid' + srcName.split(' ')[1];
     const patterns = patternStates[gridId];
     if(!patterns) return;
     const ps = patterns[c.fromIdx] || newPatOut();
-    const outParams = getModOutParams(c.fromMod, c.fromIdx);
+    const outParams = getModOutParams(fromMod, c.fromIdx);
     const bpmKey = 'pat' + srcName.split(' ')[1] + 'Bpm';
     const bpm = ps.bpm || outParams[bpmKey] || knobState[bpmKey] || 120;
     const stepDur = 60 / bpm / 4;
     const totalSteps = ps.rows * ps.cols;
-    if(!patternInfoMap[c.toMod]) patternInfoMap[c.toMod] = [null, null, null, null];
-    patternInfoMap[c.toMod][c.toIdx] = { pattern: ps.steps, stepDur, totalSteps };
+    if(!patternInfoMap[toMod]) patternInfoMap[toMod] = [null, null, null, null];
+    patternInfoMap[toMod][c.toIdx] = { pattern: ps.steps, stepDur, totalSteps };
   });
 
   audioModules = MOD_NAMES.map((name, i) => buildModule(name, i, patternInfoMap[i] || null));
 
   // Wire cables
   cables.forEach(c => {
-    const from = audioModules[c.fromMod];
-    const to = audioModules[c.toMod];
+    const fromMod = _uuidToModIdx(c.fromUuid);
+    const toMod = _uuidToModIdx(c.toUuid);
+    if(fromMod < 0 || toMod < 0) return;
+    const from = audioModules[fromMod];
+    const to = audioModules[toMod];
     if(from && to && from.outs[c.fromIdx] && to.ins[c.toIdx]){
       try { from.outs[c.fromIdx].connect(to.ins[c.toIdx]); } catch(e){}
     }
@@ -2319,6 +2325,13 @@ function _uuidForModIdx(mi){
   }
   return null;
 }
+// Alias used by the UUID-based cables refactor
+function _modIdxToUuid(mi){ return _uuidForModIdx(mi); }
+function _uuidToModIdx(uuid){
+  if(!uuid || !window.desktopInstances) return -1;
+  const inst = window.desktopInstances[uuid];
+  return inst ? inst.modIdx : -1;
+}
 
 function _morphGetRateKnob(inst, outIdx){
   // Per-output morphRate lives in modOutputState[mi][outIdx].morphRate. For the
@@ -2362,9 +2375,10 @@ function morphSetSnapshot(morphUuid, slot){
   const srcIdx = mInst.modIdx;
   const srcOut = _morphCurOut(srcIdx);
   const ms = mInst.morphState.outputs[srcOut]; if(!ms) return;
-  const targets = cables.filter(c => c.fromMod === srcIdx && c.fromIdx === srcOut);
+  const srcUuid = _uuidForModIdx(srcIdx);
+  const targets = cables.filter(c => c.fromUuid === srcUuid && c.fromIdx === srcOut);
   targets.forEach(c => {
-    const tUuid = _uuidForModIdx(c.toMod); if(!tUuid) return;
+    const tUuid = c.toUuid; if(!tUuid) return;
     const tInst = di[tUuid]; if(!tInst) return;
     if(_isMorphType(tInst.type)) return; // skip morph-to-morph
     const tIdx = tInst.modIdx;
@@ -2415,8 +2429,12 @@ function morphRefreshLabel(morphUuid){
   const label = inst.domEl.querySelector('.morph-targets-label'); if(!label) return;
   const srcIdx = inst.modIdx;
   const oi = _morphCurOut(srcIdx);
-  const names = cables.filter(c => c.fromMod === srcIdx && c.fromIdx === oi)
-    .map(c => (typeof MOD_NAMES !== 'undefined' && MOD_NAMES[c.toMod]) || '?');
+  const srcUuid = _uuidForModIdx(srcIdx);
+  const names = cables.filter(c => c.fromUuid === srcUuid && c.fromIdx === oi)
+    .map(c => {
+      const ti = _uuidToModIdx(c.toUuid);
+      return (typeof MOD_NAMES !== 'undefined' && ti >= 0 && MOD_NAMES[ti]) || '?';
+    });
   label.textContent = 'TARGETS [' + (oi + 1) + ']: ' + (names.length ? names.join(', ') : '—');
 }
 
@@ -2434,8 +2452,8 @@ function morphPruneSnapshots(){
     for(let oi = 0; oi < 4; oi++){
       const ms = inst.morphState.outputs[oi]; if(!ms) continue;
       const liveTargets = new Set();
-      cables.filter(c => c.fromMod === inst.modIdx && c.fromIdx === oi).forEach(c => {
-        const tu = _uuidForModIdx(c.toMod); if(tu) liveTargets.add(tu);
+      cables.filter(c => c.fromUuid === u && c.fromIdx === oi).forEach(c => {
+        if(c.toUuid) liveTargets.add(c.toUuid);
       });
       for(const tu in ms.snapshots){
         if(!liveTargets.has(tu)) delete ms.snapshots[tu];
@@ -2859,23 +2877,21 @@ function buildV2Preset(name){
     });
   });
 
-  // Build set of module indices referenced by cables (either endpoint)
-  const usedModIdx = new Set();
+  // Build set of UUIDs referenced by cables (either endpoint)
+  const usedUuid = new Set();
   cables.forEach(c => {
-    usedModIdx.add(c.fromMod);
-    usedModIdx.add(c.toMod);
+    if(c.fromUuid) usedUuid.add(c.fromUuid);
+    if(c.toUuid) usedUuid.add(c.toUuid);
   });
 
   // Build instance list with screen positions (for mobile hint computation)
   // Only include modules that are pinned OR cable-connected — skip unused defaults
   // so presets stay lean and don't clutter mobile imports with disconnected nodes.
-  const modIdxToUuid = {};
   const rawList = [];
   Object.keys(desktopInstances).forEach(uuid => {
     const inst = desktopInstances[uuid];
     const pinned = _isPinnedType(inst.type);
-    if(!pinned && !usedModIdx.has(inst.modIdx)) return; // skip unused
-    modIdxToUuid[inst.modIdx] = uuid;
+    if(!pinned && !usedUuid.has(uuid)) return; // skip unused
     const dom = inst.domEl;
     const x = parseFloat(dom.style.left) || 0;
     const y = parseFloat(dom.style.top) || 0;
@@ -2950,13 +2966,14 @@ function buildV2Preset(name){
     return obj;
   });
 
+  // Cables now store UUIDs directly — emit as-is, filter orphans.
   const v2cables = cables.map(c => ({
-    fromId: modIdxToUuid[c.fromMod],
+    fromId: c.fromUuid,
     fromIdx: c.fromIdx,
-    toId: modIdxToUuid[c.toMod],
+    toId: c.toUuid,
     toIdx: c.toIdx,
     color: c.color
-  })).filter(c => c.fromId && c.toId);
+  })).filter(c => c.fromId && c.toId && desktopInstances[c.fromId] && desktopInstances[c.toId]);
 
   return {
     version: 2,
@@ -3197,22 +3214,24 @@ function loadV2Preset(preset){
     });
   });
 
-  // 9. Rebuild cables
+  // 9. Rebuild cables (UUIDs stored directly on the runtime cable record)
   (preset.cables || []).forEach(c => {
-    const fromInst = desktopInstances[c.fromId];
-    const toInst = desktopInstances[c.toId];
-    if(!fromInst || !toInst) return;
+    if(!c.fromId || !c.toId) return;
+    if(!desktopInstances[c.fromId] || !desktopInstances[c.toId]) return;
     cables.push({
-      fromMod: fromInst.modIdx,
+      fromUuid: c.fromId,
       fromIdx: c.fromIdx,
-      toMod: toInst.modIdx,
+      toUuid: c.toId,
       toIdx: c.toIdx,
       color: c.color || CABLE_COLORS[0]
     });
   });
   cables.forEach(c => {
-    const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
-    const te = findJackEl(c.toMod, c.toIdx, 'input');
+    const fromMod = _uuidToModIdx(c.fromUuid);
+    const toMod = _uuidToModIdx(c.toUuid);
+    if(fromMod < 0 || toMod < 0) return;
+    const fe = findJackEl(fromMod, c.fromIdx, 'output');
+    const te = findJackEl(toMod, c.toIdx, 'input');
     if(fe) fe.classList.add('connected');
     if(te) te.classList.add('connected');
   });
@@ -3251,11 +3270,28 @@ function loadPreset(idx){
   if(p.cables){
     pushUndo();
     cables.length = 0;
-    p.cables.forEach(c => cables.push(c));
+    // V1 back-compat: preset cables carry fromMod/toMod integer indices.
+    // Assume module order matches current MOD_NAMES (V1 presets break if order
+    // has changed — use V2 presets for UUID-safe restore).
+    p.cables.forEach(c => {
+      const fromUuid = _modIdxToUuid(c.fromMod);
+      const toUuid = _modIdxToUuid(c.toMod);
+      if(!fromUuid || !toUuid) return;
+      cables.push({
+        fromUuid,
+        fromIdx: c.fromIdx,
+        toUuid,
+        toIdx: c.toIdx,
+        color: c.color || CABLE_COLORS[0]
+      });
+    });
     document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
     cables.forEach(c => {
-      const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
-      const te = findJackEl(c.toMod, c.toIdx, 'input');
+      const fromMod = _uuidToModIdx(c.fromUuid);
+      const toMod = _uuidToModIdx(c.toUuid);
+      if(fromMod < 0 || toMod < 0) return;
+      const fe = findJackEl(fromMod, c.fromIdx, 'output');
+      const te = findJackEl(toMod, c.toIdx, 'input');
       if(fe) fe.classList.add('connected');
       if(te) te.classList.add('connected');
     });
@@ -3410,13 +3446,16 @@ document.getElementById('vizToggle').addEventListener('click', () => {
 });
 
 // ── PATCH BAY: Jacks + Cables ───────────────────────────────────────
-// Default cables: MIX 1/2/3 -> OUTPUT IN 1/2/3
-const cables = [
+// Cables are UUID-keyed: {fromUuid, fromIdx, toUuid, toIdx, color}.
+// Seeds are populated AFTER desktopInstances is assigned (see requestAnimationFrame
+// block below) by converting these legacy index-based defaults to UUID form.
+const DEFAULT_CABLE_SEEDS = [
   {fromMod:35, fromIdx:0, toMod:47, toIdx:0, color:'#ff69b4'},
   {fromMod:36, fromIdx:0, toMod:47, toIdx:1, color:'#00ffcc'},
   {fromMod:37, fromIdx:0, toMod:47, toIdx:2, color:'#ffe000'},
   {fromMod:47, fromIdx:0, toMod:48, toIdx:0, color:'#ffe000'}
 ];
+const cables = [];
 let dragCable = null; // { fromJack, mx, my }
 const CABLE_COLORS = ['#ff69b4','#00ffcc','#ffe000','#ff4444','#44aaff','#aa44ff','#ff8800','#88ff44'];
 let cableColorIdx = 0;
@@ -3461,8 +3500,11 @@ function popUndo(){
   prev.cables.forEach(c => cables.push(c));
   document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
   cables.forEach(c => {
-    const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
-    const te = findJackEl(c.toMod, c.toIdx, 'input');
+    const fromMod = _uuidToModIdx(c.fromUuid);
+    const toMod = _uuidToModIdx(c.toUuid);
+    if(fromMod < 0 || toMod < 0) return;
+    const fe = findJackEl(fromMod, c.fromIdx, 'output');
+    const te = findJackEl(toMod, c.toIdx, 'input');
     if(fe) fe.classList.add('connected');
     if(te) te.classList.add('connected');
   });
@@ -3831,13 +3873,16 @@ function getJackDir(modIdx, type){
 function drawAllCables(){
   cableCtx.clearRect(0, 0, cableCanvas.width, cableCanvas.height);
   cables.forEach(c => {
-    const fromEl = findJackEl(c.fromMod, c.fromIdx, 'output');
-    const toEl = findJackEl(c.toMod, c.toIdx, 'input');
+    const fromMod = _uuidToModIdx(c.fromUuid);
+    const toMod = _uuidToModIdx(c.toUuid);
+    if(fromMod < 0 || toMod < 0) return; // orphaned cable (instance removed)
+    const fromEl = findJackEl(fromMod, c.fromIdx, 'output');
+    const toEl = findJackEl(toMod, c.toIdx, 'input');
     if(!fromEl || !toEl) return;
     const from = getJackCenter(fromEl);
     const to = getJackCenter(toEl);
-    const fromDir = getJackDir(c.fromMod, 'output');
-    const toDir = getJackDir(c.toMod, 'input');
+    const fromDir = getJackDir(fromMod, 'output');
+    const toDir = getJackDir(toMod, 'input');
     drawCable(cableCtx, from.x, from.y, to.x, to.y, c.color, fromDir, toDir);
   });
   // Draw drag cable
@@ -3864,13 +3909,15 @@ document.addEventListener('mousedown', e => {
       // Clicked input — remove cable if connected
       const modIdx = parseInt(jack.dataset.modIdx);
       const jackIdx = parseInt(jack.dataset.jackIdx);
-      const idx = cables.findIndex(c => c.toMod === modIdx && c.toIdx === jackIdx);
+      const toUuid = _modIdxToUuid(modIdx);
+      const idx = cables.findIndex(c => c.toUuid === toUuid && c.toIdx === jackIdx);
       if(idx >= 0){
         pushUndo();
         const c = cables[idx];
         cables.splice(idx, 1);
-        const fromEl = findJackEl(c.fromMod, c.fromIdx, 'output');
-        if(fromEl && !cables.some(cc => cc.fromMod===c.fromMod && cc.fromIdx===c.fromIdx)) fromEl.classList.remove('connected');
+        const fromMod = _uuidToModIdx(c.fromUuid);
+        const fromEl = fromMod >= 0 ? findJackEl(fromMod, c.fromIdx, 'output') : null;
+        if(fromEl && !cables.some(cc => cc.fromUuid===c.fromUuid && cc.fromIdx===c.fromIdx)) fromEl.classList.remove('connected');
         jack.classList.remove('connected');
         try { window.morphPruneSnapshots && window.morphPruneSnapshots(); } catch(e){}
         try { window.morphRefreshAllTargetLabels && window.morphRefreshAllTargetLabels(); } catch(e){}
@@ -3914,19 +3961,22 @@ document.addEventListener('mouseup', e => {
     // Dropped anywhere on a module — find next free input
     toMod = parseInt(mod.dataset.modIdx);
     const maxIn = mod.querySelectorAll('.jack[data-jack-type="input"]').length || 4;
+    const toUuidCheck = _modIdxToUuid(toMod);
     for(let i = 0; i < maxIn; i++){
-      if(!cables.some(c => c.toMod === toMod && c.toIdx === i)){ toIdx = i; break; }
+      if(!cables.some(c => c.toUuid === toUuidCheck && c.toIdx === i)){ toIdx = i; break; }
     }
   }
 
   if(toMod >= 0 && toIdx >= 0){
     const fromMod = parseInt(dragCable.fromJack.dataset.modIdx);
     const fromIdx = parseInt(dragCable.fromJack.dataset.jackIdx);
-    if(!cables.some(c => c.toMod === toMod && c.toIdx === toIdx)){
+    const fromUuid = _modIdxToUuid(fromMod);
+    const toUuid = _modIdxToUuid(toMod);
+    if(fromUuid && toUuid && !cables.some(c => c.toUuid === toUuid && c.toIdx === toIdx)){
       pushUndo();
       const color = CABLE_COLORS[cableColorIdx % CABLE_COLORS.length];
       cableColorIdx++;
-      cables.push({ fromMod, fromIdx, toMod, toIdx, color });
+      cables.push({ fromUuid, fromIdx, toUuid, toIdx, color });
       dragCable.fromJack.classList.add('connected');
       const toJackEl = findJackEl(toMod, toIdx, 'input');
       if(toJackEl) toJackEl.classList.add('connected');
@@ -3996,23 +4046,31 @@ document.getElementById('autoPatchBtn').addEventListener('click', () => {
   // Remove only cables between deployed modules, leave everything else
   const deployedSet = new Set(deployed.map(d => d.idx));
   for(let i = cables.length - 1; i >= 0; i--){
-    if(deployedSet.has(cables[i].fromMod) && deployedSet.has(cables[i].toMod)){
+    const fromMod = _uuidToModIdx(cables[i].fromUuid);
+    const toMod = _uuidToModIdx(cables[i].toUuid);
+    if(deployedSet.has(fromMod) && deployedSet.has(toMod)){
       cables.splice(i, 1);
     }
   }
   document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
   cables.forEach(c => {
-    const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
-    const te = findJackEl(c.toMod, c.toIdx, 'input');
+    const fromMod = _uuidToModIdx(c.fromUuid);
+    const toMod = _uuidToModIdx(c.toUuid);
+    if(fromMod < 0 || toMod < 0) return;
+    const fe = findJackEl(fromMod, c.fromIdx, 'output');
+    const te = findJackEl(toMod, c.toIdx, 'input');
     if(fe) fe.classList.add('connected');
     if(te) te.classList.add('connected');
   });
 
   function addCable(from, fromOut, to, toIn){
     if(from === undefined || to === undefined) return;
+    const fromUuid = _modIdxToUuid(from);
+    const toUuid = _modIdxToUuid(to);
+    if(!fromUuid || !toUuid) return;
     const color = CABLE_COLORS[cableColorIdx % CABLE_COLORS.length];
     cableColorIdx++;
-    cables.push({ fromMod: from, fromIdx: fromOut, toMod: to, toIdx: toIn, color });
+    cables.push({ fromUuid, fromIdx: fromOut, toUuid, toIdx: toIn, color });
     const fe = findJackEl(from, fromOut, 'output');
     const te = findJackEl(to, toIn, 'input');
     if(fe) fe.classList.add('connected');
@@ -4184,13 +4242,14 @@ requestAnimationFrame(() => {
         if(!e.ctrlKey && !e.metaKey) return;
         e.stopPropagation();
         const modIdx = parseInt(mod.dataset.modIdx);
+        const modUuid = _modIdxToUuid(modIdx);
         // Find cable coming IN and cable going OUT
-        const inCable = cables.find(c => c.toMod === modIdx);
-        const outCable = cables.find(c => c.fromMod === modIdx);
+        const inCable = cables.find(c => c.toUuid === modUuid);
+        const outCable = cables.find(c => c.fromUuid === modUuid);
         if(inCable && outCable){
           // Reconnect: source of inCable -> destination of outCable
           pushUndo();
-          const newCable = {fromMod:inCable.fromMod, fromIdx:inCable.fromIdx, toMod:outCable.toMod, toIdx:outCable.toIdx, color:inCable.color};
+          const newCable = {fromUuid:inCable.fromUuid, fromIdx:inCable.fromIdx, toUuid:outCable.toUuid, toIdx:outCable.toIdx, color:inCable.color};
           cables.splice(cables.indexOf(inCable), 1);
           const oi = cables.indexOf(outCable);
           if(oi >= 0) cables.splice(oi, 1);
@@ -4199,13 +4258,15 @@ requestAnimationFrame(() => {
           // Only one side connected, just remove cables
           pushUndo();
           for(let i=cables.length-1;i>=0;i--){
-            if(cables[i].toMod===modIdx || cables[i].fromMod===modIdx) cables.splice(i,1);
+            if(cables[i].toUuid===modUuid || cables[i].fromUuid===modUuid) cables.splice(i,1);
           }
         }
         // Update jack UI
         document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
         cables.forEach(c => {
-          const fe=findJackEl(c.fromMod,c.fromIdx,'output'), te=findJackEl(c.toMod,c.toIdx,'input');
+          const fMi = _uuidToModIdx(c.fromUuid), tMi = _uuidToModIdx(c.toUuid);
+          if(fMi < 0 || tMi < 0) return;
+          const fe=findJackEl(fMi,c.fromIdx,'output'), te=findJackEl(tMi,c.toIdx,'input');
           if(fe) fe.classList.add('connected');
           if(te) te.classList.add('connected');
         });
@@ -4282,10 +4343,13 @@ requestAnimationFrame(() => {
           const modIdx = parseInt(mod.dataset.modIdx);
           const mr = mod.getBoundingClientRect();
           const mcx = mr.left + mr.width/2, mcy = mr.top + mr.height/2;
+          const modUuid = _modIdxToUuid(modIdx);
           for(let ci=0; ci<cables.length; ci++){
             const c = cables[ci];
-            const fromEl = findJackEl(c.fromMod, c.fromIdx, 'output');
-            const toEl = findJackEl(c.toMod, c.toIdx, 'input');
+            const fMi = _uuidToModIdx(c.fromUuid), tMi = _uuidToModIdx(c.toUuid);
+            if(fMi < 0 || tMi < 0) continue;
+            const fromEl = findJackEl(fMi, c.fromIdx, 'output');
+            const toEl = findJackEl(tMi, c.toIdx, 'input');
             if(!fromEl || !toEl) continue;
             const f = getJackCenter(fromEl), t = getJackCenter(toEl);
             // Check proximity to cable line (within 20px)
@@ -4299,8 +4363,8 @@ requestAnimationFrame(() => {
               // Insert THROUGH: replace cable with two cables (keep same color)
               pushUndo();
               const orig = cables.splice(ci, 1)[0];
-              cables.push({fromMod:orig.fromMod, fromIdx:orig.fromIdx, toMod:modIdx, toIdx:0, color:orig.color});
-              cables.push({fromMod:modIdx, fromIdx:0, toMod:orig.toMod, toIdx:orig.toIdx, color:orig.color});
+              cables.push({fromUuid:orig.fromUuid, fromIdx:orig.fromIdx, toUuid:modUuid, toIdx:0, color:orig.color});
+              cables.push({fromUuid:modUuid, fromIdx:0, toUuid:orig.toUuid, toIdx:orig.toIdx, color:orig.color});
               // Mark jacks connected
               const inJ=findJackEl(modIdx,0,'input'), outJ=findJackEl(modIdx,0,'output');
               if(inJ) inJ.classList.add('connected');
@@ -4414,14 +4478,8 @@ requestAnimationFrame(() => {
     }
   });
 
-  // Mark default cable jacks as connected
-  cables.forEach(c => {
-    const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
-    const te = findJackEl(c.toMod, c.toIdx, 'input');
-    if(fe) fe.classList.add('connected');
-    if(te) te.classList.add('connected');
-  });
-  drawAllCables();
+  // Default cable seeding happens below after desktopInstances is populated,
+  // so UUID lookups resolve. (drawAllCables will be called after that.)
 
   // ═══════════════════════════════════════════════════════════════════
   // PHASE A: Multi-instance support (UUID layer + spawnModule)
@@ -4450,6 +4508,24 @@ requestAnimationFrame(() => {
     mod.dataset.isOriginal = '1';
     desktopInstances[uuid] = { modIdx: i, domEl: mod, type: MOD_NAMES[i], isOriginal: true };
   });
+
+  // Hydrate default cables from index-based seeds into the UUID-keyed runtime shape.
+  // Must run AFTER desktopInstances is populated so _modIdxToUuid resolves.
+  DEFAULT_CABLE_SEEDS.forEach(s => {
+    const fromUuid = _modIdxToUuid(s.fromMod);
+    const toUuid = _modIdxToUuid(s.toMod);
+    if(!fromUuid || !toUuid) return;
+    cables.push({ fromUuid, fromIdx: s.fromIdx, toUuid, toIdx: s.toIdx, color: s.color });
+  });
+  cables.forEach(c => {
+    const fMi = _uuidToModIdx(c.fromUuid), tMi = _uuidToModIdx(c.toUuid);
+    if(fMi < 0 || tMi < 0) return;
+    const fe = findJackEl(fMi, c.fromIdx, 'output');
+    const te = findJackEl(tMi, c.toIdx, 'input');
+    if(fe) fe.classList.add('connected');
+    if(te) te.classList.add('connected');
+  });
+  drawAllCables();
 
   // Wire STATE MORPH controls (SET A / SET B / PLAY / easing). Runs on originals & clones.
   function _wireMorphControls(mod){
@@ -4865,12 +4941,12 @@ requestAnimationFrame(() => {
     const rmIdx = inst.modIdx;
     const rmUuid = uuid;
 
-    // Drop cables touching this module; shift others
+    // Drop cables touching this module's UUID. No re-indexing needed —
+    // cables store UUIDs directly, so shifting modIdx values does not affect
+    // cable references.
     for(let i = cables.length - 1; i >= 0; i--){
       const c = cables[i];
-      if(c.fromMod === rmIdx || c.toMod === rmIdx){ cables.splice(i, 1); continue; }
-      if(c.fromMod > rmIdx) c.fromMod--;
-      if(c.toMod > rmIdx) c.toMod--;
+      if(c.fromUuid === rmUuid || c.toUuid === rmUuid) cables.splice(i, 1);
     }
 
     // Remove from state arrays
@@ -4910,8 +4986,11 @@ requestAnimationFrame(() => {
     // Reconnect jack-connected class state
     document.querySelectorAll('.jack').forEach(j => j.classList.remove('connected'));
     cables.forEach(c => {
-      const fe = findJackEl(c.fromMod, c.fromIdx, 'output');
-      const te = findJackEl(c.toMod, c.toIdx, 'input');
+      const fMi = _uuidToModIdx(c.fromUuid);
+      const tMi = _uuidToModIdx(c.toUuid);
+      if(fMi < 0 || tMi < 0) return;
+      const fe = findJackEl(fMi, c.fromIdx, 'output');
+      const te = findJackEl(tMi, c.toIdx, 'input');
       if(fe) fe.classList.add('connected');
       if(te) te.classList.add('connected');
     });
