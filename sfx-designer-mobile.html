@@ -4572,10 +4572,7 @@ requestAnimationFrame(() => {
             node.state[kid] = resetVal;
             drawMobKnob(canvas, def, resetVal);
             valEl.textContent = fmtVal(resetVal);
-            // Live-update the audio param; fall back to rebuild if unmapped
-            if(!liveKnobUpdate(nodeId, kid, resetVal)){
-              if(!mobile._suppressRebuild) rebuildMobileIfPlaying();
-            }
+            liveKnobUpdate(nodeId, kid, resetVal);
             return;
           }
           lastTap = now;
@@ -4614,11 +4611,10 @@ requestAnimationFrame(() => {
           mobile._suppressRebuild = false; // re-enable rebuilds now that drag is done
           canvas.classList.remove('dragging');
           try { canvas.releasePointerCapture(e.pointerId); } catch(_){}
-          // If any knob update during this drag was unmapped, do one crossfade rebuild now
-          if(mobile._needsRebuildOnRelease){
-            mobile._needsRebuildOnRelease = false;
-            rebuildMobileIfPlaying();
-          }
+          // Values are already written to node.states; liveKnobUpdate handled what it could.
+          // Do NOT rebuild here — it re-triggers all sounds. Unmapped knob changes
+          // will take effect on the next structural rebuild (cable/node/play-stop).
+          mobile._needsRebuildOnRelease = false;
         }
         canvas.addEventListener('pointerup', endDrag);
         canvas.addEventListener('pointercancel', endDrag);
@@ -4649,10 +4645,7 @@ requestAnimationFrame(() => {
               node.state[kid] = v;
               drawMobKnob(canvas, def, v);
               valEl.textContent = fmtVal(v);
-              // Live-update audio; fall back to rebuild if unmapped
-              if(!liveKnobUpdate(nodeId, kid, v)){
-                if(!mobile._suppressRebuild) rebuildMobileIfPlaying();
-              }
+              liveKnobUpdate(nodeId, kid, v);
             } else {
               valEl.textContent = prevText;
             }
