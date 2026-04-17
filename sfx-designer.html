@@ -4721,29 +4721,32 @@ requestAnimationFrame(() => {
         btn.dataset.modIdx = newIdx;
         btn.dataset.outIdx = o;
         btn.addEventListener('click', () => {
-          const curOut = selectedOutput[newIdx];
-          modKnobIds[newIdx].forEach(id => { modOutputState[newIdx][curOut][id] = knobState[id]; });
+          // Read modIdx fresh at click time — closures captured at wire time
+          // go stale after other clones are deleted (modIdx values shift down).
+          const uuid = mod.dataset.uuid;
+          const di = window.desktopInstances || {};
+          const curIdx = (uuid && di[uuid]) ? di[uuid].modIdx : newIdx;
+          const curOut = selectedOutput[curIdx];
+          modKnobIds[curIdx].forEach(id => { modOutputState[curIdx][curOut][id] = knobState[id]; });
           Object.keys(dropdownModMap).forEach(did => {
-            if(dropdownModMap[did] === newIdx){
-              modOutputState[newIdx][curOut]['_'+did] = dropdowns[did];
+            if(dropdownModMap[did] === curIdx){
+              modOutputState[curIdx][curOut]['_'+did] = dropdowns[did];
             }
           });
-          selectedOutput[newIdx] = o;
-          modKnobIds[newIdx].forEach(id => {
-            knobState[id] = modOutputState[newIdx][o][id];
+          selectedOutput[curIdx] = o;
+          modKnobIds[curIdx].forEach(id => {
+            knobState[id] = modOutputState[curIdx][o][id];
             updateKnobDisplay(id);
           });
           Object.keys(dropdownModMap).forEach(did => {
-            if(dropdownModMap[did] === newIdx){
-              const val = modOutputState[newIdx][o]['_'+did];
+            if(dropdownModMap[did] === curIdx){
+              const val = modOutputState[curIdx][o]['_'+did];
               if(val){ dropdowns[did] = val; const el = document.getElementById(did); if(el) el.value = val; }
             }
           });
           row.querySelectorAll('.out-sel-btn').forEach((b, bi) => b.classList.toggle('active', bi === o));
           // STATE MORPH: refresh per-output UI on this clone
           try {
-            const uuid = mod.dataset.uuid;
-            const di = window.desktopInstances || {};
             if(uuid && di[uuid] && window._isMorphType && window._isMorphType(di[uuid].type)){
               window._morphRefreshEasingDropdown && window._morphRefreshEasingDropdown(uuid);
               window.morphRefreshLabel && window.morphRefreshLabel(uuid);
@@ -4916,6 +4919,8 @@ requestAnimationFrame(() => {
     delete clone.dataset.modIdx;
     delete clone.dataset.uuid;
     delete clone.dataset.soloInput;
+    // Strip wiring-guard flags so _wireMorphControls re-attaches handlers on clone
+    clone.querySelectorAll('[data-morph-wired]').forEach(el => delete el.dataset.morphWired);
     clone.classList.remove('bypassed','selected','collapsed-knobs');
     // Remove duplicate IDs on children that would collide globally (except knob-val IDs
     // used by updateKnobDisplay — those CAN remain; getElementById finds first match
