@@ -6793,22 +6793,24 @@ requestAnimationFrame(() => {
   // Uses direct liveRefs.paramMap stored during buildMobileAudio.
   // Returns true if the param was updated live, false if a rebuild is needed.
   function liveKnobUpdate(nodeId, knobId, value){
-    if(!mobile.playing) return false;
+    if(!mobile.playing){ console.log('[LKU] not playing'); return false; }
     const audioEntry = mobile.audio[nodeId];
-    if(!audioEntry || !audioEntry.liveRefs) return false;
+    if(!audioEntry || !audioEntry.liveRefs){ console.log('[LKU] no audioEntry/liveRefs for',nodeId); return false; }
     const node = mobile.mobileNodes[nodeId];
-    if(!node) return false;
+    if(!node){ console.log('[LKU] no node',nodeId); return false; }
     const outIdx = (mobile.currentOut[nodeId] || node.selectedOutput || 0) | 0;
     const refs = audioEntry.liveRefs[outIdx];
-    if(!refs || !refs.paramMap || !refs.paramMap[knobId]) return false;
+    if(!refs || !refs.paramMap || !refs.paramMap[knobId]){ console.log('[LKU] no paramMap for',knobId,'on output',outIdx,'keys:', refs && refs.paramMap ? Object.keys(refs.paramMap) : 'none'); return false; }
     const params = refs.paramMap[knobId];
-    if(!params || params.length === 0) return false;
+    if(!params || params.length === 0){ console.log('[LKU] empty params for',knobId); return false; }
     const now = audioCtx.currentTime;
+    console.log('[LKU] updating',knobId,'=',value,'on',params.length,'params, t=',now);
     params.forEach(ap => {
       try {
         ap.cancelScheduledValues(now);
         ap.setValueAtTime(value, now);
-      } catch(_){
+      } catch(e){
+        console.log('[LKU] setValueAtTime failed:',e.message);
         try { ap.value = value; } catch(_2){}
       }
     });
