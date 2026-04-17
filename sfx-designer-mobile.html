@@ -4566,11 +4566,16 @@ requestAnimationFrame(() => {
           // Double-tap reset
           if(now - lastTap < 300){
             lastTap = 0;
+            mobile._suppressRebuild = true; // knob change: suppress rebuild
             saveHistory();
             const resetVal = def.val;
             node.state[kid] = resetVal;
             drawMobKnob(canvas, def, resetVal);
             valEl.textContent = fmtVal(resetVal);
+            // Live-update the audio param; fall back to rebuild if unmapped
+            if(!liveKnobUpdate(nodeId, kid, resetVal)){
+              rebuildMobileIfPlaying();
+            }
             return;
           }
           lastTap = now;
@@ -4588,7 +4593,8 @@ requestAnimationFrame(() => {
           if(!moved && Math.abs(dy) < 3) return; // tiny threshold to allow tap
           if(!moved){
             moved = true;
-            if(!didSaveHistory){ saveHistory(); didSaveHistory = true; }
+            // Suppress rebuild for this saveHistory call (knob drag)
+            if(!didSaveHistory){ mobile._suppressRebuild = true; saveHistory(); didSaveHistory = true; }
           }
           const range = def.max - def.min;
           const sensitivity = 150; // px for full range, matches desktop
@@ -4597,6 +4603,8 @@ requestAnimationFrame(() => {
           node.state[kid] = v;
           drawMobKnob(canvas, def, v);
           valEl.textContent = fmtVal(v);
+          // Live-update audio param on the running graph (no rebuild)
+          liveKnobUpdate(nodeId, kid, v);
         });
         function endDrag(e){
           if(!dragging) return;
@@ -4629,10 +4637,15 @@ requestAnimationFrame(() => {
             const raw = parseFloat(input.value);
             if(!isNaN(raw)){
               const v = clampSnap(raw);
+              mobile._suppressRebuild = true; // knob value entry: suppress rebuild
               saveHistory();
               node.state[kid] = v;
               drawMobKnob(canvas, def, v);
               valEl.textContent = fmtVal(v);
+              // Live-update audio; fall back to rebuild if unmapped
+              if(!liveKnobUpdate(nodeId, kid, v)){
+                rebuildMobileIfPlaying();
+              }
             } else {
               valEl.textContent = prevText;
             }
@@ -5090,6 +5103,10 @@ requestAnimationFrame(() => {
       node.state[knobId] = value;
       overlay.remove();
       renderMobilePages();
+      // Live-update audio param; fall back to rebuild if unmapped
+      if(!liveKnobUpdate(nodeId, knobId, value)){
+        rebuildMobileIfPlaying();
+      }
     };
     btns.append(cancelB, doneB);
 
@@ -6103,6 +6120,332 @@ requestAnimationFrame(() => {
     return p;
   }
 
+  // ─── Live AudioParam capture for knob updates without rebuild ───────
+  // During buildMobileAudio we intercept audioCtx.createXxx calls to capture
+  // every AudioNode created for each output chain. After building, we map
+  // knobIds to their corresponding AudioParams so knob drags can update them
+  // in real time without stopping/restarting the graph.
+
+  // Map from knobId -> AudioParam extraction function given captured nodes.
+  // Each entry returns an array of AudioParams to update for that knob.
+  // The captured nodes object has: {oscillators, gains, filters, delays, panners, compressors, shapers}
+  function getParamsForKnob(knobId, captured, nodeType){
+    const oscs = captured.oscillators || [];
+    const gains = captured.gains || [];
+    const filters = captured.filters || [];
+    const delays = captured.delays || [];
+    const panners = captured.panners || [];
+    const comps = captured.compressors || [];
+
+    // --- Generators ---
+    if(nodeType === 'OSCILLATOR'){
+      if(knobId === 'pitch') return oscs.map(o => o.frequency);
+      if(knobId === 'wobRate') return oscs.filter(o => o._role === 'lfo').map(o => o.frequency);
+      if(knobId === 'wobDepth') return gains.filter(g => g._role === 'lfoGain').map(g => g.gain);
+      if(knobId === 'harm2') return gains.filter(g => g._role === 'h2').map(g => g.gain);
+      if(knobId === 'harm3') return gains.filter(g => g._role === 'h3').map(g => g.gain);
+    }
+    if(nodeType === 'SUB OCTAVE'){
+      if(knobId === 'subGain') return gains.filter(g => g._role === 'main').map(g => g.gain);
+      if(knobId === 'subFreq') return oscs.map(o => o.frequency);
+    }
+    if(nodeType === 'SUB RUMBLE'){
+      if(knobId === 'rumFreq') return oscs.filter(o => o._role === 'main').map(o => o.frequency);
+      if(knobId === 'rumGain') return gains.filter(g => g._role === 'main').map(g => g.gain);
+    }
+    if(nodeType === 'NOISE GEN'){
+      if(knobId === 'noiseGain') return gains.filter(g => g._role === 'main').map(g => g.gain);
+      if(knobId === 'noiseFilt') return filters.map(f => f.frequency);
+    }
+    if(nodeType === 'FM OSC'){
+      if(knobId === 'fmFreq') return oscs.map(o => o.frequency);
+      if(knobId === 'fmDepth') return gains.filter(g => g._role === 'main').map(g => g.gain);
+    }
+    if(nodeType === 'PWM OSC'){
+      if(knobId === 'pwmFreq') return oscs.filter(o => o._role !== 'lfo').map(o => o.frequency);
+      if(knobId === 'pwmRate') return oscs.filter(o => o._role === 'lfo').map(o => o.frequency);
+      if(knobId === 'pwmGain') return gains.filter(g => g._role === 'main').map(g => g.gain);
+    }
+    if(nodeType === 'DRONE'){
+      if(knobId === 'drnGain') return gains.map(g => g.gain);
+    }
+    if(nodeType === 'WIND'){
+      if(knobId === 'wndCut') return filters.map(f => f.frequency);
+      if(knobId === 'wndMod') return oscs.filter(o => o._role === 'lfo').map(o => o.frequency);
+      if(knobId === 'wndDepth') return gains.filter(g => g._role === 'lfoGain').map(g => g.gain);
+      if(knobId === 'wndGain') return gains.filter(g => g._role === 'main').map(g => g.gain);
+    }
+    if(nodeType === 'SHIMMER'){
+      if(knobId === 'shmDrift') return gains.filter(g => g._role === 'drift').map(g => g.gain);
+    }
+    if(nodeType === 'BOW'){
+      if(knobId === 'bowFreq') return oscs.filter(o => o._role === 'main').map(o => o.frequency);
+      if(knobId === 'bowGain') return gains.filter(g => g._role === 'main').map(g => g.gain);
+    }
+    if(nodeType === 'CRACKLE'){
+      if(knobId === 'crkTone') return filters.map(f => f.frequency);
+      if(knobId === 'crkGain') return gains.filter(g => g._role === 'main').map(g => g.gain);
+    }
+
+    // --- Effects ---
+    if(nodeType === 'TREMOLO' || nodeType.startsWith('TREMOLO')){
+      if(knobId === 'tremRate') return oscs.filter(o => o._role === 'lfo').map(o => o.frequency);
+      if(knobId === 'tremDepth') return gains.filter(g => g._role === 'lfoGain').map(g => g.gain);
+    }
+    if(nodeType === 'PITCH WOBBLE'){
+      if(knobId === 'wobRate') return oscs.map(o => o.frequency);
+      if(knobId === 'wobDepth') return gains.filter(g => g._role === 'lfoGain').map(g => g.gain);
+    }
+    if(nodeType.startsWith('FILTER')){
+      if(knobId === 'filtCut') return filters.map(f => f.frequency);
+      if(knobId === 'filtQ') return filters.map(f => f.Q);
+    }
+    if(nodeType === 'RING MOD'){
+      if(knobId === 'ringFreq') return oscs.map(o => o.frequency);
+      if(knobId === 'ringMix') return gains.filter(g => g._role === 'wet').map(g => g.gain);
+    }
+    if(nodeType === 'DELAY'){
+      if(knobId === 'delTime') return delays.map(d => d.delayTime);
+      if(knobId === 'delFeed') return gains.filter(g => g._role === 'feedback').map(g => g.gain);
+      if(knobId === 'delMix') return gains.filter(g => g._role === 'wet').map(g => g.gain);
+    }
+    if(nodeType === 'PHASER'){
+      if(knobId === 'phRate') return oscs.filter(o => o._role === 'lfo').map(o => o.frequency);
+      if(knobId === 'phDepth') return gains.filter(g => g._role === 'lfoGain').map(g => g.gain);
+      if(knobId === 'phMix') return gains.filter(g => g._role === 'wet').map(g => g.gain);
+    }
+    if(nodeType === 'REVERB'){
+      if(knobId === 'rvbMix') return gains.filter(g => g._role === 'wet').map(g => g.gain);
+      if(knobId === 'rvbDamp') return filters.map(f => f.frequency);
+    }
+    if(nodeType === 'COMPRESSOR'){
+      if(knobId === 'cmpThresh') return comps.map(c => c.threshold);
+      if(knobId === 'cmpRatio') return comps.map(c => c.ratio);
+      if(knobId === 'cmpAtk') return comps.map(c => c.attack);
+      if(knobId === 'cmpRel') return comps.map(c => c.release);
+    }
+    if(nodeType.startsWith('EQ')){
+      if(knobId === 'eqFreq') return filters.map(f => f.frequency);
+      if(knobId === 'eqGainDb') return filters.map(f => f.gain);
+      if(knobId === 'eqQ') return filters.map(f => f.Q);
+    }
+    if(nodeType === 'FLANGER'){
+      if(knobId === 'flRate') return oscs.filter(o => o._role === 'lfo').map(o => o.frequency);
+      if(knobId === 'flDepth') return gains.filter(g => g._role === 'lfoGain').map(g => g.gain);
+      if(knobId === 'flFeed') return gains.filter(g => g._role === 'feedback').map(g => g.gain);
+      if(knobId === 'flMix') return gains.filter(g => g._role === 'wet').map(g => g.gain);
+    }
+    if(nodeType === 'GATE'){
+      if(knobId === 'gtRate') return oscs.filter(o => o._role === 'lfo').map(o => o.frequency);
+    }
+    if(nodeType === 'PANNER'){
+      if(knobId === 'panRate') return oscs.filter(o => o._role === 'lfo').map(o => o.frequency);
+      if(knobId === 'panWidth') return gains.filter(g => g._role === 'lfoGain').map(g => g.gain);
+    }
+    if(nodeType === 'ENVELOPE'){
+      if(knobId === 'envSus') return gains.filter(g => g._role === 'main').map(g => g.gain);
+    }
+
+    // --- Mix / Master ---
+    if(nodeType === 'MASTER'){
+      if(knobId === 'masterGain') return gains.filter(g => g._role === 'main').map(g => g.gain);
+    }
+    // MIX level/amp: handled via generic gain lookup
+    if(nodeType.startsWith('MIX') || nodeType === 'INPUT MIX'){
+      if(/Level$/.test(knobId)) return gains.filter(g => g._role === 'level').map(g => g.gain);
+      if(/Amp$/.test(knobId)) return gains.filter(g => g._role === 'amp').map(g => g.gain);
+      if(/^inLvl/.test(knobId)){
+        const idx = parseInt(knobId.replace('inLvl',''));
+        return gains.filter(g => g._role === 'inLvl' && g._idx === idx).map(g => g.gain);
+      }
+    }
+
+    return []; // unmapped: will fall back to rebuild
+  }
+
+  // Intercept audioCtx.createXxx to tag nodes with roles during buildChain.
+  // We wrap buildChain so captured nodes get stored per-output for each mobile node.
+  const _origBuildChain = buildChain;
+  function capturedBuildChain(name, p, inGain, outGain, triggerTimes){
+    const captured = { oscillators:[], gains:[], filters:[], delays:[], panners:[], compressors:[], shapers:[] };
+
+    // Patch audioCtx create methods to capture created nodes
+    const _createOsc = audioCtx.createOscillator.bind(audioCtx);
+    const _createGain = audioCtx.createGain.bind(audioCtx);
+    const _createFilter = audioCtx.createBiquadFilter.bind(audioCtx);
+    const _createDelay = audioCtx.createDelay.bind(audioCtx);
+    const _createPanner = audioCtx.createStereoPanner.bind(audioCtx);
+    const _createComp = audioCtx.createDynamicsCompressor.bind(audioCtx);
+    const _createShaper = audioCtx.createWaveShaper.bind(audioCtx);
+
+    audioCtx.createOscillator = function(){
+      const n = _createOsc(); captured.oscillators.push(n); return n;
+    };
+    audioCtx.createGain = function(){
+      const n = _createGain(); captured.gains.push(n); return n;
+    };
+    audioCtx.createBiquadFilter = function(){
+      const n = _createFilter(); captured.filters.push(n); return n;
+    };
+    audioCtx.createDelay = function(maxTime){
+      const n = _createDelay(maxTime); captured.delays.push(n); return n;
+    };
+    audioCtx.createStereoPanner = function(){
+      const n = _createPanner(); captured.panners.push(n); return n;
+    };
+    audioCtx.createDynamicsCompressor = function(){
+      const n = _createComp(); captured.compressors.push(n); return n;
+    };
+    audioCtx.createWaveShaper = function(){
+      const n = _createShaper(); captured.shapers.push(n); return n;
+    };
+
+    const sources = _origBuildChain(name, p, inGain, outGain, triggerTimes);
+
+    // Restore original methods
+    audioCtx.createOscillator = _createOsc;
+    audioCtx.createGain = _createGain;
+    audioCtx.createBiquadFilter = _createFilter;
+    audioCtx.createDelay = _createDelay;
+    audioCtx.createStereoPanner = _createPanner;
+    audioCtx.createDynamicsCompressor = _createComp;
+    audioCtx.createWaveShaper = _createShaper;
+
+    // Tag nodes with roles based on module type for knob->param mapping.
+    // The limiter and safe gain are always the first two gains created by buildChain.
+    // We tag remaining nodes based on module-specific knowledge of buildChain's structure.
+    tagCapturedNodes(name, captured);
+
+    return { sources, captured };
+  }
+
+  // Assign _role tags to captured nodes so getParamsForKnob can find them.
+  // Each module type in buildChain creates nodes in a known order.
+  function tagCapturedNodes(name, cap){
+    const g = cap.gains, o = cap.oscillators, f = cap.filters, d = cap.delays;
+    // First 2 gains are always limiter + safe from buildChain preamble
+    // (except generators that don't use inGain pass-through; safe is still created)
+    // g[0] = safe (value 0.7), created inside buildChain's limiter section
+
+    if(name === 'OSCILLATOR'){
+      // g[0]=safe, g[1]=g1(h1), g[2]=g2(h2), g[3]=g3(h3), g[4]=wobGain
+      if(g[1]) g[1]._role = 'h1';
+      if(g[2]) g[2]._role = 'h2';
+      if(g[3]) g[3]._role = 'h3';
+      if(g[4]) g[4]._role = 'lfoGain';
+      // o[0]=osc1, o[1]=osc2, o[2]=osc3, o[3]=wobLfo
+      if(o[3]) o[3]._role = 'lfo';
+      // Detuned oscs start at o[4] if present
+    }
+    else if(name === 'SUB OCTAVE'){
+      if(g[1]) g[1]._role = 'main';
+    }
+    else if(name === 'TREMOLO'){
+      // g[0]=safe, g[1]=tg(base), g[2]=la(lfoAmp)
+      if(o[0]) o[0]._role = 'lfo';
+      if(g[2]) g[2]._role = 'lfoGain';
+    }
+    else if(name === 'PITCH WOBBLE'){
+      if(g[1]) g[1]._role = 'lfoGain';
+    }
+    else if(name === 'SUB RUMBLE'){
+      // o[0]=main rumble osc, o[1]=drift osc
+      if(o[0]) o[0]._role = 'main';
+      if(g[1]) g[1]._role = 'main'; // rumGain
+    }
+    else if(name === 'NOISE GEN'){
+      // g[0]=safe, f[0]=noiseFilt, g[1]=noiseGain
+      if(g[1]) g[1]._role = 'main';
+    }
+    else if(name === 'FM OSC'){
+      if(g[1]) g[1]._role = 'main'; // fmDepth gain
+    }
+    else if(name === 'PWM OSC'){
+      // o[0]=o1, o[1]=o2, o[2]=lfo; g[0]=safe, g[1]=g1, g[2]=g2, g[3]=lgain
+      if(o[2]) o[2]._role = 'lfo';
+      if(g[1]) g[1]._role = 'main';
+      if(g[2]) g[2]._role = 'main';
+    }
+    else if(name === 'DRONE'){
+      g.forEach((gg,i) => { if(i > 0) gg._role = 'main'; });
+    }
+    else if(name === 'WIND'){
+      // o[0]=noiseSrc, o[1]=lfo; f[0]=filter; g[0]=safe, g[1]=lfoGain, g[2]=mainGain
+      if(o.length > 1) o[o.length-1]._role = 'lfo';
+      if(g[1]) g[1]._role = 'lfoGain';
+      if(g[2]) g[2]._role = 'main';
+    }
+    else if(name === 'SHIMMER'){
+      // Each layer: osc, driftLfo, driftGain, ampLfo, ampGain, baseGain
+      // Per layer: g at indices 1+i*2 = driftGain (even), 1+i*2+1 = baseGain
+      // Actually pattern: safe, then per layer [driftGain, ampGain, baseGain]
+      g.forEach((gg,i) => { if(i > 0 && i % 3 === 1) gg._role = 'drift'; });
+    }
+    else if(name === 'BOW'){
+      if(o[0]) o[0]._role = 'main';
+      // g[0]=safe, g[1]=frictionGain, g[2]=pressGain, g[3]=mainGain
+      if(g[3]) g[3]._role = 'main';
+      else if(g[2]) g[2]._role = 'main'; // fallback
+    }
+    else if(name === 'CRACKLE'){
+      if(g[1]) g[1]._role = 'main';
+    }
+    else if(name.startsWith('FILTER')){
+      // f[0] is the main filter; f[1] if present is from limiter (rare - no, limiter is compressor)
+      // Actually buildChain preamble uses createDynamicsCompressor, not createBiquadFilter
+      // So f[0] is the actual filter
+    }
+    else if(name === 'RING MOD'){
+      // g[0]=safe, g[1]=rg(carrier), g[2]=dry, g[3]=wet
+      if(g[3]) g[3]._role = 'wet';
+    }
+    else if(name === 'DELAY'){
+      // g[0]=safe, g[1]=fb, g[2]=dry, g[3]=wet
+      if(g[1]) g[1]._role = 'feedback';
+      if(g[3]) g[3]._role = 'wet';
+    }
+    else if(name === 'PHASER'){
+      if(o[0]) o[0]._role = 'lfo';
+      // g[0]=safe, g[1]=phaserLfoGain, g[2]=dry, g[3]=wet
+      if(g[1]) g[1]._role = 'lfoGain';
+      if(g[3]) g[3]._role = 'wet';
+    }
+    else if(name === 'REVERB'){
+      // g[0]=safe, g[1]=dry, g[2]=wet, g[3]=merge... actually:
+      // dry, wet, damp filter, then 4 delay lines with fb gains, then merge
+      if(g[1]) g[1]._role = 'dry';
+      if(g[2]) g[2]._role = 'wet';
+    }
+    else if(name === 'COMPRESSOR'){
+      // comp[0] is the limiter from preamble, comp[1] is the actual compressor
+      // Actually: limiter is comp[0], user compressor is comp[1]
+    }
+    else if(name.startsWith('EQ')){
+      // f[0] is the EQ filter
+    }
+    else if(name === 'FLANGER'){
+      if(o[0]) o[0]._role = 'lfo';
+      // g[0]=safe, g[1]=lfoGain, g[2]=fb, g[3]=dry, g[4]=wet
+      if(g[1]) g[1]._role = 'lfoGain';
+      if(g[2]) g[2]._role = 'feedback';
+      if(g[4]) g[4]._role = 'wet';
+    }
+    else if(name === 'GATE'){
+      // g[0]=safe, g[1]=gate, g[2]=lfoGain, g[3]=base
+      if(o[0]) o[0]._role = 'lfo';
+    }
+    else if(name === 'PANNER'){
+      if(o[0]) o[0]._role = 'lfo';
+      if(g[1]) g[1]._role = 'lfoGain';
+    }
+    else if(name === 'ENVELOPE'){
+      if(g[1]) g[1]._role = 'main';
+    }
+    else if(name === 'MASTER'){
+      if(g[0]) g[0]._role = 'main';
+    }
+  }
+
   // Build audio for a single mobile node. Returns {ins, outs, sources}
   // For gen/fx/pat nodes, each of the 4 outputs is an INDEPENDENT audio chain
   // driven by its own channel state (node.states[i] / node.patternStates[i]).
@@ -6157,6 +6500,10 @@ requestAnimationFrame(() => {
       return { ins, outs, sources };
     }
 
+    // capturedPerOutput stores the captured AudioNode refs for each output chain
+    // so we can live-update params later without rebuilding the graph.
+    const capturedPerOutput = {};
+
     if(node.cat === 'gen'){
       // Generator: 4 independent output chains, each with its own params.
       // No inputs. buildChain needs a dummy inGain (unused by most gens).
@@ -6168,8 +6515,9 @@ requestAnimationFrame(() => {
         const dummyIn = audioCtx.createGain();
         const pi = patternInfo ? patternInfo[o] : null;
         const tt = pi ? getTriggerTimes(0, pi, 600) : null;
-        const srcs = buildChain(node.type, p, dummyIn, outs[o], tt);
-        sources.push(...srcs);
+        const result = capturedBuildChain(node.type, p, dummyIn, outs[o], tt);
+        sources.push(...result.sources);
+        capturedPerOutput[o] = result.captured;
       }
     } else if(node.cat === 'fx'){
       // Effect: 4 independent chains. Mirror desktop behavior:
@@ -6185,8 +6533,9 @@ requestAnimationFrame(() => {
         } else {
           if(ins[o]) ins[o].connect(chainIn);
         }
-        const srcs = buildChain(node.type, p, chainIn, outs[o], null);
-        sources.push(...srcs);
+        const result = capturedBuildChain(node.type, p, chainIn, outs[o], null);
+        sources.push(...result.sources);
+        capturedPerOutput[o] = result.captured;
       }
     } else if(node.cat === 'mix'){
       const prefixMap = {'MIX 1':'mix','MIX 2':'mix2','MIX 3':'mix3','MIX 4':'mix4','MIX 5':'mix5'};
@@ -6195,14 +6544,19 @@ requestAnimationFrame(() => {
         // INPUT MIX: all inputs summed to single output (8 in / 1 out).
         const p = paramsForOutput(node, 0);
         const sum = audioCtx.createGain(); sum.gain.value = 1;
+        const mixCap = { gains:[] };
         for(let i=0;i<inCount;i++){
           const lvl = audioCtx.createGain();
           lvl.gain.value = (p[prefix+'Level'] != null) ? p[prefix+'Level'] : 1;
+          lvl._role = 'level'; lvl._idx = i;
           const amp = audioCtx.createGain();
           amp.gain.value = (p[prefix+'Amp'] != null) ? p[prefix+'Amp'] : 1;
+          amp._role = 'amp'; amp._idx = i;
           ins[i].connect(lvl); lvl.connect(amp); amp.connect(sum);
+          mixCap.gains.push(lvl, amp);
         }
         sum.connect(outs[0]);
+        capturedPerOutput[0] = mixCap;
       } else {
         // MIX / AMP: 4 inputs, each with independent LEVEL/AMP from states[i],
         // all summed to 1 output.
@@ -6211,11 +6565,16 @@ requestAnimationFrame(() => {
           const p = paramsForOutput(node, i);
           const lvl = audioCtx.createGain();
           lvl.gain.value = (p[prefix+'Level'] != null) ? p[prefix+'Level'] : 1;
+          lvl._role = 'level';
           const amp = audioCtx.createGain();
           amp.gain.value = (p[prefix+'Amp'] != null) ? p[prefix+'Amp'] : 1;
+          amp._role = 'amp';
           if(ins[i]) { ins[i].connect(lvl); }
           lvl.connect(amp);
           amp.connect(sum);
+          // For MIX, each input channel stores its own captured nodes
+          // so knob changes on output selector i map to the right gain nodes
+          capturedPerOutput[i] = { gains:[lvl, amp], oscillators:[], filters:[], delays:[], panners:[], compressors:[], shapers:[] };
         }
         sum.connect(outs[0]);
       }
@@ -6248,22 +6607,28 @@ requestAnimationFrame(() => {
       const p = paramsForOutput(node, 0);
       const g = audioCtx.createGain();
       g.gain.value = (p.masterGain != null) ? p.masterGain : 0.6;
+      g._role = 'main';
       ins[0].connect(g); g.connect(outs[0]);
+      capturedPerOutput[0] = { gains:[g], oscillators:[], filters:[], delays:[], panners:[], compressors:[], shapers:[] };
     } else if(node.type === 'INPUT MIX'){
       const p = paramsForOutput(node, 0);
       const merge = audioCtx.createGain(); merge.gain.value = 1;
+      const inMixCap = { gains:[] };
       for(let i=0;i<inCount;i++){
         const lvl = audioCtx.createGain();
         lvl.gain.value = (p['inLvl'+i] != null) ? p['inLvl'+i] : 1;
+        lvl._role = 'inLvl'; lvl._idx = i;
         ins[i].connect(lvl); lvl.connect(merge);
+        inMixCap.gains.push(lvl);
       }
       merge.connect(outs[0]);
+      capturedPerOutput[0] = inMixCap;
     } else {
       // fallback pass-through
       if(ins[0]) ins[0].connect(outs[0]);
     }
 
-    return { ins, outs, sources };
+    return { ins, outs, sources, capturedPerOutput };
   }
 
   function startMobilePlay(){
@@ -6424,10 +6789,78 @@ requestAnimationFrame(() => {
     document.querySelectorAll('.mobPatGrid').forEach(g => { g._curStep = null; });
   }
 
+  // ─── Live knob update: set AudioParam on running graph without rebuild ──
+  // Returns true if the param was updated live, false if a rebuild is needed.
+  function liveKnobUpdate(nodeId, knobId, value){
+    if(!mobile.playing) return false;
+    const audioEntry = mobile.audio[nodeId];
+    if(!audioEntry || !audioEntry.capturedPerOutput) return false;
+    const node = mobile.mobileNodes[nodeId];
+    if(!node) return false;
+    const outIdx = (mobile.currentOut[nodeId] || node.selectedOutput || 0) | 0;
+    const captured = audioEntry.capturedPerOutput[outIdx];
+    if(!captured) return false;
+    const params = getParamsForKnob(knobId, captured, node.type);
+    if(!params || params.length === 0) return false;
+    const now = audioCtx.currentTime;
+    params.forEach(ap => {
+      try {
+        ap.cancelScheduledValues(now);
+        ap.setValueAtTime(value, now);
+      } catch(_){
+        try { ap.value = value; } catch(_2){}
+      }
+    });
+    return true;
+  }
+  mobile.liveKnobUpdate = liveKnobUpdate;
+
+  // ─── Crossfade rebuild for structural changes ─────────────────────────
+  // Instead of hard stop+start, crossfade old graph out / new graph in over 50ms
+  // to avoid audible clicks.
   function rebuildMobileIfPlaying(){
     if(!mobile.playing) return;
-    stopMobilePlay();
-    setTimeout(startMobilePlay, 230);
+    // Capture old masterIn for crossfade-out
+    const oldMasterIn = mobile.masterIn;
+    const oldAudio = mobile.audio;
+    const oldSources = [];
+    Object.values(oldAudio).forEach(a => { oldSources.push(...a.sources); });
+
+    // Fade out old graph
+    const now = audioCtx.currentTime;
+    try {
+      if(oldMasterIn){
+        oldMasterIn.gain.cancelScheduledValues(now);
+        oldMasterIn.gain.setValueAtTime(oldMasterIn.gain.value, now);
+        oldMasterIn.gain.linearRampToValueAtTime(0, now + 0.05);
+      }
+    } catch(_){}
+
+    // Temporarily mark as not playing so startMobilePlay can proceed
+    mobile.playing = false;
+    // Stop pattern animation
+    if(mobile.patAnimId){ cancelAnimationFrame(mobile.patAnimId); mobile.patAnimId = null; }
+
+    // Build new graph (startMobilePlay creates new masterIn)
+    startMobilePlay();
+
+    // Fade in new graph from 0
+    try {
+      if(mobile.masterIn){
+        mobile.masterIn.gain.setValueAtTime(0, now);
+        mobile.masterIn.gain.linearRampToValueAtTime(1, now + 0.05);
+      }
+    } catch(_){}
+
+    // After crossfade completes, tear down old graph
+    setTimeout(() => {
+      oldSources.forEach(s => { try { s.stop(); } catch(_){} });
+      Object.values(oldAudio).forEach(a => {
+        a.ins.forEach(n => { try { n.disconnect(); } catch(_){} });
+        a.outs.forEach(n => { try { n.disconnect(); } catch(_){} });
+      });
+      try { oldMasterIn && oldMasterIn.disconnect(); } catch(_){}
+    }, 60);
   }
   // Expose
   mobile.startPlay = startMobilePlay;
@@ -6948,20 +7381,19 @@ requestAnimationFrame(() => {
     }
   }
 
-  // When the user commits a knob change, if playing, rebuild that node's audio graph
-  // (Simpler: rebuild entire mobile graph — nodes are few on mobile)
-  // Wrap the pointerup on knob canvas via a MutationObserver-like approach:
-  // Easiest: listen for any change on node.state by hooking into the exisiting
-  // endDrag / commit paths. Since the code writes directly to node.state, we intercept
-  // by polling dirty flags via a setInterval — but cheaper to tap into saveHistory().
+  // When any state change occurs via saveHistory(), rebuild if playing.
+  // BUT: knob drags set mobile._suppressRebuild = true to skip the rebuild
+  // (they use liveKnobUpdate instead for smooth real-time audio updates).
+  // Structural changes (cable/node/pattern) do NOT set the flag, so they rebuild.
   const _origSaveHistory = saveHistory;
   saveHistory = function(){
     _origSaveHistory();
-    if(mobile.playing){
-      // Defer rebuild to let the state write settle
+    if(mobile.playing && !mobile._suppressRebuild){
+      // Structural change: rebuild with crossfade
       clearTimeout(mobile._rebuildT);
       mobile._rebuildT = setTimeout(() => { rebuildMobileIfPlaying(); }, 120);
     }
+    mobile._suppressRebuild = false;
   };
 
   // ════════════════════════════════════════════════════════════════════
