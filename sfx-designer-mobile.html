@@ -286,7 +286,7 @@
   .mobileNode.fx  { background:rgba(0,0,0,0.6); border:1px solid #00ffcc33; color:#00ffcc; }
   .mobileNode.mix { background:rgba(40,20,10,0.6); border:1px solid #ff994444; color:#00ffcc; }
   .mobileNode.pat { background:rgba(25,10,40,0.6); border:1px solid #aa66ff44; color:#00ffcc; }
-  .mobileNode.morph { background:rgba(35,15,45,0.6); border:1px solid #cc88ff44; color:#00ffcc; }
+  .mobileNode.morph { background:rgba(25,10,40,0.6); border:1px solid #aa66ff44; color:#00ffcc; }
 
   .mobileNode .nodeHeader {
     display:flex; justify-content:space-between; align-items:center;
@@ -298,7 +298,7 @@
   .mobileNode.fx  .nodeTitle { color:#00ffcc; }
   .mobileNode.mix .nodeTitle { color:#ff9944; }
   .mobileNode.pat .nodeTitle { color:#aa66ff; }
-  .mobileNode.morph .nodeTitle { color:#cc88ff; }
+  .mobileNode.morph .nodeTitle { color:#aa66ff; }
   .mobMorphControls { display:flex; flex-direction:column; gap:8px; margin-top:8px; padding:8px; border:1px solid #cc88ff44; background:rgba(0,0,0,0.3); }
   .mobMorphTargets { font-size:11px; color:#cc88ff; letter-spacing:1px; word-break:break-word; }
   .mobMorphSubLabel { font-size:10px; color:#00ffcc; letter-spacing:2px; margin-bottom:2px; }
@@ -307,7 +307,7 @@
   .mobMorphBtnRow { display:flex; gap:6px; }
   .mobMorphBtn { flex:1; padding:10px 6px; background:rgba(25,10,40,0.6); border:2px solid #cc88ff88; color:#cc88ff; font-family:inherit; font-size:14px; letter-spacing:2px; cursor:pointer; border-radius:0; }
   .mobMorphBtn:active { background:rgba(204,136,255,0.2); }
-  .pickerRow.morph { color:#cc88ff; border-color:#cc88ffaa; background:rgba(35,15,45,0.6); }
+  .pickerRow.morph { color:#aa66ff; border-color:#aa66ffaa; background:rgba(25,10,40,0.6); }
   .mobileNode .nodeDeleteBtn {
     width:36px; height:36px; border:2px solid #ff4444; background:transparent;
     color:#ff4444; font-family:inherit; font-size:18px; cursor:pointer; border-radius:0;
@@ -4916,14 +4916,8 @@ requestAnimationFrame(() => {
       nodeEl.appendChild(ex);
     }
     // Bottom jack row (outputs), always shown if applicable — both collapsed AND expanded.
-    // STATE MORPH exception: when collapsed, suppress the 4 output jacks too so the node
-    // is purely a title + expand/delete affordance. Users must expand the morph node to
-    // access cabling (which is the same place they manage SET A/B, easing, targets).
-    const suppressBotJacks = (!expanded && (node.type === 'STATE MORPH' || node.cat === 'morph'));
-    if(!suppressBotJacks){
-      const botJacks = buildJackRow(node, 'bottom');
-      if(botJacks) nodeEl.appendChild(botJacks);
-    }
+    const botJacks = buildJackRow(node, 'bottom');
+    if(botJacks) nodeEl.appendChild(botJacks);
     return nodeEl;
   }
 
@@ -6305,7 +6299,7 @@ requestAnimationFrame(() => {
     if(node.cat === 'fx')  return '#00ffcc';
     if(node.cat === 'mix') return '#ffe000';
     if(node.cat === 'pat') return PAT_COLORS[(fromIdx||0) % PAT_COLORS.length];
-    if(node.cat === 'morph') return '#cc88ff';
+    if(node.cat === 'morph') return PAT_COLORS[(fromIdx||0) % PAT_COLORS.length];
     return '#88ff44';
   }
 
