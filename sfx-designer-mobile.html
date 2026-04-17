@@ -7190,7 +7190,7 @@ requestAnimationFrame(() => {
     const liveRefs = audioEntry.liveRefs && audioEntry.liveRefs[outIdx]; if(!liveRefs) return false;
     const params = liveRefs.paramMap && liveRefs.paramMap[knobId]; if(!params || !params.length) return false;
     const now = audioCtx.currentTime;
-    params.forEach(p=>{ try { p.cancelScheduledValues(now); p.setTargetAtTime(value, now, 0.015); } catch(_){} });
+    params.forEach(p=>{ try { p.cancelScheduledValues(now); p.setValueAtTime(value, now); } catch(_){ try { p.value = value; } catch(_2){} } });
     return true;
   }
 
