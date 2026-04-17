@@ -343,7 +343,7 @@ PRODUCTS.forEach(p => {
   grid.appendChild(card);
 });
 
-function submitPricing() {
+async function submitPricing() {
   const inputs = document.querySelectorAll('.price-input');
   let lines = [];
   let hasAny = false;
@@ -361,16 +361,36 @@ function submitPricing() {
     return;
   }
 
-  const subject = encodeURIComponent('SSI Capoeira - Merch Pricing');
-  const body = encodeURIComponent(
-    'SSI Capoeira Merch - Producer Pricing\n' +
-    '='.repeat(40) + '\n\n' +
-    lines.join('\n') + '\n\n' +
-    'Sent from pietsuess.com/capoeira'
-  );
-  window.location.href = `mailto:psuess@gmail.com?subject=${subject}&body=${body}`;
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
 
-  document.getElementById('submitMsg').style.display = 'block';
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        access_key: '0f45da86-7dcf-4c66-8881-d7597d02d720',
+        subject: 'SSI Capoeira - Merch Pricing',
+        from_name: 'SSI Capoeira Producer',
+        message: 'SSI Capoeira Merch - Producer Pricing\n' +
+                 '========================================\n\n' +
+                 lines.join('\n') + '\n\n' +
+                 'Sent from pietsuess.com/capoeira'
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      btn.textContent = 'Sent';
+      document.getElementById('submitMsg').style.display = 'block';
+    } else {
+      btn.textContent = 'Error - try again';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    btn.textContent = 'Error - try again';
+    btn.disabled = false;
+  }
 }
 </script>
 
