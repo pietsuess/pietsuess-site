@@ -1102,7 +1102,8 @@ document.querySelectorAll('.knob-canvas').forEach(canvas => {
       // Snap to step
       knobState[id] = Math.round(knobState[id] / def.step) * def.step;
       updateKnobDisplay(id);
-      updateLive();
+      // Try live AudioParam update; fall back to updateLive for masterGain
+      if(!liveDesktopKnobUpdate(id, knobState[id])) updateLive();
     };
     const onUp = () => { dragging = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
     document.addEventListener('mousemove', onMove);
@@ -1112,7 +1113,7 @@ document.querySelectorAll('.knob-canvas').forEach(canvas => {
   canvas.addEventListener('dblclick', () => {
     knobState[id] = KNOB_DEFS[id].val;
     updateKnobDisplay(id);
-    updateLive();
+    if(!liveDesktopKnobUpdate(id, knobState[id])) updateLive();
   });
 });
 
@@ -1136,7 +1137,7 @@ document.querySelectorAll('.knob-val').forEach(valEl => {
       if(!isNaN(v)){
         knobState[id] = Math.max(def.min, Math.min(def.max, v));
         updateKnobDisplay(id);
-        updateLive();
+        if(!liveDesktopKnobUpdate(id, knobState[id])) updateLive();
       }
       input.remove();
       valEl.style.display = '';
@@ -1174,7 +1175,7 @@ for(let i=0;i<8;i++){
       if(knobLabel) knobLabel.style.color = '#ff4444';
     }
     updateKnobDisplay(id);
-    updateLive();
+    if(!liveDesktopKnobUpdate(id, knobState[id])) updateLive();
   });
 }
 
@@ -1499,8 +1500,12 @@ function getTriggerTimes(rate, patternInfo, duration){
 }
 
 // Build one processing chain for a module, connecting to a single outGain node
+// Returns { sources: [], paramMap: { knobId: [AudioParam...] } }
 function buildChain(name, p, inGain, outGain, triggerTimes){
   const sources = [];
+  const paramMap = {};
+  // pm(knobId, audioParam, mul) -- mul is an optional multiplier applied to raw knob value
+  function pm(knobId, audioParam, mul){ if(!paramMap[knobId]) paramMap[knobId]=[]; paramMap[knobId].push({p:audioParam, m:mul||1}); }
   // Limiter for feedback safety
   const limiter = audioCtx.createDynamicsCompressor();
   limiter.threshold.value=-6;limiter.knee.value=3;limiter.ratio.value=20;limiter.attack.value=0.001;limiter.release.value=0.05;
@@ -1519,11 +1524,16 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     wl.connect(wg);wg.connect(o1.frequency);wg.connect(o2.frequency);wg.connect(o3.frequency);
     o1.connect(g1);o2.connect(g2);o3.connect(g3);
     g1.connect(outGain);g2.connect(outGain);g3.connect(outGain);
+    pm('pitch', o1.frequency, 1); pm('pitch', o2.frequency, p.harmSpread); pm('pitch', o3.frequency, p.harmSpread*1.5);
+    pm('wobRate', wl.frequency); pm('wobDepth', wg.gain);
+    pm('harm2', g2.gain, 0.18); pm('harm3', g3.gain, 0.18);
     if(p.detune>0){
       const d1=audioCtx.createOscillator();d1.type=p.waveform;d1.frequency.value=p.pitch;d1.detune.value=p.detune;
       const d2=audioCtx.createOscillator();d2.type=p.waveform;d2.frequency.value=p.pitch*p.harmSpread;d2.detune.value=p.detune;
       const d3=audioCtx.createOscillator();d3.type=p.waveform;d3.frequency.value=p.pitch*p.harmSpread*1.5;d3.detune.value=p.detune;
       d1.connect(g1);d2.connect(g2);d3.connect(g3);sources.push(d1,d2,d3);
+      pm('pitch', d1.frequency, 1); pm('pitch', d2.frequency, p.harmSpread); pm('pitch', d3.frequency, p.harmSpread*1.5);
+      pm('detune', d1.detune); pm('detune', d2.detune); pm('detune', d3.detune);
     }
     sources.push(o1,o2,o3,wl);
   }
@@ -1533,12 +1543,14 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const s=audioCtx.createOscillator();s.type=p.waveform;s.frequency.value=freq;
     const g=audioCtx.createGain();g.gain.value=p.subGain;
     safe.connect(g);s.connect(g);g.connect(outGain);sources.push(s);
+    pm('subFreq', s.frequency); pm('subGain', g.gain);
   }
   else if(name==='TREMOLO'){
     const tg=audioCtx.createGain();tg.gain.value=1-p.tremDepth/2;
     const lfo=audioCtx.createOscillator();lfo.type=p.tremShape;lfo.frequency.value=p.tremRate;
     const la=audioCtx.createGain();la.gain.value=p.tremDepth/2;
     lfo.connect(la);la.connect(tg.gain);safe.connect(tg);tg.connect(outGain);sources.push(lfo);
+    pm('tremRate', lfo.frequency); pm('tremDepth', la.gain, 0.005);
   }
   else if(name==='PITCH WOBBLE'){
     // Vibrato via modulated delay line
@@ -1548,6 +1560,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const lg=audioCtx.createGain();lg.gain.value=p.wobDepth*0.001; // depth in ms
     lfo.connect(lg);lg.connect(dl.delayTime);
     safe.connect(dl);dl.connect(outGain);sources.push(lfo);
+    pm('wobRate', lfo.frequency); pm('wobDepth', lg.gain, 0.001);
   }
   else if(name==='SUB RUMBLE'){
     const r=audioCtx.createOscillator();r.type='sine';r.frequency.value=p.rumFreq;
@@ -1555,19 +1568,23 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const dg=audioCtx.createGain();dg.gain.value=2;dr.connect(dg);dg.connect(r.frequency);
     const rg=audioCtx.createGain();rg.gain.value=p.rumGain;
     safe.connect(rg);r.connect(rg);rg.connect(outGain);sources.push(r,dr);
+    pm('rumFreq', r.frequency); pm('rumGain', rg.gain);
   }
   else if(name==='DISTORTION'){
     const d=audioCtx.createWaveShaper();d.curve=makeDistCurve(p.distDrive);d.oversample='4x';
     safe.connect(d);d.connect(outGain);
+    // distDrive requires curve rebuild -- no live param
   }
   else if(name.startsWith('FILTER')){
     const f=audioCtx.createBiquadFilter();f.type=p.filtType||'lowpass';f.frequency.value=p.filtCut;f.Q.value=p.filtQ;
     safe.connect(f);f.connect(outGain);
+    pm('filtCut', f.frequency); pm('filtQ', f.Q);
   }
   else if(name.startsWith('DETUNE')){
     const pL=audioCtx.createStereoPanner();pL.pan.value=-p.stereoPan;
     const pR=audioCtx.createStereoPanner();pR.pan.value=p.stereoPan;
     safe.connect(pL);safe.connect(pR);pL.connect(outGain);pR.connect(outGain);
+    pm('stereoPan', pL.pan, -1); pm('stereoPan', pR.pan);
   }
   else if(name==='RING MOD'){
     const ro=audioCtx.createOscillator();ro.type='sine';ro.frequency.value=p.ringFreq;
@@ -1576,6 +1593,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const wet=audioCtx.createGain();wet.gain.value=p.ringMix;
     safe.connect(dry);dry.connect(outGain);
     safe.connect(rg);rg.connect(wet);wet.connect(outGain);sources.push(ro);
+    pm('ringFreq', ro.frequency); pm('ringMix', wet.gain);
   }
   else if(name==='NOISE GEN'){
     const ns=audioCtx.createBufferSource();
@@ -1583,11 +1601,13 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const nf=audioCtx.createBiquadFilter();nf.type='lowpass';nf.frequency.value=p.noiseFilt;nf.Q.value=0.5;
     const ng=audioCtx.createGain();ng.gain.value=p.noiseGain;
     ns.connect(nf);nf.connect(ng);ng.connect(outGain);sources.push(ns);
+    pm('noiseGain', ng.gain); pm('noiseFilt', nf.frequency);
   }
   else if(name==='FM OSC'){
     const fm=audioCtx.createOscillator();fm.type='sine';fm.frequency.value=p.fmFreq;
     const fg=audioCtx.createGain();fg.gain.value=p.fmDepth;
     fm.connect(fg);fg.connect(outGain);sources.push(fm);
+    pm('fmFreq', fm.frequency); pm('fmDepth', fg.gain);
   }
   else if(name==='PWM OSC'){
     // Pulse width modulation via two detuned oscillators
@@ -1600,6 +1620,8 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const g2=audioCtx.createGain();g2.gain.value=-p.pwmGain;
     o1.connect(g1);o2.connect(g2);g1.connect(outGain);g2.connect(outGain);
     sources.push(o1,o2,lfo);
+    pm('pwmFreq', o1.frequency); pm('pwmFreq', o2.frequency);
+    pm('pwmRate', lfo.frequency); pm('pwmGain', g1.gain); pm('pwmGain', g2.gain, -1);
   }
   else if(name==='IMPACT'){
     // Repeating percussive burst with pitch sweep
@@ -1624,6 +1646,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       ng.gain.exponentialRampToValueAtTime(0.001,at+p.impDecay*0.7);
     }
     sources.push(osc,ns);
+    // IMPACT uses scheduled envelopes -- no continuous live params
   }
   else if(name==='CRACKLE'){
     // Random impulse train via scriptlet buffer
@@ -1636,6 +1659,8 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const filt=audioCtx.createBiquadFilter();filt.type='bandpass';filt.frequency.value=p.crkTone;filt.Q.value=1;
     const g=audioCtx.createGain();g.gain.value=p.crkGain;
     bs.connect(filt);filt.connect(g);g.connect(outGain);sources.push(bs);
+    pm('crkTone', filt.frequency); pm('crkGain', g.gain);
+    // crkDensity requires buffer rebuild -- no live param
   }
   else if(name==='METALLIC'){
     // Repeating inharmonic partials that ring like metal
@@ -1653,6 +1678,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       }
       o.connect(g);g.connect(outGain);sources.push(o);
     });
+    // METALLIC uses scheduled envelopes -- no continuous live params
   }
   else if(name==='FORMANT'){
     // Vowel formant synthesis via parallel bandpass filters on a rich source
@@ -1663,8 +1689,10 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f;bp.Q.value=10;
       const g=audioCtx.createGain();g.gain.value=p.formGain;
       src.connect(bp);bp.connect(g);g.connect(outGain);
+      pm('formGain', g.gain);
     });
     sources.push(src);
+    pm('formFreq', src.frequency);
   }
   else if(name==='DRONE'){
     // Multiple detuned oscillator layers
@@ -1675,7 +1703,9 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       o.frequency.value=p.drnFreq+(i-layers/2)*p.drnSpread;
       const g=audioCtx.createGain();g.gain.value=p.drnGain/layers;
       o.connect(g);g.connect(outGain);sources.push(o);
+      pm('drnFreq', o.frequency); pm('drnGain', g.gain);
     }
+    // drnLayers/drnSpread require structural rebuild
   }
   else if(name==='WIND'){
     // Filtered noise with LFO-modulated cutoff
@@ -1686,6 +1716,8 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     lfo.connect(lg);lg.connect(filt.frequency);
     const g=audioCtx.createGain();g.gain.value=p.wndGain;
     ns.connect(filt);filt.connect(g);g.connect(outGain);sources.push(ns,lfo);
+    pm('wndCut', filt.frequency); pm('wndMod', lfo.frequency);
+    pm('wndDepth', lg.gain); pm('wndGain', g.gain);
   }
   else if(name==='PLUCK'){
     // Plucked string: noise burst excitation + tuned delay line feedback
@@ -1716,6 +1748,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       ng.gain.exponentialRampToValueAtTime(0.001,now+t+0.008);
     }
     ns.connect(nf);nf.connect(ng);ng.connect(outGain);sources.push(ns);
+    // PLUCK uses scheduled envelopes -- no continuous live params
   }
   else if(name==='BELL'){
     // Tuned bell with harmonic partials
@@ -1734,6 +1767,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       }
       o.connect(g);g.connect(outGain);sources.push(o);
     });
+    // BELL uses scheduled envelopes -- no continuous live params
   }
   else if(name==='MALLET'){
     // Struck bar: fundamental + decaying harmonics, noise click attack
@@ -1761,6 +1795,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       ng.gain.exponentialRampToValueAtTime(0.001,now+t+0.01);
     }
     ns.connect(nf);nf.connect(ng);ng.connect(outGain);sources.push(ns);
+    // MALLET uses scheduled envelopes -- no continuous live params
   }
   else if(name==='SWEEP'){
     // Pitch sweep oscillator
@@ -1776,6 +1811,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       g.gain.exponentialRampToValueAtTime(0.001,at+p.swpTime);
     }
     osc.connect(g);g.connect(outGain);sources.push(osc);
+    // SWEEP uses scheduled envelopes -- no continuous live params
   }
   else if(name==='ARPEGGIO'){
     // Cycling pitch pattern
@@ -1791,6 +1827,8 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       osc.frequency.setValueAtTime(freq,now+t);
     });
     osc.connect(g);g.connect(outGain);sources.push(osc);
+    pm('arpGain', g.gain);
+    // arpRoot/arpSteps/arpRate use scheduled values -- rebuild needed
   }
   else if(name==='SHIMMER'){
     // Layered oscillators with slow drift
@@ -1809,7 +1847,9 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       al.connect(ag);ag.connect(base.gain);
       o.connect(base);base.connect(outGain);
       sources.push(o,dl,al);
+      pm('shmDrift', dg.gain); pm('shmGain', base.gain);
     }
+    // shmFreq/shmLayers require structural rebuild
   }
   else if(name==='BOW'){
     // Bowed string: sawtooth + noise friction + harmonics
@@ -1821,17 +1861,19 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const nf=audioCtx.createBiquadFilter();nf.type='bandpass';nf.frequency.value=p.bowFreq*3;nf.Q.value=5;
     const ng=audioCtx.createGain();ng.gain.value=p.bowGain*p.bowPress*0.15;
     // Pressure modulation
-    const pm=audioCtx.createOscillator();pm.frequency.value=4+p.bowPress*2;
+    const pm2=audioCtx.createOscillator();pm2.frequency.value=4+p.bowPress*2;
     const pg=audioCtx.createGain();pg.gain.value=p.bowGain*0.1*p.bowPress;
     const g=audioCtx.createGain();g.gain.value=p.bowGain;
-    pm.connect(pg);pg.connect(g.gain);
+    pm2.connect(pg);pg.connect(g.gain);
     o.connect(filt);filt.connect(g);g.connect(outGain);
     ns.connect(nf);nf.connect(ng);ng.connect(outGain);
-    sources.push(o,ns,pm);
+    sources.push(o,ns,pm2);
+    pm('bowFreq', o.frequency); pm('bowGain', g.gain);
   }
   else if(name==='ENVELOPE'){
     const eg=audioCtx.createGain();eg.gain.value=p.envSus;
     safe.connect(eg);eg.connect(outGain);
+    pm('envSus', eg.gain);
   }
   else if(name==='DELAY'){
     const dl=audioCtx.createDelay(2.0);dl.delayTime.value=p.delTime;
@@ -1841,6 +1883,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const wet=audioCtx.createGain();wet.gain.value=p.delMix;
     safe.connect(dry);dry.connect(outGain);
     safe.connect(dl);dl.connect(wet);wet.connect(outGain);
+    pm('delTime', dl.delayTime); pm('delFeed', fb.gain); pm('delMix', wet.gain);
   }
   else if(name==='PHASER'){
     const st=[];
@@ -1853,6 +1896,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const wet=audioCtx.createGain();wet.gain.value=p.phMix;
     safe.connect(dry);dry.connect(outGain);
     safe.connect(st[0]);st[st.length-1].connect(wet);wet.connect(outGain);sources.push(pl);
+    pm('phRate', pl.frequency); pm('phDepth', pg.gain); pm('phMix', wet.gain);
   }
   else if(name==='REVERB'){
     // Algorithmic reverb via multiple delay lines with feedback
@@ -1869,17 +1913,22 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       safe.connect(dl);dl.connect(fb);fb.connect(damp);damp.connect(dl);dl.connect(merge);
     });
     merge.connect(wet);wet.connect(outGain);
+    pm('rvbMix', wet.gain); pm('rvbDamp', damp.frequency);
+    // rvbSize/rvbDecay require structural rebuild
   }
   else if(name==='COMPRESSOR'){
     const comp=audioCtx.createDynamicsCompressor();
     comp.threshold.value=p.cmpThresh;comp.ratio.value=p.cmpRatio;
     comp.attack.value=p.cmpAtk;comp.release.value=p.cmpRel;comp.knee.value=6;
     safe.connect(comp);comp.connect(outGain);
+    pm('cmpThresh', comp.threshold); pm('cmpRatio', comp.ratio);
+    pm('cmpAtk', comp.attack); pm('cmpRel', comp.release);
   }
   else if(name.startsWith('EQ')){
     const eq=audioCtx.createBiquadFilter();eq.type=p.eqType||'peaking';
     eq.frequency.value=p.eqFreq;eq.gain.value=p.eqGainDb;eq.Q.value=p.eqQ;
     safe.connect(eq);eq.connect(outGain);
+    pm('eqFreq', eq.frequency); pm('eqGainDb', eq.gain); pm('eqQ', eq.Q);
   }
   else if(name==='BITCRUSHER'){
     // Bit reduction + sample rate reduction via ScriptProcessor workaround
@@ -1895,6 +1944,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
       safe.connect(dl);dl.connect(ws);
     } else { safe.connect(ws); }
     ws.connect(outGain);
+    // BITCRUSHER requires curve rebuild -- no live param
   }
   else if(name==='FLANGER'){
     const dl=audioCtx.createDelay(0.02);dl.delayTime.value=0.005;
@@ -1908,6 +1958,8 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     safe.connect(dry);dry.connect(outGain);
     safe.connect(dl);dl.connect(wet);wet.connect(outGain);
     sources.push(lfo);
+    pm('flRate', lfo.frequency); pm('flDepth', lg.gain);
+    pm('flFeed', fb.gain); pm('flMix', wet.gain);
   }
   else if(name==='GATE'){
     // Rhythmic gate using LFO-driven gain
@@ -1917,6 +1969,7 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const base=audioCtx.createGain();base.gain.value=0.5;
     lfo.connect(lg);lg.connect(gate.gain);
     safe.connect(gate);gate.connect(outGain);sources.push(lfo);
+    pm('gtRate', lfo.frequency);
   }
   else if(name==='PANNER'){
     const pan=audioCtx.createStereoPanner();pan.pan.value=0;
@@ -1924,14 +1977,16 @@ function buildChain(name, p, inGain, outGain, triggerTimes){
     const lg=audioCtx.createGain();lg.gain.value=p.panWidth;
     lfo.connect(lg);lg.connect(pan.pan);
     safe.connect(pan);pan.connect(outGain);sources.push(lfo);
+    pm('panRate', lfo.frequency); pm('panWidth', lg.gain);
   }
   else if(name==='MIX'){
     // Simple mixer with level control - pass through with gain
     const lvl=audioCtx.createGain();lvl.gain.value=p.mixLevel;
     safe.connect(lvl);lvl.connect(outGain);
+    pm('mixLevel', lvl.gain);
   }
   else { safe.connect(outGain); } // pass-through
-  return sources;
+  return { sources, paramMap };
 }
 
 // Check if a module is bypassed/muted
@@ -1941,6 +1996,7 @@ function isModBypassed(modIdx){
 }
 
 // Build a full module with 4 independent output chains (or 8 inputs for OUTPUT)
+// Returns { ins, outs, sources, paramMaps: { outIdx: { knobId: [AudioParam...] } }, ... }
 function buildModule(name, modIdx, patternInfo){
   const isInputMix = (name === 'INPUT MIX');
   const isMaster = (name === 'MASTER');
@@ -1958,6 +2014,7 @@ function buildModule(name, modIdx, patternInfo){
   }
   const outs = []; for(let i=0;i<4;i++){ const g=audioCtx.createGain(); g.gain.value=1; outs.push(g); }
   const allSources = [];
+  const paramMaps = {}; // outIdx -> { knobId: [AudioParam...] }
 
   // Bypassed effect: pass input straight to output. Muted generator: produce nothing.
   if(bypassed && !isOut){
@@ -1969,7 +2026,7 @@ function buildModule(name, modIdx, patternInfo){
       }
     }
     // Muted generator: no sources, no connections
-    return { ins, outs, sources: allSources };
+    return { ins, outs, sources: allSources, paramMaps };
   }
 
   if(name.startsWith('PATTERN')){
@@ -2002,13 +2059,13 @@ function buildModule(name, modIdx, patternInfo){
       gate.connect(outs[o]);
     }
 
-    return { ins, outs, sources: allSources, isPattern: true, gridId };
+    return { ins, outs, sources: allSources, paramMaps, isPattern: true, gridId };
   }
 
   if(name.startsWith('T1') || name.startsWith('T2') || name.startsWith('THROUGH')){
     // Pass-through: 1 in -> 1 out, no processing
     ins.forEach(inp => inp.connect(outs[0]));
-    return { ins, outs, sources: allSources };
+    return { ins, outs, sources: allSources, paramMaps };
   }
 
   if(name.startsWith('MIX')){
@@ -2023,22 +2080,33 @@ function buildModule(name, modIdx, patternInfo){
       const amp = audioCtx.createGain();
       amp.gain.value = cp[prefix+'Amp'] !== undefined ? cp[prefix+'Amp'] : 1;
       ins[ch].connect(lvl); lvl.connect(amp); amp.connect(sum);
+      if(!paramMaps[ch]) paramMaps[ch] = {};
+      const lk = prefix+'Level', ak = prefix+'Amp';
+      if(!paramMaps[ch][lk]) paramMaps[ch][lk] = [];
+      paramMaps[ch][lk].push({p:lvl.gain, m:1});
+      if(!paramMaps[ch][ak]) paramMaps[ch][ak] = [];
+      paramMaps[ch][ak].push({p:amp.gain, m:1});
     }
     sum.connect(outs[0]);
-    return { ins, outs, sources: allSources };
+    return { ins, outs, sources: allSources, paramMaps };
   }
 
   if(isInputMix){
     // INPUT MIX: 8 inputs with per-input level control -> single output
     const p = getModOutParams(modIdx, 0);
     const merge = audioCtx.createGain(); merge.gain.value = 1;
+    const inPm = {};
     for(let i=0;i<8;i++){
       const lvl = audioCtx.createGain();
       lvl.gain.value = p['inLvl'+i] !== undefined ? p['inLvl'+i] : 1;
       ins[i].connect(lvl); lvl.connect(merge);
+      const k = 'inLvl'+i;
+      if(!inPm[k]) inPm[k] = [];
+      inPm[k].push({p:lvl.gain, m:1});
     }
+    paramMaps[0] = inPm;
     merge.connect(outs[0]);
-    return { ins, outs, sources: allSources };
+    return { ins, outs, sources: allSources, paramMaps };
   }
 
   if(isMaster){
@@ -2048,7 +2116,8 @@ function buildModule(name, modIdx, patternInfo){
     const gain = audioCtx.createGain(); gain.gain.value = p.masterGain || 0.6;
     ins[0].connect(gain);
     gain.connect(analyser); analyser.connect(masterOut);
-    return { ins, outs, sources: allSources };
+    paramMaps[0] = { masterGain: [{p:gain.gain, m:1}] };
+    return { ins, outs, sources: allSources, paramMaps };
   }
 
   {
@@ -2066,11 +2135,12 @@ function buildModule(name, modIdx, patternInfo){
       // Per-output pattern trigger: out[o] uses input[o]'s pattern only
       const pi = patternInfo ? patternInfo[o] : null;
       const tt = pi ? getTriggerTimes(0, pi, 600) : null;
-      const srcs = buildChain(name, p, chainIn, outs[o], tt);
-      allSources.push(...srcs);
+      const chainResult = buildChain(name, p, chainIn, outs[o], tt);
+      allSources.push(...chainResult.sources);
+      paramMaps[o] = chainResult.paramMap;
     }
   }
-  return { ins, outs, sources: allSources };
+  return { ins, outs, sources: allSources, paramMaps };
 }
 
 function buildLive(){
@@ -2115,11 +2185,58 @@ function buildLive(){
 }
 
 let _rebuildTimer = null;
+
+// ── Live AudioParam update: change running nodes without rebuild ────
+// Find which module owns a knob ID
+function findModuleForKnob(knobId){
+  for(let m=0; m<modKnobIds.length; m++){
+    if(modKnobIds[m].includes(knobId)) return m;
+  }
+  return -1;
+}
+
+// Value transform: some knobs need conversion before setting AudioParam
+function liveParamValue(knobId, rawVal){
+  // All transforms are now handled via multipliers in the paramMap entries
+  return rawVal;
+}
+
+// Try to update a running AudioParam for a knob change. Returns true if handled.
+function liveDesktopKnobUpdate(knobId, value){
+  if(!live || !live.playing || !audioModules) return false;
+  const modIdx = findModuleForKnob(knobId);
+  if(modIdx < 0) return false;
+  const mod = audioModules[modIdx];
+  if(!mod || !mod.paramMaps) return false;
+
+  let handled = false;
+  const now = audioCtx.currentTime;
+  const tv = liveParamValue(knobId, value);
+
+  // Update all outputs that have this param
+  const outIndices = Object.keys(mod.paramMaps).map(Number);
+  for(const oi of outIndices){
+    const pm = mod.paramMaps[oi];
+    if(!pm || !pm[knobId]) continue;
+    pm[knobId].forEach(entry => {
+      try {
+        // entry is {p: AudioParam, m: multiplier}
+        const param = entry.p || entry;
+        const mul = entry.m || 1;
+        param.cancelScheduledValues(now);
+        param.setTargetAtTime(tv * mul, now, 0.015);
+        handled = true;
+      } catch(e){}
+    });
+  }
+  return handled;
+}
+
 function updateLive(){
+  // Master gain always direct (masterOut is persistent)
   masterOut.gain.setTargetAtTime(knobState.masterGain, audioCtx.currentTime, 0.02);
   if(!live || !live.playing) return;
-  if(_rebuildTimer) clearTimeout(_rebuildTimer);
-  _rebuildTimer = setTimeout(() => { _rebuildTimer=null; rebuildIfPlaying(); }, 100);
+  // Live param updates are handled per-knob in the drag handler; no rebuild needed here
 }
 
 function startPlay(){
@@ -2196,7 +2313,58 @@ function stopPlay(){
 }
 
 function rebuildIfPlaying(){
-  if(live && live.playing){ stopPlay(); setTimeout(startPlay, 250); }
+  if(!live || !live.playing) return;
+  // Crossfade rebuild: build new graph, fade old out + new in over 80ms
+  const oldSources = live.sources;
+  const oldOut = live.out;
+  const now = audioCtx.currentTime;
+
+  // Create a temporary gain node for the old graph to fade out through
+  const oldFade = audioCtx.createGain();
+  oldFade.gain.setValueAtTime(1, now);
+  oldFade.gain.linearRampToValueAtTime(0, now + 0.08);
+
+  // Build new graph
+  live.playing = false; // allow startPlay logic
+  live = null;
+  live = buildLive();
+  const targetGain = knobState.masterGain || 0.6;
+
+  // Start new sources with fade-in
+  live.out.gain.setValueAtTime(0.0001, now);
+  live.out.gain.exponentialRampToValueAtTime(targetGain, now + 0.08);
+  live.sources.forEach(s => { try { s.start(now); } catch(e){} });
+  live.playing = true;
+
+  // Stop old sources after crossfade completes
+  setTimeout(() => {
+    oldSources.forEach(s => { try { s.stop(); } catch(e){} });
+  }, 100);
+
+  // Restart pattern step indicators
+  patternIntervals.forEach(clearInterval);
+  patternIntervals = [];
+  audioModules.forEach(m => {
+    if(!m.isPattern) return;
+    const grid = document.getElementById(m.gridId);
+    if(!grid) return;
+    const patNum = m.gridId.replace('patGrid','');
+    const activeOut = parseInt(grid.dataset.activeOut) || 0;
+    const ps = patternStates[m.gridId] && patternStates[m.gridId][activeOut];
+    if(!ps) return;
+    const outP = getModOutParams(MOD_NAMES.indexOf('PATTERN ' + patNum), activeOut);
+    const bpm = ps.bpm || outP['pat' + patNum + 'Bpm'] || knobState['pat' + patNum + 'Bpm'] || 120;
+    const stepMs = (60 / bpm / 4) * 1000;
+    const total = ps.rows * ps.cols;
+    let step = 0;
+    const iv = setInterval(() => {
+      const stepsEls = grid.querySelectorAll('.pat-step');
+      stepsEls.forEach(s => s.classList.remove('current'));
+      stepsEls[step]?.classList.add('current');
+      step = (step + 1) % total;
+    }, stepMs);
+    patternIntervals.push(iv);
+  });
 }
 
 document.getElementById('playBtn').addEventListener('click', () => {
