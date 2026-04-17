@@ -2473,7 +2473,7 @@ function _morphLiveWrite(modIdx, outIdx, knobId, value){
       const param = e.p || e;
       const mul = e.m || 1;
       param.cancelScheduledValues(now);
-      param.setTargetAtTime(value * mul, now, 0.015);
+      param.setValueAtTime(value * mul, now);
     } catch(err){}
   });
 }
