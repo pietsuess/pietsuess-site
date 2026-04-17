@@ -760,10 +760,27 @@
       </div>
     </div>
 
-    <!-- STATE MORPH (purple) — logical-only, no audio. Drives knob values on target modules via ping-pong tween.
-         Body is intentionally minimal; all controls live in openMorphModal() (click body to open). -->
-    <div class="module pat morph-module" data-no-inputs="true" style="cursor:pointer;">
+    <!-- STATE MORPH (purple) — logical-only, no audio. Drives knob values on target modules via ping-pong tween. -->
+    <div class="module pat" data-no-inputs="true">
       <div class="mod-title">STATE MORPH</div>
+      <div class="morph-targets-label" style="font-size:9px;color:#aaa;padding:2px 6px;min-height:11px;letter-spacing:1px;">TARGETS: —</div>
+      <div class="knob-row">
+        <div class="knob-wrap"><canvas class="knob-canvas" data-id="morphRate" width="72" height="72"></canvas><div class="knob-val" id="morphRateV">—</div><div class="knob-label">RATE</div></div>
+      </div>
+      <div style="padding:4px 6px;display:flex;flex-direction:column;gap:3px;">
+        <select class="morph-easing" style="background:#1a1a1a;color:#ddd;border:1px solid #555;font-size:10px;padding:2px;font-family:inherit;">
+          <option value="sine">sine</option>
+          <option value="linear">linear</option>
+          <option value="easeIn">easeIn</option>
+          <option value="easeOut">easeOut</option>
+          <option value="easeInOut">easeInOut</option>
+        </select>
+        <div style="display:flex;gap:3px;">
+          <button class="morph-btn" data-morph-act="A" style="flex:1;font-size:9px;padding:3px;">SET A</button>
+          <button class="morph-btn" data-morph-act="B" style="flex:1;font-size:9px;padding:3px;">SET B</button>
+          <button class="morph-btn" data-morph-act="clear" style="flex:1;font-size:9px;padding:3px;">CLEAR</button>
+        </div>
+      </div>
     </div>
 
     <!-- INPUT MIX (yellow) — 8 inputs, 1 output -->
@@ -2319,171 +2336,6 @@ function _morphGetRateKnob(inst, outIdx){
 function _morphCurOut(modIdx){
   return (selectedOutput && selectedOutput[modIdx] !== undefined) ? selectedOutput[modIdx] : 0;
 }
-
-// ─── STATE MORPH modal (desktop) ────────────────────────────────────
-// Body of morph module shows only title + jacks. Clicking the body opens
-// this modal with RATE knob, EASING dropdown, SET A/B/CLEAR buttons,
-// output selector 1/2/3/4, and TARGETS label.
-function openMorphModal(morphUuid){
-  const di = window.desktopInstances || {};
-  const mInst = di[morphUuid]; if(!mInst) return;
-
-  // Tear down any existing modal first
-  const existing = document.getElementById('morphModalOverlay');
-  if(existing) existing.remove();
-
-  // Ensure morphState shape
-  if(!mInst.morphState || !mInst.morphState.outputs){
-    mInst.morphState = _morphDefaultState();
-  }
-
-  const curOut = _morphCurOut(mInst.modIdx);
-
-  const overlay = document.createElement('div');
-  overlay.id = 'morphModalOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:10000;display:flex;align-items:center;justify-content:center;font-family:inherit;';
-
-  const box = document.createElement('div');
-  box.style.cssText = 'background:#0a0a14;border:2px solid #aa66ff;color:#aa66ff;padding:18px;min-width:360px;max-width:90vw;box-shadow:0 0 24px rgba(170,102,255,0.25);';
-
-  // Header
-  const header = document.createElement('div');
-  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;';
-  const titleEl = document.createElement('div');
-  titleEl.textContent = 'STATE MORPH';
-  titleEl.style.cssText = 'font-size:14px;letter-spacing:2px;';
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = 'X';
-  closeBtn.style.cssText = 'background:transparent;border:1px solid #aa66ff;color:#aa66ff;cursor:pointer;padding:4px 10px;font-family:inherit;';
-  closeBtn.onclick = ()=> overlay.remove();
-  header.append(titleEl, closeBtn);
-  box.appendChild(header);
-
-  // Output selector 1/2/3/4
-  const outRow = document.createElement('div');
-  outRow.style.cssText = 'display:flex;gap:6px;margin-bottom:10px;';
-  for(let i=0; i<4; i++){
-    const b = document.createElement('button');
-    b.textContent = String(i+1);
-    b.style.cssText = `flex:1;padding:8px;background:${i===curOut?'rgba(170,102,255,0.25)':'transparent'};border:1px solid #aa66ff;color:#aa66ff;cursor:pointer;font-family:inherit;font-size:12px;`;
-    b.onclick = ()=>{
-      // Use existing clone out-sel-row handler path if available to keep parity
-      // with per-output state flush (knobState <-> modOutputState).
-      try {
-        const outBtns = mInst.domEl && mInst.domEl.querySelectorAll('.out-sel-row .out-sel-btn');
-        if(outBtns && outBtns[i]) outBtns[i].click();
-        else if(typeof selectedOutput !== 'undefined') selectedOutput[mInst.modIdx] = i;
-      } catch(_){
-        if(typeof selectedOutput !== 'undefined') selectedOutput[mInst.modIdx] = i;
-      }
-      overlay.remove();
-      openMorphModal(morphUuid);
-    };
-    outRow.appendChild(b);
-  }
-  box.appendChild(outRow);
-
-  // TARGETS label (per currently-viewed output)
-  const tgtNames = (typeof cables !== 'undefined' ? cables : [])
-    .filter(c => c.fromMod === mInst.modIdx && c.fromIdx === curOut)
-    .map(c => (typeof MOD_NAMES !== 'undefined' && MOD_NAMES[c.toMod]) || '?');
-  const tgtLabel = document.createElement('div');
-  tgtLabel.textContent = 'TARGETS [' + (curOut+1) + ']: ' + (tgtNames.length ? tgtNames.join(', ') : '—');
-  tgtLabel.style.cssText = 'font-size:10px;margin-bottom:14px;color:#c9a8ff;letter-spacing:1px;';
-  box.appendChild(tgtLabel);
-
-  // RATE slider (writes into modOutputState for runtime + syncs knobState when viewing this output)
-  const rateDef = (typeof KNOB_DEFS !== 'undefined') ? KNOB_DEFS['morphRate'] : null;
-  if(rateDef){
-    if(!modOutputState[mInst.modIdx]) modOutputState[mInst.modIdx] = [{},{},{},{}];
-    if(!modOutputState[mInst.modIdx][curOut]) modOutputState[mInst.modIdx][curOut] = {};
-    const curRate = (modOutputState[mInst.modIdx][curOut].morphRate != null)
-      ? modOutputState[mInst.modIdx][curOut].morphRate
-      : ((typeof knobState !== 'undefined' && knobState.morphRate != null) ? knobState.morphRate : rateDef.val);
-    const rateWrap = document.createElement('div');
-    rateWrap.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:12px;';
-    const rateLabel = document.createElement('div');
-    rateLabel.textContent = 'RATE';
-    rateLabel.style.cssText = 'font-size:11px;min-width:56px;letter-spacing:1px;';
-    const rateInput = document.createElement('input');
-    rateInput.type = 'range';
-    rateInput.min = rateDef.min;
-    rateInput.max = rateDef.max;
-    rateInput.step = rateDef.step;
-    rateInput.value = curRate;
-    rateInput.style.cssText = 'flex:1;accent-color:#aa66ff;';
-    const rateValEl = document.createElement('div');
-    rateValEl.style.cssText = 'min-width:70px;font-size:11px;text-align:right;';
-    rateValEl.textContent = rateDef.fmt ? rateDef.fmt(curRate) : String(curRate);
-    rateInput.addEventListener('input', e=>{
-      let v = parseFloat(e.target.value);
-      v = Math.max(rateDef.min, Math.min(rateDef.max, v));
-      modOutputState[mInst.modIdx][curOut].morphRate = v;
-      // Sync live knobState if user is viewing this output on the original
-      if(typeof knobState !== 'undefined' && mInst.isOriginal
-         && typeof selectedOutput !== 'undefined'
-         && selectedOutput[mInst.modIdx] === curOut){
-        knobState.morphRate = v;
-        try { if(typeof updateKnobDisplay === 'function') updateKnobDisplay('morphRate'); } catch(_){}
-      }
-      rateValEl.textContent = rateDef.fmt ? rateDef.fmt(v) : String(v);
-    });
-    rateWrap.append(rateLabel, rateInput, rateValEl);
-    box.appendChild(rateWrap);
-  }
-
-  // EASING dropdown
-  const easingWrap = document.createElement('div');
-  easingWrap.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:16px;';
-  const easingLabel = document.createElement('div');
-  easingLabel.textContent = 'EASING';
-  easingLabel.style.cssText = 'font-size:11px;min-width:56px;letter-spacing:1px;';
-  const easingSelect = document.createElement('select');
-  easingSelect.style.cssText = 'flex:1;background:#1a1a1a;color:#aa66ff;border:1px solid #aa66ff;font-family:inherit;font-size:11px;padding:4px;';
-  const curEasing = (mInst.morphState.outputs[curOut] && mInst.morphState.outputs[curOut].easing) || 'sine';
-  ['sine','linear','easeIn','easeOut','easeInOut'].forEach(name=>{
-    const opt = document.createElement('option');
-    opt.value = name; opt.textContent = name;
-    if(name === curEasing) opt.selected = true;
-    easingSelect.appendChild(opt);
-  });
-  easingSelect.addEventListener('change', e=>{
-    if(!mInst.morphState.outputs[curOut]){
-      mInst.morphState.outputs[curOut] = { easing:'sine', snapshots:{}, _phaseStart: performance.now(), _lastDisplayTick: 0 };
-    }
-    mInst.morphState.outputs[curOut].easing = e.target.value;
-  });
-  easingWrap.append(easingLabel, easingSelect);
-  box.appendChild(easingWrap);
-
-  // SET A / SET B / CLEAR row
-  const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex;gap:6px;';
-  ['A','B','CLEAR'].forEach(act=>{
-    const b = document.createElement('button');
-    b.textContent = (act === 'CLEAR') ? 'CLEAR' : ('SET ' + act);
-    b.style.cssText = 'flex:1;padding:10px;background:transparent;border:1px solid #aa66ff;color:#aa66ff;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:1px;';
-    b.onclick = ()=>{
-      if(act === 'CLEAR'){ if(typeof morphClearSnapshots === 'function') morphClearSnapshots(morphUuid); }
-      else { if(typeof morphSetSnapshot === 'function') morphSetSnapshot(morphUuid, act); }
-      // Refresh targets label inline
-      const sel = _morphCurOut(mInst.modIdx);
-      const refreshTgt = (typeof cables !== 'undefined' ? cables : [])
-        .filter(c => c.fromMod === mInst.modIdx && c.fromIdx === sel)
-        .map(c => (typeof MOD_NAMES !== 'undefined' && MOD_NAMES[c.toMod]) || '?');
-      tgtLabel.textContent = 'TARGETS [' + (sel+1) + ']: ' + (refreshTgt.length ? refreshTgt.join(', ') : '—');
-    };
-    btnRow.appendChild(b);
-  });
-  box.appendChild(btnRow);
-
-  // Click backdrop to close
-  overlay.addEventListener('click', e=>{ if(e.target === overlay) overlay.remove(); });
-
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-}
-window.openMorphModal = openMorphModal;
 
 function morphClearSnapshots(morphUuid){
   const di = window.desktopInstances || {};
@@ -4633,27 +4485,7 @@ requestAnimationFrame(() => {
       try { window._morphRefreshEasingDropdown(u); } catch(e){}
       try { window.morphRefreshLabel(u); } catch(e){}
       try { window._morphUpdateCaptureUI(u); } catch(e){}
-      // Tap-to-open: clicking the morph body anywhere except jacks / output selector /
-      // delete-X / bypass opens the modal with all controls.
-      _wireMorphTapToOpen(mod);
     }
-  }
-
-  // Clicking the STATE MORPH module body opens openMorphModal.
-  // Ignores clicks on jacks, output selector buttons, delete X, bypass button, orient button.
-  function _wireMorphTapToOpen(mod){
-    if(mod._morphTapWired) return;
-    mod._morphTapWired = true;
-    mod.addEventListener('click', (e)=>{
-      if(e.target.closest('.jack')) return;
-      if(e.target.closest('.out-sel-btn')) return;
-      if(e.target.closest('.x-del-btn')) return;
-      if(e.target.closest('.bypass-btn')) return;
-      if(e.target.closest('.orient-btn')) return;
-      if(e.target.closest('#morphModalOverlay')) return;
-      const uuid = mod.dataset.uuid;
-      if(uuid && typeof openMorphModal === 'function') openMorphModal(uuid);
-    });
   }
 
   // Wire morph on all originals now
