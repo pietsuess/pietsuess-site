@@ -286,14 +286,6 @@
 
   <div class="vc-content">
 
-  <div class="vc-stat-bar" style="margin-top:10px">
-    <div class="vc-stat"><div class="vc-stat-num">24</div><div class="vc-stat-label">Projects</div></div>
-    <div class="vc-stat"><div class="vc-stat-num">18</div><div class="vc-stat-label">Days</div></div>
-    <div class="vc-stat"><div class="vc-stat-num">6</div><div class="vc-stat-label">Client Sites</div></div>
-    <div class="vc-stat"><div class="vc-stat-num">6</div><div class="vc-stat-label">Experiments</div></div>
-    <div class="vc-stat"><div class="vc-stat-num">6</div><div class="vc-stat-label">Games</div></div>
-    <div class="vc-stat"><div class="vc-stat-num">6</div><div class="vc-stat-label">Tools</div></div>
-  </div>
 
   <div class="vc-section-label">Client Sites</div>
   <div class="vc-grid">
@@ -350,20 +342,6 @@
         <div class="vc-card-links">
           <a class="vc-card-link" href="https://clients.pietsuess.com/unveil/" target="_blank" onclick="event.stopPropagation()">Animations &#8599;</a>
           <a class="vc-card-link" href="https://clients.pietsuess.com/unveil/interactive.html" target="_blank" onclick="event.stopPropagation()">Interactive &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="lotus">
-      <img class="vc-card-thumb" src="toolkit-screenshots/lotus.jpg" alt="Lotus" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Lotus</div>
-        <div class="vc-card-client">Lotus</div>
-        <div class="vc-card-desc">Interactive proposal site with animated presentation and PDF export.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Proposal</span><span class="vc-tag">Interactive</span><span class="vc-tag">Animation</span></div>
-        <div class="vc-card-date">Mar 2026</div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://clients.pietsuess.com/lotus/" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
         </div>
       </div>
     </div>
@@ -711,10 +689,6 @@ const details = {
     desc: 'Product animation showcase built for Unveil. Interactive demos with hover and click states, mobile-optimized views, and animated WebP/GIF assets exported in three colorways and multiple sizes. Clean product-focused layout designed to highlight the animation work.',
     links: [['Interactive','https://clients.pietsuess.com/unveil/interactive.html'],['Animations','https://clients.pietsuess.com/unveil/']]
   },
-  lotus: {
-    desc: 'Interactive proposal site with animated presentation flow and PDF export. Built as a pitch tool with smooth transitions between sections, glassmorphic card layouts, and a polished delivery feel.',
-    links: [['View','https://clients.pietsuess.com/lotus/']]
-  },
   '424': {
     desc: 'Single-page property listing with photo gallery, unit details, pricing, and contact information. Clean layout focused on showcasing the property with minimal friction.',
     links: [['View','https://arcade.pietsuess.com/424-350-e-2nd.html']]
@@ -901,7 +875,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeDetail()
 const D = '<svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>';
 const M = '<svg viewBox="0 0 24 24"><path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-2 20h-4v-1h4v1zm3.25-3H6.75V4h10.5v14z"/></svg>';
 const devices = {
-  maya:D+M, sscy:D+M, selena:D, unveil:D+M, lotus:D, '424':D,
+  maya:D+M, sscy:D+M, selena:D, unveil:D+M, '424':D,
   'heart-lines':D, clearing:D, intent:D, scatter:D, 'depth-scroll':D, deck:D, chalkboard:D, orbit:D, 'maya-depth':D, 'maya-scatter':D,
   navigator:D, 'return-to-space':D, victory:D, tunnel:M, 'cube-toss':D, gary:D,
   'schedule-editor':D, bmats:D, 'grid-editor':D, 'content-editor':D, chat:D+M,
