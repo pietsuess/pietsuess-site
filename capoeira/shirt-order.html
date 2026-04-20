@@ -57,7 +57,37 @@
     }
 
     @media (max-width: 600px) {
-      .customer-form { grid-template-columns: 1fr; }
+      .hero { padding: 2rem 1rem 1.5rem; }
+      .hero img.logo { height: 180px; }
+      .hero p { font-size: 1.05rem !important; }
+
+      .customer-form {
+        grid-template-columns: 1fr;
+        padding: 1.5rem 1rem;
+      }
+      .field input { padding: 0.85rem 0.9rem; font-size: 1.05rem; }
+
+      .products { grid-template-columns: 1fr; }
+      .product-info { padding: 1.1rem 1.1rem 1.4rem; }
+
+      .product-price { font-size: 1.5rem; }
+
+      .size-row { gap: 0.55rem; margin-top: 1rem; }
+      .size-option label {
+        padding: 0.85rem 1.1rem;
+        min-width: 58px;
+        font-size: 1.05rem;
+      }
+
+      .submit-section { padding: 2rem 1rem; }
+      .submit-btn {
+        padding: 1.15rem 3rem;
+        font-size: 1.2rem;
+        width: 100%;
+        max-width: 360px;
+      }
+      .order-total { font-size: 1.2rem; }
+      .order-total .total-amount { font-size: 2rem; }
     }
 
     .field {
