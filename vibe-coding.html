@@ -567,16 +567,6 @@
       </div>
     </div>
 
-    <div class="vc-card" data-img="chat">
-      <img class="vc-card-thumb" src="toolkit-screenshots/chat.jpg" alt="Chat" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Book/Studio Chat</div>
-        <div class="vc-card-client">Internal</div>
-        <div class="vc-card-desc">Real-time chat with image support (drag/drop, paste, file picker), channel rooms, presence indicators, login system.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Real-time</span><span class="vc-tag">Chat</span><span class="vc-tag">Images</span></div>
-      </div>
-    </div>
-
     <div class="vc-card" data-img="grid-editor">
       <img class="vc-card-thumb" src="toolkit-screenshots/grid-editor.jpg" alt="Grid Editor" loading="lazy">
       <div class="vc-card-body">
@@ -754,10 +744,6 @@ const details = {
     desc: 'The bridge between portfolio and arcade. This editor pulls images from GitHub repos and turns them into collectible game objects that players discover inside both Navigator and TunnelRunner. Drag-and-drop reordering, thematic grouping, and one-click publish pushes updated manifests that both games read at runtime. Portfolio content becomes in-game pickups across 5 zones, so updating your photography or design work automatically updates what players find in the games.',
     links: [['Demo','https://arcade.pietsuess.com/dev/content-editor.html?demo']]
   },
-  chat: {
-    desc: 'Real-time chat application with image support via drag/drop, clipboard paste, and file picker. Multiple channel rooms (Book, Studio), presence indicators showing who is online, password-protected login, emoji reactions on messages, and a lightbox for viewing shared images.',
-    links: []
-  },
   portfolio: {
     desc: 'Full portfolio site rebuilt from scratch in a dark gradient wrapper. Animated gradient background, glassmorphic card layouts, noise texture overlay, 6 zone pages with project grids, 24+ individual project pages with modals, walking squares logo animation, 3D education wheel, and a measuring tape ruler. Single-repo deployment to GitHub Pages. You\'re looking at it.',
     links: []
@@ -854,7 +840,7 @@ const devices = {
   maya:D+M, sscy:D+M, selena:D, unveil:D+M, '424':D,
   'heart-lines':D, clearing:D, intent:D, scatter:D, 'depth-scroll':D, deck:D, chalkboard:D, orbit:D, 'maya-depth':D, 'maya-scatter':D,
   navigator:D, 'return-to-space':D, victory:D, tunnel:M, 'cube-toss':D, gary:D,
-  'schedule-editor':D, bmats:D, 'grid-editor':D, 'content-editor':D, chat:D+M, 'sfx-designer':D+M,
+  'schedule-editor':D, bmats:D, 'grid-editor':D, 'content-editor':D, 'sfx-designer':D+M,
   portfolio:D+M
 };
 document.querySelectorAll('[data-img]').forEach(card => {
