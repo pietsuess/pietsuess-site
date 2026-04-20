@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSI Capoeira - Shirt Order</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #E02020;
+      --yellow: #F5D020;
+      --blue: #2090D0;
+      --black: #0a0a0a;
+      --dark: #111;
+      --card-bg: #1a1a1a;
+      --text: #eee;
+      --text-dim: #999;
+      --border: #333;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Urbanist', sans-serif;
+      background: var(--black);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    p, .desc { text-align: justify; text-align-last: left; }
+
+    /* HEADER */
+    .hero {
+      padding: 3rem 2rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero img.logo {
+      height: 312px;
+      margin-bottom: 1rem;
+    }
+
+    /* CUSTOMER FORM */
+    .customer-form {
+      padding: 2rem;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 600px) {
+      .customer-form { grid-template-columns: 1fr; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .field input {
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: #222;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--yellow);
+    }
+
+    /* GRID */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 0;
+      width: 100%;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card img {
+      width: 100%;
+      aspect-ratio: 1.15;
+      object-fit: cover;
+      display: block;
+      cursor: zoom-in;
+    }
+
+    .product-info {
+      padding: 1.25rem 1.5rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .product-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .product-detail {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .product-color {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .product-material {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid #555;
+      display: inline-block;
+    }
+
+    .product-price {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--yellow);
+      margin-top: 0.25rem;
+    }
+
+    /* SIZE CHECKBOXES */
+    .size-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+
+    .size-option {
+      position: relative;
+    }
+
+    .size-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .size-option label {
+      display: inline-block;
+      padding: 0.45rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: #222;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 44px;
+      text-align: center;
+    }
+
+    .size-option input:checked + label {
+      background: var(--yellow);
+      color: var(--black);
+      border-color: var(--yellow);
+    }
+
+    .size-option label:hover {
+      border-color: var(--yellow);
+    }
+
+    /* SUBMIT SECTION */
+    .submit-section {
+      padding: 2.5rem 2rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .submit-section p {
+      text-align: center;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .submit-btn {
+      display: inline-block;
+      padding: 0.85rem 3rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid var(--yellow);
+      background: transparent;
+      color: var(--yellow);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .submit-btn:hover:not(:disabled) {
+      background: var(--yellow);
+      color: var(--black);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .order-total {
+      margin-bottom: 1.25rem;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+    .order-total .total-amount {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--yellow);
+      margin-left: 0.5rem;
+    }
+    .order-total .item-count {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .submit-msg {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      color: #4f4;
+      display: none;
+    }
+
+    /* LIGHTBOX */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.92);
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img {
+      max-width: 95vw;
+      max-height: 95vh;
+      object-fit: contain;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--yellow); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('active')">
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<div class="hero">
+  <img class="logo" src="images/logo.svg" alt="SSI Capoeira">
+  <p style="font-size:1.25rem; color:var(--text-dim); font-weight:300; letter-spacing:0.1em; text-transform:uppercase; margin-top:0.5rem;">Shirt Order</p>
+</div>
+
+<div class="customer-form">
+  <div class="field">
+    <label for="custName">Name</label>
+    <input type="text" id="custName" autocomplete="name" required>
+  </div>
+  <div class="field">
+    <label for="custEmail">Email</label>
+    <input type="email" id="custEmail" autocomplete="email" required>
+  </div>
+</div>
+
+<div class="products" id="products"></div>
+
+<div class="submit-section">
+  <p>Check the sizes you want for each shirt, then send your order.</p>
+  <div class="order-total">
+    Total:<span class="total-amount" id="totalAmount">$0.00</span>
+    <span class="item-count" id="itemCount">0 items</span>
+  </div>
+  <button class="submit-btn" onclick="submitOrder()">Send Order</button>
+  <div class="submit-msg" id="submitMsg">Order sent. Piet will be in touch.</div>
+</div>
+
+<footer>
+  SSI Capoeira &middot; Questions? <a href="mailto:psuess@gmail.com">psuess@gmail.com</a>
+</footer>
+
+<script>
+const PRICE = 35.00;
+
+const PRODUCTS = [
+  {
+    id: "bc-3001-black",
+    name: "Unisex Jersey T-Shirt",
+    brand: "Bella+Canvas 3001",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-06.jpg",
+    blankPrice: 10.04,
+    material: "100% combed ring-spun cotton"
+  },
+  {
+    id: "bc-6400-black",
+    name: "Women's Relaxed Jersey T-Shirt",
+    brand: "Bella+Canvas 6400",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-04.jpg",
+    blankPrice: 10.21,
+    material: "100% combed ring-spun cotton"
+  },
+  {
+    id: "bc-3483-black",
+    name: "Unisex Jersey Muscle Tank Top",
+    brand: "Bella+Canvas 3483",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-07.jpg",
+    blankPrice: 13.62,
+    material: "100% combed ring-spun cotton"
+  },
+  {
+    id: "bc-8804-black",
+    name: "Women's Flowy Muscle T-Shirt",
+    brand: "Bella+Canvas 8804",
+    color: "Black",
+    colorHex: "#111",
+    logo: "Tri-color (red/yellow/blue)",
+    img: "images/product-02.jpg",
+    blankPrice: 16.37,
+    material: "65% polyester, 35% viscose"
+  },
+  {
+    id: "gildan-64200-red",
+    name: "Men's Softstyle Tank Top",
+    brand: "Gildan 64200",
+    color: "Red",
+    colorHex: "#c62828",
+    logo: "Yellow (single-color)",
+    img: "images/product-03.jpg",
+    blankPrice: 6.25,
+    material: "100% ring-spun cotton"
+  },
+  {
+    id: "bc-b6008-red",
+    name: "Women's Jersey Racerback Tank Top",
+    brand: "Bella+Canvas B6008",
+    color: "Red",
+    colorHex: "#c62828",
+    logo: "Yellow (single-color)",
+    img: "images/product-01.jpg",
+    blankPrice: 9.83,
+    material: "100% cotton"
+  },
+  {
+    id: "bc-3001-yellow",
+    name: "Unisex Jersey T-Shirt",
+    brand: "Bella+Canvas 3001",
+    color: "Maize Yellow",
+    colorHex: "#F5D020",
+    logo: "Tri-color (black/red/blue)",
+    img: "images/product-05.jpg",
+    blankPrice: 10.04,
+    material: "100% combed ring-spun cotton"
+  }
+];
+
+const SIZES = ["XS", "S", "M", "L", "XL"];
+
+const grid = document.getElementById('products');
+
+PRODUCTS.forEach(p => {
+  const price = PRICE.toFixed(2);
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  card.innerHTML = `
+    <img src="${p.img}" alt="${p.brand} ${p.name}" loading="lazy">
+    <div class="product-info">
+      <div class="product-name">${p.name}</div>
+      <div class="product-detail">${p.brand}</div>
+      <div class="product-color">
+        <span class="color-dot" style="background:${p.colorHex}"></span>
+        ${p.color} &middot; ${p.logo}
+      </div>
+      <div class="product-material">${p.material}</div>
+      <div class="product-price">$${price}</div>
+      <div class="size-row">
+        ${SIZES.map(sz => `
+          <div class="size-option">
+            <input type="checkbox" id="${p.id}-${sz}" data-product="${p.id}" data-size="${sz}" class="size-checkbox">
+            <label for="${p.id}-${sz}">${sz}</label>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  card.querySelector('img').addEventListener('click', () => {
+    document.getElementById('lightboxImg').src = p.img;
+    document.getElementById('lightbox').classList.add('active');
+  });
+  grid.appendChild(card);
+});
+
+function updateTotal() {
+  let total = 0;
+  let itemCount = 0;
+  const checked = document.querySelectorAll('.size-checkbox:checked');
+  checked.forEach(cb => {
+    const p = PRODUCTS.find(x => x.id === cb.dataset.product);
+    if (p) {
+      total += PRICE;
+      itemCount += 1;
+    }
+  });
+  document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
+  document.getElementById('itemCount').textContent = itemCount === 1 ? '1 item' : itemCount + ' items';
+}
+
+document.addEventListener('change', e => {
+  if (e.target.classList && e.target.classList.contains('size-checkbox')) {
+    updateTotal();
+  }
+});
+
+async function submitOrder() {
+  const name = document.getElementById('custName').value.trim();
+  const email = document.getElementById('custEmail').value.trim();
+
+  if (!name || !email) {
+    alert('Please enter your name and email.');
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert('Please enter a valid email address.');
+    return;
+  }
+
+  const selections = {};
+  document.querySelectorAll('.size-checkbox:checked').forEach(cb => {
+    const pid = cb.dataset.product;
+    const sz = cb.dataset.size;
+    if (!selections[pid]) selections[pid] = [];
+    selections[pid].push(sz);
+  });
+
+  if (Object.keys(selections).length === 0) {
+    alert('Please select at least one size on one shirt.');
+    return;
+  }
+
+  let lines = [];
+  let total = 0;
+  let itemCount = 0;
+  PRODUCTS.forEach(p => {
+    if (selections[p.id]) {
+      const price = PRICE;
+      const sizes = selections[p.id];
+      const subtotal = price * sizes.length;
+      total += subtotal;
+      itemCount += sizes.length;
+      lines.push(`${p.brand} - ${p.name} (${p.color})`);
+      lines.push(`  Sizes: ${sizes.join(', ')}`);
+      lines.push(`  $${price.toFixed(2)} x ${sizes.length} = $${subtotal.toFixed(2)}`);
+      lines.push('');
+    }
+  });
+
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  const message =
+    'SSI Capoeira - Shirt Order\n' +
+    '========================================\n\n' +
+    `Name:  ${name}\n` +
+    `Email: ${email}\n\n` +
+    '----------------------------------------\n' +
+    'Order:\n' +
+    '----------------------------------------\n\n' +
+    lines.join('\n') +
+    '\n----------------------------------------\n' +
+    `Items: ${itemCount}\n` +
+    `Total: $${total.toFixed(2)}\n` +
+    '----------------------------------------\n\n' +
+    'Sent from pietsuess.com/capoeira/shirt-order.html';
+
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        access_key: '0f45da86-7dcf-4c66-8881-d7597d02d720',
+        subject: `SSI Capoeira Order - ${name}`,
+        from_name: name,
+        replyto: email,
+        message: message
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      btn.textContent = 'Sent';
+      document.getElementById('submitMsg').style.display = 'block';
+    } else {
+      btn.textContent = 'Error - try again';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    btn.textContent = 'Error - try again';
+    btn.disabled = false;
+  }
+}
+</script>
+
+</body>
+</html>
