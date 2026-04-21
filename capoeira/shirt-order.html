@@ -73,18 +73,21 @@
       .product-price { font-size: 1.5rem; }
 
       .size-row {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        display: flex;
+        flex-wrap: nowrap;
         gap: 0.4rem;
         margin-top: 1rem;
       }
-      .size-option { width: 100%; }
+      .size-option {
+        flex: 1 1 0;
+        min-width: 0;
+      }
       .size-option label {
         display: block;
-        padding: 1.35rem 0;
-        min-width: 0;
         width: 100%;
-        font-size: 1.25rem;
+        padding: 1.4rem 0;
+        min-width: 0;
+        font-size: 1.35rem;
       }
 
       .submit-section { padding: 2rem 1rem; }
