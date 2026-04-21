@@ -76,7 +76,8 @@
         display: flex;
         flex-wrap: nowrap;
         gap: 0.4rem;
-        margin-top: 1rem;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
       }
       .size-option {
         flex: 1 1 0;
@@ -205,7 +206,7 @@
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
-      margin-top: 0.75rem;
+      margin-bottom: 0.25rem;
     }
 
     .size-option {
@@ -469,14 +470,6 @@ PRODUCTS.forEach(p => {
   card.innerHTML = `
     <img src="${p.img}" alt="${p.brand} ${p.name}" loading="lazy">
     <div class="product-info">
-      <div class="product-name">${p.name}</div>
-      <div class="product-detail">${p.brand}</div>
-      <div class="product-color">
-        <span class="color-dot" style="background:${p.colorHex}"></span>
-        ${p.color} &middot; ${p.logo}
-      </div>
-      <div class="product-material">${p.material}</div>
-      <div class="product-price">$${price}</div>
       <div class="size-row">
         ${SIZES.map(sz => `
           <div class="size-option">
@@ -485,6 +478,14 @@ PRODUCTS.forEach(p => {
           </div>
         `).join('')}
       </div>
+      <div class="product-name">${p.name}</div>
+      <div class="product-detail">${p.brand}</div>
+      <div class="product-color">
+        <span class="color-dot" style="background:${p.colorHex}"></span>
+        ${p.color} &middot; ${p.logo}
+      </div>
+      <div class="product-material">${p.material}</div>
+      <div class="product-price">$${price}</div>
     </div>
   `;
   card.querySelector('img').addEventListener('click', () => {
