@@ -330,6 +330,7 @@ const PRODUCTS = [
     color: "Black",
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
+    material: "4.2 oz, 100% Airlume combed ringspun cotton",
     img: "images/product-06.jpg",
     blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/",
     blankPrice: 10.04
@@ -341,6 +342,7 @@ const PRODUCTS = [
     color: "Black",
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
+    material: "7 oz/lin yd, 100% combed ringspun cotton",
     img: "images/product-04.jpg",
     blankUrl: "https://blankclothing.ca/b6400-bella-canvas-missy-jersey-t-shirt/",
     blankPrice: 10.21
@@ -352,6 +354,7 @@ const PRODUCTS = [
     color: "Black",
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
+    material: "7.2 oz/lin yd, 100% combed ringspun cotton",
     img: "images/product-07.jpg",
     blankUrl: "https://blankclothing.ca/bella-canvas-3483-unisex-jersey-muscle-tank-top/",
     blankPrice: 13.62
@@ -363,6 +366,7 @@ const PRODUCTS = [
     color: "Black",
     colorHex: "#111",
     logo: "Tri-color (red/yellow/blue)",
+    material: "6.2 oz/lin yd, 65% polyester, 35% viscose",
     img: "images/product-02.jpg",
     blankUrl: "https://blankclothing.ca/8804-bella-canvas-ladies-flowy-muscle-t-shirt-with-rolled-cuff/",
     blankPrice: 16.37
@@ -375,6 +379,7 @@ const PRODUCTS = [
     color: "Red",
     colorHex: "#c62828",
     logo: "Yellow (single-color)",
+    material: "7.5 oz/lin yd, 100% ringspun cotton",
     img: "images/product-03.jpg",
     blankUrl: "https://blankclothing.ca/gildan-64200-softstyle-tank-top/",
     blankPrice: 6.25
@@ -386,6 +391,7 @@ const PRODUCTS = [
     color: "Red",
     colorHex: "#c62828",
     logo: "Yellow (single-color)",
+    material: "7 oz/lin yd, 100% cotton",
     img: "images/product-01.jpg",
     blankUrl: "https://blankclothing.ca/b6008-bella-canvas-ladies-jersey-racerback-tank-top/",
     blankPrice: 9.83
@@ -398,6 +404,7 @@ const PRODUCTS = [
     color: "Maize Yellow",
     colorHex: "#F5D020",
     logo: "Tri-color (black/red/blue)",
+    material: "4.2 oz, 100% Airlume combed ringspun cotton",
     img: "images/product-05.jpg",
     blankUrl: "https://blankclothing.ca/bella-canvas-3001c-unisex-jersey-t-shirt/",
     blankPrice: 10.04
@@ -414,6 +421,7 @@ PRODUCTS.forEach(p => {
     <div class="product-info">
       <div class="product-name">${p.name}</div>
       <div class="product-detail">${p.brand}</div>
+      <div class="product-detail">${p.material}</div>
       <div class="product-color">
         <span class="color-dot" style="background:${p.colorHex}"></span>
         ${p.color} &middot; ${p.logo}
