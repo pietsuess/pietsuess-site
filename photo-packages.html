@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Packages &ndash; Piet Suess</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;1,700;1,800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#e5007e;
+    --pink-deep:#b8005f;
+    --orange:#f26522;
+    --orange-mid:#f5a63c;
+    --yellow:#f5ee5e;
+    --cream:#fdf6e6;
+    --ink:#33302c;
+    --ink-soft:#5d574f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Poppins',Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:var(--cream);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* Warm gradient wash behind the whole page, yellow at the top
+     falling to deep orange at the bottom, as on the printed sheet. */
+  .wash{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:linear-gradient(180deg,
+      var(--yellow) 0%, #f6e07a 14%, var(--orange-mid) 46%,
+      #ef8a35 74%, var(--orange) 100%);
+  }
+  .page{position:relative;z-index:1;}
+
+  /* ---- Masthead ---- */
+  header.mast{
+    position:relative;
+    padding:clamp(2rem,4vw,3.5rem) clamp(1.25rem,4vw,4rem) clamp(4rem,7vw,6rem);
+    text-align:center;
+    overflow:hidden;
+  }
+  header.mast::after{
+    content:"";position:absolute;left:-5%;right:-5%;bottom:-1px;height:clamp(40px,7vw,90px);
+    background:var(--cream);
+    border-radius:60% 60% 0 0 / 100% 100% 0 0;
+  }
+  .mark{
+    display:inline-flex;align-items:baseline;gap:.12em;
+    font-weight:800;font-style:italic;font-size:clamp(1.6rem,3vw,2.4rem);
+    color:var(--pink);letter-spacing:-.03em;
+  }
+  .mark .dot{width:.22em;height:.22em;border-radius:50%;background:var(--pink);display:inline-block}
+  h1{
+    margin-top:.3em;
+    font-weight:800;font-style:italic;
+    font-size:clamp(3rem,10vw,8rem);
+    line-height:.95;letter-spacing:-.02em;
+    color:var(--pink);
+    text-shadow:0 3px 0 rgba(255,255,255,.5);
+  }
+  .mast .sub{
+    margin-top:1.1rem;
+    font-size:clamp(.95rem,1.5vw,1.15rem);
+    color:var(--ink);font-weight:600;
+    letter-spacing:.02em;
+  }
+
+  /* ---- Package sections ---- */
+  main{padding:0 0 clamp(3rem,6vw,6rem);}
+  .pkg{
+    background:var(--cream);
+    padding:clamp(2rem,4vw,3.5rem) clamp(1.25rem,4vw,4rem);
+    border-bottom:2px solid rgba(229,0,126,.18);
+  }
+  .pkg:nth-of-type(even){background:#fffaf0;}
+
+  .pkg-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:1.5rem;flex-wrap:wrap;
+    margin-bottom:1.6rem;
+  }
+  .pkg-name{
+    display:inline-block;
+    font-weight:800;font-style:italic;
+    font-size:clamp(1.35rem,2.8vw,2.2rem);
+    color:var(--pink);
+    background:var(--yellow);
+    border:2px solid var(--pink);
+    border-radius:999px;
+    padding:.3em 1.1em;
+    line-height:1.15;
+  }
+  .pkg.warm .pkg-name{color:var(--orange);border-color:var(--orange);}
+  .price{
+    font-weight:800;
+    font-size:clamp(1.5rem,3.4vw,2.6rem);
+    color:var(--cream);
+    background:var(--pink);
+    border-radius:999px;
+    padding:.18em .78em;
+    line-height:1.2;
+    white-space:nowrap;
+    box-shadow:0 6px 18px rgba(184,0,95,.28);
+  }
+  .pkg.warm .price{background:var(--orange);box-shadow:0 6px 18px rgba(242,101,34,.3);}
+
+  /* Two columns: the terms on the left, the pictures on the right.
+     Full width, no centred measure. */
+  .pkg-body{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);
+    gap:clamp(1.5rem,3vw,3rem);
+    align-items:start;
+  }
+  ul.terms{list-style:none;display:grid;gap:1rem;}
+  ul.terms li{
+    position:relative;
+    padding-left:1.7em;
+    font-size:clamp(.95rem,1.15vw,1.06rem);
+    line-height:1.55;
+    color:var(--ink-soft);
+    text-align:justify;
+    text-align-last:left;
+  }
+  ul.terms li::before{
+    content:"+";
+    position:absolute;left:0;top:-.04em;
+    color:var(--pink);font-weight:700;font-size:1.15em;
+  }
+  .pkg.warm ul.terms li::before{color:var(--orange);}
+  ul.terms li b{color:var(--ink);font-weight:600;}
+  .perfect{
+    margin-top:.2rem;
+    font-style:italic;
+    color:var(--ink);
+  }
+
+  .shots{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:clamp(.4rem,.8vw,.8rem);
+  }
+  .shots .shot{
+    position:relative;overflow:hidden;
+    aspect-ratio:3/4;background:#e8ded0;
+    cursor:zoom-in;
+    border-radius:2px;
+  }
+  .shots .shot img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    opacity:0;transition:opacity .5s ease, transform .6s cubic-bezier(.2,.7,.2,1);
+  }
+  .shots .shot img.loaded{opacity:1;}
+  .shots .shot:hover img{transform:scale(1.05);}
+  /* First frame of each set runs double width so the sets do not read
+     as a uniform waffle. */
+  .shots .shot:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;}
+
+  /* ---- Group packages ---- */
+  .groups{
+    background:var(--pink);
+    color:var(--cream);
+    padding:clamp(2rem,4vw,3.5rem) clamp(1.25rem,4vw,4rem);
+  }
+  .groups h2{
+    font-weight:800;font-style:italic;
+    font-size:clamp(1.6rem,3.4vw,2.6rem);
+    color:var(--yellow);
+    margin-bottom:1.4rem;
+  }
+  .group-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:clamp(.8rem,1.6vw,1.6rem);
+  }
+  .group-card{
+    border:2px solid rgba(253,246,230,.5);
+    border-radius:10px;
+    padding:1.2rem 1.4rem;
+    display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
+    font-weight:600;font-size:clamp(1rem,1.5vw,1.25rem);
+  }
+  .group-card span{font-weight:800;font-size:1.25em;color:var(--yellow);}
+  .group-shots{margin-top:1.6rem;}
+  .group-shots .shot{aspect-ratio:3/4;}
+  .group-shots .shot:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;}
+  .groups .note{
+    margin-top:1.4rem;font-size:.95rem;opacity:.9;
+    text-align:justify;text-align-last:left;
+  }
+
+  /* ---- Footer ---- */
+  footer{
+    background:var(--cream);
+    text-align:center;
+    padding:clamp(2rem,4vw,3.5rem) 1.5rem clamp(2.5rem,5vw,4rem);
+  }
+  footer a{
+    color:var(--pink);text-decoration:none;font-weight:700;
+    font-size:clamp(1.1rem,2vw,1.5rem);
+  }
+  footer a:hover{text-decoration:underline;}
+  footer .fine{
+    margin-top:1rem;color:var(--ink-soft);font-size:.9rem;
+  }
+
+  /* ---- Lightbox ---- */
+  #lb{
+    position:fixed;inset:0;z-index:50;
+    background:rgba(40,22,10,.94);
+    backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;
+    opacity:0;transition:opacity .3s ease;
+  }
+  #lb.open{display:flex;opacity:1;}
+  #lb img{
+    max-width:92vw;max-height:88vh;object-fit:contain;
+    box-shadow:0 30px 80px rgba(0,0,0,.55);
+    user-select:none;
+  }
+  #lb .close{
+    position:absolute;top:1.2rem;right:1.4rem;z-index:60;
+    width:2.8rem;height:2.8rem;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(253,246,230,.15);border:1px solid rgba(253,246,230,.5);
+    color:var(--cream);font-size:1.6rem;cursor:pointer;line-height:1;
+  }
+  #lb .nav{
+    position:absolute;top:50%;transform:translateY(-50%);z-index:52;
+    width:3.4rem;height:3.4rem;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    color:var(--cream);font-size:1.7rem;line-height:1;padding-bottom:.15em;
+    background:rgba(253,246,230,.15);border:1px solid rgba(253,246,230,.5);
+  }
+  #lb .prev{left:1.4rem;} #lb .next{right:1.4rem;}
+  #lb .close:hover,#lb .nav:hover{background:rgba(229,0,126,.55);}
+  #lb .counter{
+    position:absolute;bottom:1.5rem;left:0;right:0;text-align:center;
+    color:var(--cream);letter-spacing:.3em;font-size:.8rem;opacity:.8;
+  }
+
+  @media (max-width:1000px){
+    .pkg-body{grid-template-columns:1fr;}
+    .group-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:600px){
+    .shots{grid-template-columns:repeat(2,1fr);}
+    .pkg-head{flex-direction:column;align-items:flex-start;gap:.9rem;}
+  }
+</style>
+</head>
+<body>
+<div class="wash"></div>
+
+<div class="page">
+  <header class="mast">
+    <div class="mark">ps<span class="dot"></span></div>
+    <h1>Photo Packages</h1>
+    <div class="sub">Portrait, product and website photography on Salt Spring Island</div>
+  </header>
+
+  <main id="main"></main>
+
+  <section class="groups">
+    <h2>Group Packages</h2>
+    <div class="group-grid">
+      <div class="group-card">Gold Group Package <span>$1600</span></div>
+      <div class="group-card">Silver Group Package <span>$1200</span></div>
+      <div class="group-card">Bronze Group Package <span>$750</span></div>
+    </div>
+    <p class="note">Group rates cover the same session structure as the matching portrait package, extended to cover everyone in the frame.</p>
+    <div class="shots group-shots" id="groupShots"></div>
+  </section>
+
+  <footer>
+    <a href="https://pietsuess.com">pietsuess.com</a>
+    <div class="fine">All prices in Canadian dollars. Travel outside Salt Spring Island quoted separately.</div>
+  </footer>
+</div>
+
+<div id="lb" aria-hidden="true">
+  <button class="close" aria-label="Close">&times;</button>
+  <button class="nav prev" aria-label="Previous">&#8249;</button>
+  <img id="lbImg" alt="">
+  <button class="nav next" aria-label="Next">&#8250;</button>
+  <div class="counter" id="lbCount"></div>
+</div>
+
+<script>
+const IMG_DIR = 'images/packages/';
+
+const PACKAGES = [
+  {
+    name: 'Platinum Portrait Package',
+    price: '$1500',
+    tone: 'pink',
+    terms: [
+      'Premium photography package for one person or group, with Piet and Natalie.',
+      'Full day with a midday break shoot, with professional lighting and styling. This includes as many looks and styles as we can fit in the day, and can be on location and at my private home studio in Ganges.',
+      'Includes a creative consultation in advance to determine look and feel and to prepare for the shoot.',
+      'All the finished photos are carefully edited, touched up and finely tuned to your satisfaction, and mine. You can choose how many final edited photos you would like, there is no limit.',
+      'Professional makeup artist available to hire for additional cost.'
+    ],
+    perfect: 'Perfect for: personal branding, website content, headshots, life moments, gifts, antiquity.',
+    images: ['DSC03637.jpg','DSC03597-2.jpg','DSC03615.jpg','DSC03354.jpg','IMG_0167.jpg']
+  },
+  {
+    name: 'Gold Portrait Package',
+    price: '$1200',
+    tone: 'pink',
+    terms: [
+      'Signature Portrait Session for one person, with Piet and Natalie.',
+      '4 to 6 hour portrait shoot, with lighting and styling. This includes as many looks, styles and lighting setups as we can fit in the time. This can be on location or at my private home studio in Ganges.',
+      'Includes a creative consultation in advance to determine look and feel and to prepare for the shoot.',
+      'All the finished photos are carefully edited, touched up and finely tuned to your satisfaction, and mine. You can choose how many final edited photos you would like, there is no limit.',
+      'Professional makeup artist available to hire for additional cost.'
+    ],
+    perfect: 'Perfect for: personal branding, website content, headshots, special life moments.',
+    images: ['DSC03789-2.jpg','DSC03757-3.jpg','DSC03798-2.jpg','AlexDuncan_MG_9333.jpg','Natalie_Red_Gown.jpg']
+  },
+  {
+    name: 'Silver Portrait Package',
+    price: '$850',
+    tone: 'warm',
+    terms: [
+      'Basic photography package for one person, with Piet and Natalie.',
+      '2 to 3 hour studio shoot, with professional lighting and styling. This includes as many looks and styles as we can fit in the time, and can be on location or at my private home studio in Ganges.',
+      'Includes a creative consultation in advance to determine look and feel and to prepare for the shoot.',
+      'You will receive at least 10 finished photos. All the finished photos are carefully edited, touched up and finely tuned to your satisfaction, and mine.',
+      'Professional makeup artist available to hire for additional cost.'
+    ],
+    perfect: 'Perfect for: personal branding, website content, headshots.',
+    images: ['DSC05244-2.jpg','DSC04989.jpg','DSC05026.jpg','DSC05329.jpg','DSC05533.jpg']
+  },
+  {
+    name: 'Bronze Portrait Package',
+    price: '$500',
+    tone: 'warm',
+    terms: [
+      'Basic photography package for one person, with Piet.',
+      '1 hour studio shoot, with professional lighting, and you show up styled. At my private home studio in Ganges.',
+      'Includes a creative consultation in advance to determine look and feel and to prepare for the shoot.',
+      'You will receive at least 5 finished photos. All the finished photos are carefully edited, touched up and finely tuned to your satisfaction, and mine.'
+    ],
+    perfect: 'Perfect for: personal branding, website content, headshots.',
+    images: ['IMG_7398.jpg','0P2A3050.jpg','DSC02831.jpg','IMG_4995.jpg','Mom_DSC03011-2.jpg']
+  },
+  {
+    name: 'Website Background Package',
+    price: '$500',
+    tone: 'warm',
+    terms: [
+      'Basic background photo package for web and print, with Piet.',
+      'This package is designed to fill out your website backgrounds for texture and content, or for print material. I will come to your place of work, or equivalent, and photograph elements in your location. This can include a body or hand model (not faces) or two, arranged by you or by me at an additional expense, as well as curated scenes and props.',
+      'Includes a creative consultation in advance to determine look and feel and to prepare for the shoot.',
+      'All the finished photos are carefully edited, touched up and finely tuned. You can choose how many final edited photos you would like, there is no limit.'
+    ],
+    perfect: '',
+    images: ['DSC08322.jpg','DSC08657.jpg','DSC08670.jpg','IMG_2667.jpg']
+  },
+  {
+    name: 'Product Photo Package',
+    price: '$600',
+    tone: 'warm',
+    terms: [
+      'Stylized product photography for your website or print material.',
+      'This package is a heavily stylized product shoot that will include custom backgrounds, on colour or on white or black. It can be an ornate set, or a simple layout.',
+      'Includes a creative consultation in advance to determine look and feel and to prepare for the shoot.',
+      'All the finished photos are carefully edited, touched up and finely tuned.',
+      '$100 for each additional product.'
+    ],
+    perfect: '',
+    images: []
+  }
+];
+
+// Flat list backing the lightbox, built as the sections render.
+const FLAT = [];
+
+function render(){
+  const main = document.getElementById('main');
+  PACKAGES.forEach(pkg=>{
+    const sec = document.createElement('section');
+    sec.className = 'pkg' + (pkg.tone === 'warm' ? ' warm' : '');
+
+    const head = document.createElement('div');
+    head.className = 'pkg-head';
+    head.innerHTML = '<div class="pkg-name">' + pkg.name + '</div>' +
+                     '<div class="price">' + pkg.price + '</div>';
+    sec.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'pkg-body';
+
+    const ul = document.createElement('ul');
+    ul.className = 'terms';
+    pkg.terms.forEach(t=>{
+      const li = document.createElement('li');
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+    if(pkg.perfect){
+      const li = document.createElement('li');
+      li.className = 'perfect';
+      li.textContent = pkg.perfect;
+      ul.appendChild(li);
+    }
+    body.appendChild(ul);
+
+    // A package with no sample set yet keeps the terms full width
+    // rather than leaving a hole where the pictures go.
+    if(!pkg.images.length){
+      body.style.gridTemplateColumns = '1fr';
+      sec.appendChild(body);
+      main.appendChild(sec);
+      return;
+    }
+
+    const shots = document.createElement('div');
+    shots.className = 'shots';
+    pkg.images.forEach(name=>{
+      const idx = FLAT.length;
+      FLAT.push(name);
+      const fig = document.createElement('div');
+      fig.className = 'shot';
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.src = IMG_DIR + name;
+      img.alt = pkg.name + ' example';
+      img.addEventListener('load', ()=> img.classList.add('loaded'));
+      fig.appendChild(img);
+      fig.addEventListener('click', ()=> openLb(idx));
+      shots.appendChild(fig);
+    });
+    body.appendChild(shots);
+
+    sec.appendChild(body);
+    main.appendChild(sec);
+  });
+}
+
+// Lightbox
+const lb = document.getElementById('lb');
+const lbImg = document.getElementById('lbImg');
+const lbCount = document.getElementById('lbCount');
+let cur = 0;
+
+function openLb(i){
+  cur = i;
+  show();
+  lb.classList.add('open');
+  lb.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+}
+function show(){
+  lbImg.src = IMG_DIR + FLAT[cur];
+  lbCount.textContent = (cur+1) + ' / ' + FLAT.length;
+}
+function closeLb(){
+  lb.classList.remove('open');
+  lb.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+}
+function step(d){ cur = (cur + d + FLAT.length) % FLAT.length; show(); }
+
+document.querySelector('#lb .close').addEventListener('click', closeLb);
+document.querySelector('#lb .prev').addEventListener('click', e=>{e.stopPropagation();step(-1);});
+document.querySelector('#lb .next').addEventListener('click', e=>{e.stopPropagation();step(1);});
+lb.addEventListener('click', e=>{ if(e.target === lb) closeLb(); });
+document.addEventListener('keydown', e=>{
+  if(!lb.classList.contains('open')) return;
+  if(e.key === 'Escape') closeLb();
+  if(e.key === 'ArrowLeft') step(-1);
+  if(e.key === 'ArrowRight') step(1);
+});
+
+function renderGroup(){
+  const wrap = document.getElementById('groupShots');
+  ['Rieter_DSC06406.jpg','Rieter_DSC06527.jpg','Rieter_DSC06533.jpg','Rieter_DSC06232.jpg'].forEach(name=>{
+    const idx = FLAT.length;
+    FLAT.push(name);
+    const fig = document.createElement('div');
+    fig.className = 'shot';
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.src = IMG_DIR + name;
+    img.alt = 'Group session example';
+    img.addEventListener('load', ()=> img.classList.add('loaded'));
+    fig.appendChild(img);
+    fig.addEventListener('click', ()=> openLb(idx));
+    wrap.appendChild(fig);
+  });
+}
+
+render();
+renderGroup();
+</script>
+</body>
+</html>
