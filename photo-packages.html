@@ -185,6 +185,9 @@
     font-weight:600;font-size:clamp(1rem,1.5vw,1.25rem);
   }
   .group-card span{font-weight:800;font-size:1.25em;color:var(--yellow);}
+  /* Background plates are landscape, so they get wider cells than the
+     portrait sets and do not crop to a standing frame. */
+  .wide-shots .shot{aspect-ratio:3/2;}
   .group-shots{margin-top:1.6rem;}
   .group-shots .shot{aspect-ratio:3/4;}
   .group-shots .shot:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;}
@@ -360,7 +363,8 @@ const PACKAGES = [
       'All the finished photos are carefully edited, touched up and finely tuned. You can choose how many final edited photos you would like, there is no limit.'
     ],
     perfect: '',
-    images: ['DSC08322.jpg','DSC08657.jpg','DSC08670.jpg','IMG_2667.jpg']
+    wide: true,
+    images: ['bg-pillars.jpg','bg-boxes.jpg','bg-barnacles.jpg','bg-lamp.jpg','bg-blossom.jpg']
   },
   {
     name: 'Product Photo Package',
@@ -421,7 +425,7 @@ function render(){
     }
 
     const shots = document.createElement('div');
-    shots.className = 'shots';
+    shots.className = 'shots' + (pkg.wide ? ' wide-shots' : '');
     pkg.images.forEach(name=>{
       const idx = FLAT.length;
       FLAT.push(name);
