@@ -140,25 +140,33 @@
     color:var(--ink);
   }
 
-  /* Columns of equal width, each frame at its own height. Nothing is
-     cropped: a wide shot stays wide, a tall shot stays tall. */
+  /* Justified rows. Each frame grows in proportion to its own width, so a
+     row fills the full measure exactly, every frame keeps its true shape,
+     and the block ends on a straight edge instead of a ragged one. */
   .shots{
-    column-count:4;
-    column-gap:clamp(.4rem,.8vw,.8rem);
+    display:flex;
+    flex-wrap:wrap;
+    gap:clamp(.4rem,.8vw,.8rem);
   }
   .shots .shot{
     position:relative;overflow:hidden;
     background:#e8ded0;
     cursor:zoom-in;
     border-radius:2px;
-    break-inside:avoid;
-    margin-bottom:clamp(.4rem,.8vw,.8rem);
+    flex:1 1 320px;
+    height:clamp(200px,20vw,300px);
   }
   .shots .shot img{
-    width:100%;height:auto;display:block;
+    position:absolute;inset:0;
+    width:100%;height:100%;object-fit:cover;display:block;
     opacity:0;transition:opacity .5s ease;
   }
   .shots .shot img.loaded{opacity:1;}
+  /* Soak up the slack on the final row so its frames are not stretched
+     to fill the width on their own. */
+  .shots .filler{
+    flex:1 1 320px;height:0;margin:0;pointer-events:none;
+  }
 
   /* ---- Group packages ---- */
   .groups{
@@ -252,7 +260,7 @@
     .group-grid{grid-template-columns:1fr;}
   }
   @media (max-width:600px){
-    .shots{column-count:2;}
+    .shots .shot{height:clamp(150px,38vw,220px);}
     .pkg-head{flex-direction:column;align-items:flex-start;gap:.9rem;}
   }
 </style>
@@ -482,11 +490,23 @@ function renderGallery(){
     img.loading = 'lazy';
     img.src = IMG_DIR + name;
     img.alt = '';
-    img.addEventListener('load', ()=> img.classList.add('loaded'));
+    // Grow each frame in proportion to its own shape so rows justify
+    // without squashing anything.
+    img.addEventListener('load', ()=>{
+      img.classList.add('loaded');
+      const r = img.naturalWidth / img.naturalHeight;
+      fig.style.flexGrow = r;
+      fig.style.flexBasis = (r * 240) + 'px';
+    });
     fig.appendChild(img);
     fig.addEventListener('click', ()=> openLb(idx));
     wrap.appendChild(fig);
   });
+  for(let i = 0; i < 6; i++){
+    const f = document.createElement('i');
+    f.className = 'filler';
+    wrap.appendChild(f);
+  }
 }
 
 render();
