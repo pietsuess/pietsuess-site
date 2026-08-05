@@ -159,10 +159,7 @@
   .shots .shot:hover img{transform:scale(1.05);}
   /* First frame of each set runs double width so the sets do not read
      as a uniform waffle. */
-  /* The lead frame covers two columns and two rows. Two 3/4 cells stacked
-     with a gap between them come out to the same 3/4 overall, so the lead
-     keeps that ratio rather than its own, and the rows stay flush. */
-  .shots .shot:first-child{grid-column:span 2;grid-row:span 2;}
+  /* Every frame is the same size. No lead frame, no spans. */
 
   /* ---- Group packages ---- */
   .groups{
