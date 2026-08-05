@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Packages &ndash; Gallery Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#e5007e;
+    --orange:#f26522;
+    --cream:#fdf6e6;
+    --ink:#33302c;
+    --ink-soft:#5d574f;
+    --line:rgba(51,48,44,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Poppins',Helvetica,Arial,sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  header{
+    padding:clamp(1.5rem,3vw,2.5rem) clamp(1rem,3vw,3rem) 1rem;
+    border-bottom:2px solid var(--line);
+  }
+  h1{
+    font-weight:700;font-size:clamp(1.5rem,3vw,2.2rem);
+    color:var(--pink);letter-spacing:-.01em;
+  }
+  .lede{
+    margin-top:.5rem;color:var(--ink-soft);
+    font-size:.95rem;line-height:1.5;
+    text-align:justify;text-align-last:left;
+  }
+
+  .bar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;align-items:center;gap:.7rem;
+    padding:.9rem clamp(1rem,3vw,3rem);
+    background:var(--cream);
+    border-bottom:2px solid var(--line);
+  }
+  button{
+    font-family:inherit;font-weight:600;font-size:.9rem;
+    padding:.55em 1.1em;border-radius:999px;cursor:pointer;
+    border:2px solid var(--pink);background:var(--pink);color:var(--cream);
+  }
+  button.ghost{background:transparent;color:var(--pink);}
+  button:hover{background:var(--orange);border-color:var(--orange);color:var(--cream);}
+  .count{margin-left:auto;color:var(--ink-soft);font-size:.9rem;}
+
+  main{padding:clamp(1rem,3vw,2.5rem) clamp(1rem,3vw,3rem) 4rem;}
+
+  /* Uniform editing tiles. This is the working view, not the live look. */
+  .board{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:.9rem;
+  }
+  .card{
+    position:relative;
+    aspect-ratio:1/1;
+    background:#e8ded0;
+    border:2px solid transparent;
+    border-radius:4px;
+    overflow:hidden;
+    cursor:grab;
+    user-select:none;
+  }
+  .card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
+  .card.dragging{opacity:.35;cursor:grabbing;}
+  .card.over{border-color:var(--pink);}
+  .card .idx{
+    position:absolute;top:.4rem;left:.4rem;z-index:2;
+    background:rgba(51,48,44,.75);color:var(--cream);
+    font-size:.72rem;font-weight:600;
+    padding:.15em .5em;border-radius:999px;
+  }
+  .card .name{
+    position:absolute;left:0;right:0;bottom:0;z-index:2;
+    background:rgba(51,48,44,.78);color:var(--cream);
+    font-size:.68rem;padding:.35em .5em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .card .kill{
+    position:absolute;top:.35rem;right:.35rem;z-index:3;
+    width:1.7rem;height:1.7rem;border-radius:50%;
+    border:none;background:rgba(51,48,44,.75);color:var(--cream);
+    font-size:1rem;line-height:1;padding:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .card .kill:hover{background:var(--pink);}
+
+  .dropped{
+    margin-top:2.5rem;padding-top:1.2rem;border-top:2px solid var(--line);
+  }
+  .dropped h2{font-size:1rem;font-weight:700;margin-bottom:.8rem;}
+  .dropped .board .card{opacity:.5;}
+  .dropped .card .kill{background:rgba(51,48,44,.6);}
+  .dropped .card .kill::before{content:"";}
+
+  .out{
+    margin-top:2.5rem;padding-top:1.2rem;border-top:2px solid var(--line);
+  }
+  .out h2{font-size:1rem;font-weight:700;margin-bottom:.8rem;}
+  textarea{
+    width:100%;min-height:220px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.82rem;line-height:1.5;
+    padding:1rem;border:2px solid var(--line);border-radius:6px;
+    background:#fffdf7;color:var(--ink);resize:vertical;
+  }
+  .hint{margin-top:.6rem;color:var(--ink-soft);font-size:.85rem;}
+  .err{color:var(--pink);font-weight:600;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Gallery Editor</h1>
+  <p class="lede">Drag to reorder. The X drops a frame into the discard shelf at the bottom, and the X there puts it back. When it looks right, copy the block at the foot of the page and hand it over to be pasted into the live page. Nothing here changes the site on its own.</p>
+</header>
+
+<div class="bar">
+  <button id="copy">Copy list</button>
+  <button class="ghost" id="revert">Start over</button>
+  <span class="count" id="count"></span>
+</div>
+
+<main>
+  <div class="board" id="board"></div>
+
+  <section class="dropped" id="droppedWrap" hidden>
+    <h2>Dropped</h2>
+    <div class="board" id="dropped"></div>
+  </section>
+
+  <section class="out">
+    <h2>Paste this back</h2>
+    <textarea id="out" readonly></textarea>
+    <p class="hint" id="hint"></p>
+  </section>
+</main>
+
+<script>
+const IMG_DIR = 'images/packages/';
+let order = [];
+let discard = [];
+let original = [];
+
+// The live page owns the list. Read it from there so the two can never
+// drift apart.
+async function boot(){
+  const hint = document.getElementById('hint');
+  try{
+    const res = await fetch('photo-packages.html?v=' + Date.now());
+    const text = await res.text();
+    const block = text.match(/const GALLERY = \[([\s\S]*?)\];/);
+    if(!block) throw new Error('no GALLERY array found in photo-packages.html');
+    order = [...block[1].matchAll(/'([^']+)'/g)].map(m=> m[1]);
+    original = order.slice();
+    render();
+  }catch(err){
+    hint.innerHTML = '<span class="err">Could not read photo-packages.html: ' +
+      err.message + '</span>';
+  }
+}
+
+function render(){
+  drawBoard(document.getElementById('board'), order, false);
+  const dw = document.getElementById('droppedWrap');
+  dw.hidden = discard.length === 0;
+  drawBoard(document.getElementById('dropped'), discard, true);
+  document.getElementById('count').textContent =
+    order.length + ' in, ' + discard.length + ' out';
+  writeOut();
+}
+
+function drawBoard(wrap, list, isDiscard){
+  wrap.innerHTML = '';
+  list.forEach((name, i)=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.draggable = !isDiscard;
+    card.dataset.i = i;
+
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.src = IMG_DIR + name;
+    img.alt = '';
+    card.appendChild(img);
+
+    if(!isDiscard){
+      const idx = document.createElement('span');
+      idx.className = 'idx';
+      idx.textContent = i + 1;
+      card.appendChild(idx);
+    }
+
+    const label = document.createElement('span');
+    label.className = 'name';
+    label.textContent = name;
+    card.appendChild(label);
+
+    const kill = document.createElement('button');
+    kill.className = 'kill';
+    kill.textContent = isDiscard ? '+' : '×';
+    kill.title = isDiscard ? 'Put back' : 'Drop';
+    kill.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(isDiscard){
+        discard.splice(i,1);
+        order.push(name);
+      } else {
+        order.splice(i,1);
+        discard.push(name);
+      }
+      render();
+    });
+    card.appendChild(kill);
+
+    if(!isDiscard) wireDrag(card);
+    wrap.appendChild(card);
+  });
+}
+
+let dragFrom = null;
+function wireDrag(card){
+  card.addEventListener('dragstart', e=>{
+    dragFrom = Number(card.dataset.i);
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(dragFrom));
+  });
+  card.addEventListener('dragend', ()=>{
+    card.classList.remove('dragging');
+    document.querySelectorAll('.card.over').forEach(c=> c.classList.remove('over'));
+  });
+  card.addEventListener('dragover', e=>{
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    card.classList.add('over');
+  });
+  card.addEventListener('dragleave', ()=> card.classList.remove('over'));
+  card.addEventListener('drop', e=>{
+    e.preventDefault();
+    const to = Number(card.dataset.i);
+    if(dragFrom === null || dragFrom === to) return;
+    const [moved] = order.splice(dragFrom, 1);
+    order.splice(to, 0, moved);
+    dragFrom = null;
+    render();
+  });
+}
+
+function writeOut(){
+  const lines = [];
+  for(let i = 0; i < order.length; i += 4){
+    lines.push('  ' + order.slice(i, i+4).map(n=> "'" + n + "'").join(','));
+  }
+  document.getElementById('out').value =
+    'const GALLERY = [\n' + lines.join(',\n') + '\n];';
+}
+
+document.getElementById('copy').addEventListener('click', async ()=>{
+  const ta = document.getElementById('out');
+  try{
+    await navigator.clipboard.writeText(ta.value);
+    document.getElementById('hint').textContent = 'Copied.';
+  }catch(e){
+    ta.removeAttribute('readonly');
+    ta.select();
+    document.getElementById('hint').textContent = 'Select and copy by hand.';
+  }
+});
+
+document.getElementById('revert').addEventListener('click', ()=>{
+  order = original.slice();
+  discard = [];
+  render();
+});
+
+boot();
+</script>
+</body>
+</html>
