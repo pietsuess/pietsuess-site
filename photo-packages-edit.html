@@ -65,9 +65,15 @@
      what the page shows. */
   .board{
     display:flex;
-    flex-wrap:wrap;
+    flex-direction:column;
     gap:clamp(.4rem,.8vw,.8rem);
   }
+  .shot-row{
+    display:flex;
+    gap:clamp(.4rem,.8vw,.8rem);
+  }
+  #dropped{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem;}
+  #dropped .card{aspect-ratio:1/1;width:auto!important;height:auto!important;}
   .card{
     position:relative;
     flex:0 0 auto;
@@ -315,10 +321,17 @@ function layoutBoard(){
   if(!width) return;
 
   rowGroups = buildRows();
+  wrap.innerHTML = '';
+  rowGroups.forEach(r=>{
+    const rowEl = document.createElement('div');
+    rowEl.className = 'shot-row';
+    r.forEach(t=> rowEl.appendChild(t.el));
+    wrap.appendChild(rowEl);
+  });
 
   rowGroups.forEach(r=>{
     const sum = r.reduce((a,x)=> a + x.ratio, 0);
-    const h = (width - gap * (r.length - 1)) / sum;
+    const h = (width - gap * (r.length - 1) - 1) / sum;
     r.forEach(t=>{
       t.el.style.height = h + 'px';
       t.el.style.width = (h * t.ratio) + 'px';

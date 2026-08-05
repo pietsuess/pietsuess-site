@@ -148,7 +148,12 @@
      and the block ends on a straight edge instead of a ragged one. */
   .shots{
     display:flex;
-    flex-wrap:wrap;
+    flex-direction:column;
+    gap:clamp(.4rem,.8vw,.8rem);
+  }
+  /* Each row is its own element, so a row can never spill onto the next. */
+  .shot-row{
+    display:flex;
     gap:clamp(.4rem,.8vw,.8rem);
   }
   .shots .shot{
@@ -525,11 +530,23 @@ function layoutGallery(){
   const width = wrap.clientWidth;
   if(!width) return;
 
-  if(!rowGroups) rowGroups = buildRows();
+  if(!rowGroups){
+    rowGroups = buildRows();
+    // Re-home each frame into a row of its own so the grouping is
+    // structural, not something the browser can rewrap.
+    wrap.innerHTML = '';
+    rowGroups.forEach(r=>{
+      const rowEl = document.createElement('div');
+      rowEl.className = 'shot-row';
+      r.forEach(t=> rowEl.appendChild(t.el));
+      wrap.appendChild(rowEl);
+    });
+  }
 
   rowGroups.forEach(r=>{
     const sum = r.reduce((a,x)=> a + x.ratio, 0);
-    const h = (width - gap * (r.length - 1)) / sum;
+    // A hair off the measure keeps rounding from pushing a frame out.
+    const h = (width - gap * (r.length - 1) - 1) / sum;
     r.forEach(t=>{
       t.el.style.height = h + 'px';
       t.el.style.width = (h * t.ratio) + 'px';
