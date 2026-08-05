@@ -188,10 +188,11 @@
   /* Background plates are landscape, so they get wider cells than the
      portrait sets and do not crop to a standing frame. */
   .wide-shots .shot{aspect-ratio:3/2;}
-  /* Two frames only. They keep the same column width as every other set,
-     so they fill the first half of the row instead of stretching. */
-  .group-shots{margin-top:1.6rem;}
-  .group-shots .shot{aspect-ratio:3/4;}
+  /* All the frames sit here, below the packages. */
+  .gallery-band{
+    background:var(--cream);
+    padding:clamp(2rem,4vw,3.5rem) clamp(1.25rem,4vw,4rem);
+  }
   .groups .note{
     margin-top:1.4rem;font-size:.95rem;opacity:.9;
     text-align:justify;text-align-last:left;
@@ -276,7 +277,10 @@
       <div class="group-card">Bronze Group Package <span>$750</span></div>
     </div>
     <p class="note">Group rates cover the same session structure as the matching portrait package, extended to cover everyone in the frame.</p>
-    <div class="shots group-shots" id="groupShots"></div>
+  </section>
+
+  <section class="gallery-band">
+    <div class="shots" id="gallery"></div>
   </section>
 
   <footer>
@@ -414,33 +418,9 @@ function render(){
     }
     body.appendChild(ul);
 
-    // A package with no sample set yet keeps the terms full width
-    // rather than leaving a hole where the pictures go.
-    if(!pkg.images.length){
-      body.style.gridTemplateColumns = '1fr';
-      sec.appendChild(body);
-      main.appendChild(sec);
-      return;
-    }
-
-    const shots = document.createElement('div');
-    shots.className = 'shots' + (pkg.wide ? ' wide-shots' : '');
-    pkg.images.forEach(name=>{
-      const idx = FLAT.length;
-      FLAT.push(name);
-      const fig = document.createElement('div');
-      fig.className = 'shot';
-      const img = document.createElement('img');
-      img.loading = 'lazy';
-      img.src = IMG_DIR + name;
-      img.alt = pkg.name + ' example';
-      img.addEventListener('load', ()=> img.classList.add('loaded'));
-      fig.appendChild(img);
-      fig.addEventListener('click', ()=> openLb(idx));
-      shots.appendChild(fig);
-    });
-    body.appendChild(shots);
-
+    // Terms run full width. The pictures all live in one grid at the
+    // bottom of the page rather than inside the packages.
+    body.style.gridTemplateColumns = '1fr';
     sec.appendChild(body);
     main.appendChild(sec);
   });
@@ -481,9 +461,20 @@ document.addEventListener('keydown', e=>{
   if(e.key === 'ArrowRight') step(1);
 });
 
-function renderGroup(){
-  const wrap = document.getElementById('groupShots');
-  ['Rieter_DSC06132.jpg','Rieter_DSC06527.jpg'].forEach(name=>{
+// Every frame on the page, in one grid at the bottom.
+const GALLERY = [
+  'DSC03637.jpg','IMG_0167.jpg','IMG_3558.jpg','IMG_0081.jpg',
+  'AlexDuncan_MG_9333.jpg','Natalie_Red_Gown.jpg','IMG_7203.jpg',
+  'DSC05244-2.jpg','DSC04989.jpg','DSC05329.jpg',
+  'IMG_7398.jpg','0P2A3050.jpg','RUTH_4551.jpg','Mom_DSC03011-2.jpg',
+  'kk-amberglass.jpg','farm-carrots.jpg','kk-woodfloor.jpg','farm-crate.jpg',
+  'sq-hotpink-latest.jpg','sq-yellow-latest.jpg',
+  'Rieter_DSC06132.jpg','Rieter_DSC06527.jpg'
+];
+
+function renderGallery(){
+  const wrap = document.getElementById('gallery');
+  GALLERY.forEach(name=>{
     const idx = FLAT.length;
     FLAT.push(name);
     const fig = document.createElement('div');
@@ -491,7 +482,7 @@ function renderGroup(){
     const img = document.createElement('img');
     img.loading = 'lazy';
     img.src = IMG_DIR + name;
-    img.alt = 'Group session example';
+    img.alt = '';
     img.addEventListener('load', ()=> img.classList.add('loaded'));
     fig.appendChild(img);
     fig.addEventListener('click', ()=> openLb(idx));
@@ -500,7 +491,7 @@ function renderGroup(){
 }
 
 render();
-renderGroup();
+renderGallery();
 </script>
 </body>
 </html>
