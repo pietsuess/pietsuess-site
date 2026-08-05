@@ -154,19 +154,12 @@
     cursor:zoom-in;
     border-radius:2px;
     flex:1 1 320px;
-    height:clamp(200px,20vw,300px);
   }
   .shots .shot img{
-    position:absolute;inset:0;
-    width:100%;height:100%;object-fit:cover;display:block;
+    width:100%;height:auto;display:block;
     opacity:0;transition:opacity .5s ease;
   }
   .shots .shot img.loaded{opacity:1;}
-  /* Soak up the slack on the final row so its frames are not stretched
-     to fill the width on their own. */
-  .shots .filler{
-    flex:1 1 320px;height:0;margin:0;pointer-events:none;
-  }
 
   /* ---- Group packages ---- */
   .groups{
@@ -509,11 +502,6 @@ function renderGallery(){
     fig.addEventListener('click', ()=> openLb(idx));
     wrap.appendChild(fig);
   });
-  for(let i = 0; i < 6; i++){
-    const f = document.createElement('i');
-    f.className = 'filler';
-    wrap.appendChild(f);
-  }
 }
 
 render();
