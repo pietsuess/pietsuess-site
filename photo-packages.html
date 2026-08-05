@@ -191,9 +191,10 @@
   /* Background plates are landscape, so they get wider cells than the
      portrait sets and do not crop to a standing frame. */
   .wide-shots .shot{aspect-ratio:3/2;}
-  .group-shots{margin-top:1.6rem;}
+  /* Two frames only, so they sit side by side at equal weight rather than
+     running a lead frame with empty cells beside it. */
+  .group-shots{margin-top:1.6rem;grid-template-columns:repeat(2,1fr);}
   .group-shots .shot{aspect-ratio:3/4;}
-  .group-shots .shot:first-child{grid-column:span 2;grid-row:span 2;}
   .groups .note{
     margin-top:1.4rem;font-size:.95rem;opacity:.9;
     text-align:justify;text-align-last:left;
@@ -264,7 +265,6 @@
 
 <div class="page">
   <header class="mast">
-    <div class="mark">ps<span class="dot"></span></div>
     <h1>Photo Packages</h1>
     <div class="sub">Portrait, product and website photography on Salt Spring Island</div>
   </header>
@@ -486,7 +486,7 @@ document.addEventListener('keydown', e=>{
 
 function renderGroup(){
   const wrap = document.getElementById('groupShots');
-  ['Rieter_DSC06132.jpg','Rieter_DSC06406.jpg','Rieter_DSC05873.jpg','Rieter_DSC06527.jpg','Rieter_DSC05712.jpg'].forEach(name=>{
+  ['Rieter_DSC06132.jpg','Rieter_DSC06527.jpg'].forEach(name=>{
     const idx = FLAT.length;
     FLAT.push(name);
     const fig = document.createElement('div');
