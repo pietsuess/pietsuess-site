@@ -67,7 +67,9 @@
   }
   .card{
     position:relative;
-    aspect-ratio:1/1;
+    aspect-ratio:4/5;
+    overflow:hidden;
+    background:#e8ded0;
     border:2px solid transparent;
     border-radius:2px;
     cursor:grab;
@@ -75,7 +77,8 @@
   }
   /* The discard shelf is a holding pen, not a preview. */
   #dropped{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
-  .card img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;}
+  #dropped .card{aspect-ratio:1/1;}
+  .card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
   .card.dragging{opacity:.35;cursor:grabbing;}
   .card.over{border-color:var(--pink);}
   .card .idx{

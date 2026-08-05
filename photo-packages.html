@@ -140,21 +140,22 @@
     color:var(--ink);
   }
 
-  /* A fixed grid. The cells never move or change size. Each picture is
-     scaled to sit inside its cell whole, so a tall frame reads narrow and
-     a wide frame reads short, and nothing is cropped. */
+  /* A fixed grid of identical tiles, each one filled edge to edge. The
+     cells never move or resize. 4:5 is close to the shape most of these
+     frames already are, so the fill takes very little off them. */
   .shots{
     display:grid;
     grid-template-columns:repeat(4,1fr);
     gap:clamp(.6rem,1.4vw,1.4rem);
   }
   .shots .shot{
-    position:relative;
-    aspect-ratio:1/1;
+    position:relative;overflow:hidden;
+    aspect-ratio:4/5;
+    background:#e8ded0;
     cursor:zoom-in;
   }
   .shots .shot img{
-    width:100%;height:100%;object-fit:contain;display:block;
+    width:100%;height:100%;object-fit:cover;display:block;
     opacity:0;transition:opacity .5s ease;
   }
   .shots .shot img.loaded{opacity:1;}
