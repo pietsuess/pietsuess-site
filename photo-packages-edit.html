@@ -285,36 +285,21 @@ function wireDrag(card){
 }
 
 // Identical to the live page. Any change here has to be made there too.
-const TARGET_H = 260;
-const MAX_H = 340;
 
 // Same as the live page: rows are worked out once at a fixed reference
 // width and never regrouped, so narrowing the window only scales them.
-const REF_W = 1560;
-const REF_GAP = 10;   // fixed, so the row breaks never depend on the window
+// Fixed row sizes. The grid never changes: these frames per row, always.
+const ROW_SIZES = [5, 6, 5, 5];
 let rowGroups = null;
 
 function buildRows(){
   const rows = [];
-  let row = [];
-  tiles.forEach(t=>{
-    row.push(t);
-    const sum = row.reduce((a,x)=> a + x.ratio, 0);
-    const h = (REF_W - REF_GAP * (row.length - 1)) / sum;
-    if(h <= TARGET_H){ rows.push(row); row = []; }
+  let i = 0;
+  ROW_SIZES.forEach(n=>{
+    if(i < tiles.length) rows.push(tiles.slice(i, i + n));
+    i += n;
   });
-  if(row.length) rows.push(row);
-
-  if(rows.length > 1){
-    const last = rows[rows.length - 1];
-    const prev = rows[rows.length - 2];
-    while(prev.length > 1){
-      const sum = last.reduce((a,x)=> a + x.ratio, 0);
-      const h = (REF_W - REF_GAP * (last.length - 1)) / sum;
-      if(h <= MAX_H) break;
-      last.unshift(prev.pop());
-    }
-  }
+  if(i < tiles.length) rows.push(tiles.slice(i));
   return rows;
 }
 
