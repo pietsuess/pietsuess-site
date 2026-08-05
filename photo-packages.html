@@ -503,57 +503,51 @@ function renderGallery(){
   });
 }
 
-function layoutGallery(){
-  const wrap = document.getElementById('gallery');
-  const ready = tiles.filter(t=> t.ready);
-  if(!ready.length) return;
+// The rows are worked out once, at a fixed reference width, and then
+// never regrouped. Narrowing the window only scales what is already
+// there: the same pictures stay in the same rows, just smaller.
+const REF_W = 1560;
+let rowGroups = null;
 
-  const styles = getComputedStyle(wrap);
-  const gap = parseFloat(styles.gap) || 0;
-  const width = wrap.clientWidth;
-  if(!width) return;
-
-  // Narrow screens read better as a single column.
-  if(width < 560){
-    ready.forEach(t=>{
-      t.el.style.width = width + 'px';
-      t.el.style.height = (width / t.ratio) + 'px';
-    });
-    return;
-  }
-
+function buildRows(gap){
   const rows = [];
   let row = [];
-  ready.forEach(t=>{
+  tiles.forEach(t=>{
     row.push(t);
     const sum = row.reduce((a,x)=> a + x.ratio, 0);
-    const h = (width - gap * (row.length - 1)) / sum;
-    if(h <= TARGET_H){
-      rows.push(row);
-      row = [];
-    }
+    const h = (REF_W - gap * (row.length - 1)) / sum;
+    if(h <= TARGET_H){ rows.push(row); row = []; }
   });
   if(row.length) rows.push(row);
 
-  // Pull frames down from the row above until the last row is full enough
-  // to sit at a sensible height on its own.
-  const last = rows[rows.length - 1];
+  // A last row left short borrows from the row above so it is not
+  // stranded at giant size.
   if(rows.length > 1){
+    const last = rows[rows.length - 1];
     const prev = rows[rows.length - 2];
     while(prev.length > 1){
       const sum = last.reduce((a,x)=> a + x.ratio, 0);
-      const h = (width - gap * (last.length - 1)) / sum;
+      const h = (REF_W - gap * (last.length - 1)) / sum;
       if(h <= MAX_H) break;
       last.unshift(prev.pop());
     }
   }
+  return rows;
+}
 
-  rows.forEach((r, i)=>{
+function layoutGallery(){
+  const wrap = document.getElementById('gallery');
+  if(!tiles.length || !tiles.every(t=> t.ready)) return;
+
+  const gap = parseFloat(getComputedStyle(wrap).gap) || 0;
+  const width = wrap.clientWidth;
+  if(!width) return;
+
+  if(!rowGroups) rowGroups = buildRows(gap);
+
+  rowGroups.forEach(r=>{
     const sum = r.reduce((a,x)=> a + x.ratio, 0);
-    let h = (width - gap * (r.length - 1)) / sum;
-    const isLast = i === rows.length - 1;
-    // The final row keeps its shape rather than stretching to the measure.
-    if(isLast && h > MAX_H) h = TARGET_H;
+    const h = (width - gap * (r.length - 1)) / sum;
     r.forEach(t=>{
       t.el.style.height = h + 'px';
       t.el.style.width = (h * t.ratio) + 'px';

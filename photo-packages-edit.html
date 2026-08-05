@@ -288,48 +288,48 @@ function wireDrag(card){
 const TARGET_H = 260;
 const MAX_H = 340;
 
+// Same as the live page: rows are worked out once at a fixed reference
+// width and never regrouped, so narrowing the window only scales them.
+const REF_W = 1560;
+let rowGroups = null;
+
+function buildRows(gap){
+  const rows = [];
+  let row = [];
+  tiles.forEach(t=>{
+    row.push(t);
+    const sum = row.reduce((a,x)=> a + x.ratio, 0);
+    const h = (REF_W - gap * (row.length - 1)) / sum;
+    if(h <= TARGET_H){ rows.push(row); row = []; }
+  });
+  if(row.length) rows.push(row);
+
+  if(rows.length > 1){
+    const last = rows[rows.length - 1];
+    const prev = rows[rows.length - 2];
+    while(prev.length > 1){
+      const sum = last.reduce((a,x)=> a + x.ratio, 0);
+      const h = (REF_W - gap * (last.length - 1)) / sum;
+      if(h <= MAX_H) break;
+      last.unshift(prev.pop());
+    }
+  }
+  return rows;
+}
+
 function layoutBoard(){
   const wrap = document.getElementById('board');
-  const ready = tiles.filter(t=> t.ready);
-  if(!ready.length) return;
+  if(!tiles.length || !tiles.every(t=> t.ready)) return;
 
   const gap = parseFloat(getComputedStyle(wrap).gap) || 0;
   const width = wrap.clientWidth;
   if(!width) return;
 
-  if(width < 560){
-    ready.forEach(t=>{
-      t.el.style.width = width + 'px';
-      t.el.style.height = (width / t.ratio) + 'px';
-    });
-    return;
-  }
+  rowGroups = buildRows(gap);
 
-  const rows = [];
-  let row = [];
-  ready.forEach(t=>{
-    row.push(t);
-    const sum = row.reduce((a,x)=> a + x.ratio, 0);
-    const h = (width - gap * (row.length - 1)) / sum;
-    if(h <= TARGET_H){ rows.push(row); row = []; }
-  });
-  if(row.length) rows.push(row);
-
-  const last = rows[rows.length - 1];
-  if(rows.length > 1){
-    const prev = rows[rows.length - 2];
-    while(prev.length > 1){
-      const sum = last.reduce((a,x)=> a + x.ratio, 0);
-      const h = (width - gap * (last.length - 1)) / sum;
-      if(h <= MAX_H) break;
-      last.unshift(prev.pop());
-    }
-  }
-
-  rows.forEach((r, i)=>{
+  rowGroups.forEach(r=>{
     const sum = r.reduce((a,x)=> a + x.ratio, 0);
-    let h = (width - gap * (r.length - 1)) / sum;
-    if(i === rows.length - 1 && h > MAX_H) h = TARGET_H;
+    const h = (width - gap * (r.length - 1)) / sum;
     r.forEach(t=>{
       t.el.style.height = h + 'px';
       t.el.style.width = (h * t.ratio) + 'px';
