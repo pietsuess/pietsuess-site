@@ -140,23 +140,21 @@
     color:var(--ink);
   }
 
-  /* Justified rows. Each frame grows in proportion to its own width, so a
-     row fills the full measure exactly, every frame keeps its true shape,
-     and the block ends on a straight edge instead of a ragged one. */
+  /* A fixed grid. The cells never move or change size. Each picture is
+     scaled to sit inside its cell whole, so a tall frame reads narrow and
+     a wide frame reads short, and nothing is cropped. */
   .shots{
-    display:flex;
-    flex-wrap:wrap;
-    gap:clamp(.4rem,.8vw,.8rem);
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:clamp(.6rem,1.4vw,1.4rem);
   }
   .shots .shot{
-    position:relative;overflow:hidden;
-    background:#e8ded0;
+    position:relative;
+    aspect-ratio:1/1;
     cursor:zoom-in;
-    border-radius:2px;
-    flex:0 0 auto;
   }
   .shots .shot img{
-    width:100%;height:100%;object-fit:cover;display:block;
+    width:100%;height:100%;object-fit:contain;display:block;
     opacity:0;transition:opacity .5s ease;
   }
   .shots .shot img.loaded{opacity:1;}
@@ -470,15 +468,6 @@ const GALLERY = [
   'IMG_0081.jpg'
 ];
 
-// Justified rows, laid out by hand rather than left to flex-grow.
-// Each row is packed until it is close to the target height, then scaled
-// to fit the measure exactly. A row is never allowed past MAX_H, and a
-// last row left with one or two frames borrows from the row above it so
-// nothing is stranded at giant size.
-const TARGET_H = 260;
-const MAX_H = 340;
-const tiles = [];
-
 function renderGallery(){
   const wrap = document.getElementById('gallery');
   GALLERY.forEach(name=>{
@@ -487,85 +476,15 @@ function renderGallery(){
     const fig = document.createElement('div');
     fig.className = 'shot';
     const img = document.createElement('img');
+    img.loading = 'lazy';
     img.src = IMG_DIR + name;
     img.alt = '';
-    const tile = {el: fig, ratio: 1, ready: false};
-    img.addEventListener('load', ()=>{
-      img.classList.add('loaded');
-      tile.ratio = img.naturalWidth / img.naturalHeight;
-      tile.ready = true;
-      layoutGallery();
-    });
+    img.addEventListener('load', ()=> img.classList.add('loaded'));
     fig.appendChild(img);
     fig.addEventListener('click', ()=> openLb(idx));
     wrap.appendChild(fig);
-    tiles.push(tile);
   });
 }
-
-function layoutGallery(){
-  const wrap = document.getElementById('gallery');
-  const ready = tiles.filter(t=> t.ready);
-  if(!ready.length) return;
-
-  const styles = getComputedStyle(wrap);
-  const gap = parseFloat(styles.gap) || 0;
-  const width = wrap.clientWidth;
-  if(!width) return;
-
-  // Narrow screens read better as a single column.
-  if(width < 560){
-    ready.forEach(t=>{
-      t.el.style.width = width + 'px';
-      t.el.style.height = (width / t.ratio) + 'px';
-    });
-    return;
-  }
-
-  const rows = [];
-  let row = [];
-  ready.forEach(t=>{
-    row.push(t);
-    const sum = row.reduce((a,x)=> a + x.ratio, 0);
-    const h = (width - gap * (row.length - 1)) / sum;
-    if(h <= TARGET_H){
-      rows.push(row);
-      row = [];
-    }
-  });
-  if(row.length) rows.push(row);
-
-  // Pull frames down from the row above until the last row is full enough
-  // to sit at a sensible height on its own.
-  const last = rows[rows.length - 1];
-  if(rows.length > 1){
-    const prev = rows[rows.length - 2];
-    while(prev.length > 1){
-      const sum = last.reduce((a,x)=> a + x.ratio, 0);
-      const h = (width - gap * (last.length - 1)) / sum;
-      if(h <= MAX_H) break;
-      last.unshift(prev.pop());
-    }
-  }
-
-  rows.forEach((r, i)=>{
-    const sum = r.reduce((a,x)=> a + x.ratio, 0);
-    let h = (width - gap * (r.length - 1)) / sum;
-    const isLast = i === rows.length - 1;
-    // The final row keeps its shape rather than stretching to the measure.
-    if(isLast && h > MAX_H) h = TARGET_H;
-    r.forEach(t=>{
-      t.el.style.height = h + 'px';
-      t.el.style.width = (h * t.ratio) + 'px';
-    });
-  });
-}
-
-let layoutTimer;
-window.addEventListener('resize', ()=>{
-  clearTimeout(layoutTimer);
-  layoutTimer = setTimeout(layoutGallery, 120);
-});
 
 render();
 renderGallery();
