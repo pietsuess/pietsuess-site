@@ -140,26 +140,25 @@
     color:var(--ink);
   }
 
+  /* Columns of equal width, each frame at its own height. Nothing is
+     cropped: a wide shot stays wide, a tall shot stays tall. */
   .shots{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:clamp(.4rem,.8vw,.8rem);
+    column-count:4;
+    column-gap:clamp(.4rem,.8vw,.8rem);
   }
   .shots .shot{
     position:relative;overflow:hidden;
-    aspect-ratio:3/4;background:#e8ded0;
+    background:#e8ded0;
     cursor:zoom-in;
     border-radius:2px;
+    break-inside:avoid;
+    margin-bottom:clamp(.4rem,.8vw,.8rem);
   }
   .shots .shot img{
-    width:100%;height:100%;object-fit:cover;display:block;
-    opacity:0;transition:opacity .5s ease, transform .6s cubic-bezier(.2,.7,.2,1);
+    width:100%;height:auto;display:block;
+    opacity:0;transition:opacity .5s ease;
   }
   .shots .shot img.loaded{opacity:1;}
-  .shots .shot:hover img{transform:scale(1.05);}
-  /* First frame of each set runs double width so the sets do not read
-     as a uniform waffle. */
-  /* Every frame is the same size. No lead frame, no spans. */
 
   /* ---- Group packages ---- */
   .groups{
@@ -253,7 +252,7 @@
     .group-grid{grid-template-columns:1fr;}
   }
   @media (max-width:600px){
-    .shots{grid-template-columns:repeat(2,1fr);}
+    .shots{column-count:2;}
     .pkg-head{flex-direction:column;align-items:flex-start;gap:.9rem;}
   }
 </style>
@@ -468,7 +467,7 @@ const GALLERY = [
   'DSC05244-2.jpg','DSC04989.jpg','DSC05329.jpg',
   'IMG_7398.jpg','0P2A3050.jpg','RUTH_4551.jpg','Mom_DSC03011-2.jpg',
   'kk-amberglass.jpg','kk-woodfloor.jpg',
-  'sq-hotpink-latest.jpg','sq-yellow-latest.jpg',
+  'sq-hotpink-latest.jpg',
   'Rieter_DSC06132.jpg','Rieter_DSC06527.jpg'
 ];
 
