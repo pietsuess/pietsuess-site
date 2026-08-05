@@ -191,9 +191,9 @@
   /* Background plates are landscape, so they get wider cells than the
      portrait sets and do not crop to a standing frame. */
   .wide-shots .shot{aspect-ratio:3/2;}
-  /* Two frames only, so they sit side by side at equal weight rather than
-     running a lead frame with empty cells beside it. */
-  .group-shots{margin-top:1.6rem;grid-template-columns:repeat(2,1fr);}
+  /* Two frames only. They keep the same column width as every other set,
+     so they fill the first half of the row instead of stretching. */
+  .group-shots{margin-top:1.6rem;}
   .group-shots .shot{aspect-ratio:3/4;}
   .groups .note{
     margin-top:1.4rem;font-size:.95rem;opacity:.9;
