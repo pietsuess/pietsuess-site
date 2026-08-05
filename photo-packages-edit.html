@@ -54,30 +54,31 @@
   button:hover{background:var(--orange);border-color:var(--orange);color:var(--cream);}
   .count{margin-left:auto;color:var(--ink-soft);font-size:.9rem;}
 
-  /* Horizontal padding matches the live page so the cells come out the
-     same width. */
+  /* Horizontal padding matches the live page so the measure, and
+     therefore the row breaks, come out the same. */
   main{padding:clamp(1rem,3vw,2.5rem) clamp(1.25rem,4vw,4rem) 4rem;}
 
-  /* Same fixed grid as the live gallery: the cells never move, only the
-     picture inside them changes size. */
+  /* Same justified rows as the live gallery. What is arranged here is
+     what the page shows. */
   .board{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:clamp(.6rem,1.4vw,1.4rem);
+    display:flex;
+    flex-wrap:wrap;
+    gap:clamp(.4rem,.8vw,.8rem);
   }
   .card{
     position:relative;
-    aspect-ratio:4/5;
-    overflow:hidden;
+    flex:0 0 auto;
     background:#e8ded0;
     border:2px solid transparent;
     border-radius:2px;
+    overflow:hidden;
     cursor:grab;
     user-select:none;
   }
-  /* The discard shelf is a holding pen, not a preview. */
-  #dropped{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
-  #dropped .card{aspect-ratio:1/1;}
+  /* The discard shelf is a holding pen, not a preview, so it stays small
+     and even. */
+  #dropped{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
+  #dropped .card{aspect-ratio:1/1;width:auto!important;height:auto!important;}
   .card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
   .card.dragging{opacity:.35;cursor:grabbing;}
   .card.over{border-color:var(--pink);}
@@ -177,7 +178,13 @@ async function boot(){
   }
 }
 
+// Ratios are remembered across redraws so a reorder relays out at once
+// instead of waiting on the images to load again.
+const ratios = {};
+let tiles = [];
+
 function render(){
+  tiles = [];
   drawBoard(document.getElementById('board'), order, false);
   const dw = document.getElementById('droppedWrap');
   dw.hidden = discard.length === 0;
@@ -185,6 +192,7 @@ function render(){
   document.getElementById('count').textContent =
     order.length + ' in, ' + discard.length + ' out';
   writeOut();
+  layoutBoard();
 }
 
 function drawBoard(wrap, list, isDiscard){
@@ -199,6 +207,19 @@ function drawBoard(wrap, list, isDiscard){
     img.src = IMG_DIR + name;
     img.alt = '';
     card.appendChild(img);
+
+    if(!isDiscard){
+      const tile = {el: card, ratio: ratios[name] || 1, ready: !!ratios[name]};
+      tiles.push(tile);
+      if(!ratios[name]){
+        img.addEventListener('load', ()=>{
+          ratios[name] = img.naturalWidth / img.naturalHeight;
+          tile.ratio = ratios[name];
+          tile.ready = true;
+          layoutBoard();
+        });
+      }
+    }
 
     if(!isDiscard){
       const idx = document.createElement('span');
@@ -262,6 +283,65 @@ function wireDrag(card){
     render();
   });
 }
+
+// Identical to the live page. Any change here has to be made there too.
+const TARGET_H = 260;
+const MAX_H = 340;
+
+function layoutBoard(){
+  const wrap = document.getElementById('board');
+  const ready = tiles.filter(t=> t.ready);
+  if(!ready.length) return;
+
+  const gap = parseFloat(getComputedStyle(wrap).gap) || 0;
+  const width = wrap.clientWidth;
+  if(!width) return;
+
+  if(width < 560){
+    ready.forEach(t=>{
+      t.el.style.width = width + 'px';
+      t.el.style.height = (width / t.ratio) + 'px';
+    });
+    return;
+  }
+
+  const rows = [];
+  let row = [];
+  ready.forEach(t=>{
+    row.push(t);
+    const sum = row.reduce((a,x)=> a + x.ratio, 0);
+    const h = (width - gap * (row.length - 1)) / sum;
+    if(h <= TARGET_H){ rows.push(row); row = []; }
+  });
+  if(row.length) rows.push(row);
+
+  const last = rows[rows.length - 1];
+  if(rows.length > 1){
+    const prev = rows[rows.length - 2];
+    while(prev.length > 1){
+      const sum = last.reduce((a,x)=> a + x.ratio, 0);
+      const h = (width - gap * (last.length - 1)) / sum;
+      if(h <= MAX_H) break;
+      last.unshift(prev.pop());
+    }
+  }
+
+  rows.forEach((r, i)=>{
+    const sum = r.reduce((a,x)=> a + x.ratio, 0);
+    let h = (width - gap * (r.length - 1)) / sum;
+    if(i === rows.length - 1 && h > MAX_H) h = TARGET_H;
+    r.forEach(t=>{
+      t.el.style.height = h + 'px';
+      t.el.style.width = (h * t.ratio) + 'px';
+    });
+  });
+}
+
+let layoutTimer;
+window.addEventListener('resize', ()=>{
+  clearTimeout(layoutTimer);
+  layoutTimer = setTimeout(layoutBoard, 120);
+});
 
 function writeOut(){
   const lines = [];
