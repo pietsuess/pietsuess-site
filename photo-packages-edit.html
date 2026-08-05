@@ -291,15 +291,16 @@ const MAX_H = 340;
 // Same as the live page: rows are worked out once at a fixed reference
 // width and never regrouped, so narrowing the window only scales them.
 const REF_W = 1560;
+const REF_GAP = 10;   // fixed, so the row breaks never depend on the window
 let rowGroups = null;
 
-function buildRows(gap){
+function buildRows(){
   const rows = [];
   let row = [];
   tiles.forEach(t=>{
     row.push(t);
     const sum = row.reduce((a,x)=> a + x.ratio, 0);
-    const h = (REF_W - gap * (row.length - 1)) / sum;
+    const h = (REF_W - REF_GAP * (row.length - 1)) / sum;
     if(h <= TARGET_H){ rows.push(row); row = []; }
   });
   if(row.length) rows.push(row);
@@ -309,7 +310,7 @@ function buildRows(gap){
     const prev = rows[rows.length - 2];
     while(prev.length > 1){
       const sum = last.reduce((a,x)=> a + x.ratio, 0);
-      const h = (REF_W - gap * (last.length - 1)) / sum;
+      const h = (REF_W - REF_GAP * (last.length - 1)) / sum;
       if(h <= MAX_H) break;
       last.unshift(prev.pop());
     }
@@ -325,7 +326,7 @@ function layoutBoard(){
   const width = wrap.clientWidth;
   if(!width) return;
 
-  rowGroups = buildRows(gap);
+  rowGroups = buildRows();
 
   rowGroups.forEach(r=>{
     const sum = r.reduce((a,x)=> a + x.ratio, 0);
