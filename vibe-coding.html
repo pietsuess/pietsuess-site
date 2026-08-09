@@ -89,6 +89,16 @@
     .vc-card-full { grid-template-columns: 1fr; }
     .vc-card-full .vc-card-thumb { border-right: none; border-bottom: 1px solid var(--glass-border); aspect-ratio: 16/9; height: auto; }
   }
+  .vc-card-goals-label {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gold); margin: 0 0 6px;
+  }
+  .vc-card-goals { list-style: none; padding: 0; margin: 0 0 12px; }
+  .vc-card-goals li {
+    font-size: 12.5px; color: rgba(254,249,240,0.65); line-height: 1.65;
+    padding-left: 14px; position: relative; text-align: justify; text-align-last: left;
+  }
+  .vc-card-goals li::before { content: '\2013'; position: absolute; left: 0; color: var(--gold); }
 
   .vc-card {
     background: var(--glass); border: 1px solid var(--glass-border);
@@ -288,6 +298,32 @@
 
   <div class="vc-content">
 
+
+  <div class="vc-section-label">Featured</div>
+  <div class="vc-grid">
+
+    <div class="vc-card-full" data-img="btmats-platform">
+      <img class="vc-card-thumb" src="toolkit-screenshots/btmats-platform.jpg" alt="Between the Mountain and the Sky rental platform" loading="lazy">
+      <div class="vc-card-body">
+        <div class="vc-card-title">Film Rental Platform</div>
+        <div class="vc-card-client">MPWR Change &middot; Between the Mountain and the Sky</div>
+        <div class="vc-card-goals-label">The Brief</div>
+        <ul class="vc-card-goals">
+          <li>Be our own distributor, no rental platform between the film and its audience</li>
+          <li>Off Vimeo, onto ground we control, signed playback so a watch link works for the renter and nobody else</li>
+          <li>Subtitles and burnt-in translations in our own hands, so the film crosses language barriers the way it was meant to</li>
+          <li>Rent and watch with no account and no password, a link in the inbox is the key</li>
+          <li>Head off tech support before it starts, one answer that fixes it instead of a week of back and forth</li>
+        </ul>
+        <div class="vc-card-desc">A complete film rental business built from scratch: pay-what-you-want Stripe checkout, gift rentals, signed video playback, CRM sync, automated email, a live analytics desk, and a support desk where the team answers customers by name, with per-person keys and ticket claiming. The volume is real: 205 TB of film streamed in a year against a 2 TB-a-month Vimeo allowance, and a forced ~$24,000-a-year Enterprise contract if it stayed. Owning delivery made that contract disappear. Cloudflare Workers, D1 and Stream, no servers anywhere. Took its first real money the week it opened.</div>
+        <div class="vc-card-tags"><span class="vc-tag">E-commerce</span><span class="vc-tag">Stripe</span><span class="vc-tag">Cloudflare</span><span class="vc-tag">Support Desk</span></div>
+        <div class="vc-card-links">
+          <a class="vc-card-link" href="https://www.betweenthemountainandthesky.com" target="_blank" onclick="event.stopPropagation()">Visit the film site &#8599;</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
   <div class="vc-section-label">Games</div>
   <div class="vc-grid">
@@ -694,6 +730,10 @@ const details = {
     desc: 'Interactive weekly schedule editor built for the yoga centre. Click to stamp events on a time grid, drag to resize or move them. Venue color coding with hex color inputs, 3-level undo system, and vector PDF export with embedded fonts. Syncs with Google Sheets for collaborative editing.',
     links: [['View','https://clients.pietsuess.com/sscy/schedule-editor.html?demo']]
   },
+  'btmats-platform': {
+    desc: 'The brief: be our own distributor. Get the film off Vimeo and onto ground we control, streamed with signed playback so a watch link works for the person who rented it and nobody else. Keep the subtitles and burnt-in translations in our own hands. Let anyone rent and watch without an account or a password. And head off tech support before it starts. The result is a complete film rental business built from scratch: pay-what-you-want Stripe checkout, gift rentals, signed video playback, CRM sync, automated email, a live analytics desk, and a support desk where the team answers customers by name, with per-person keys and ticket claiming. The volume is real: 205 TB of film streamed in a year against a 2 TB-a-month Vimeo allowance, and a forced ~$24,000-a-year Enterprise contract if it stayed. Owning delivery made that contract disappear. Cloudflare Workers, D1 and Stream, no servers anywhere. Took its first real money the week it opened.',
+    links: [['Visit the film site','https://www.betweenthemountainandthesky.com']]
+  },
   bmats: {
     desc: 'Video subtitle review tool with embedded Vimeo player synchronized to subtitle tracks. Multi-language tabs for reviewing translations, correction panel where reviewers can flag and annotate issues, with Google Sheets integration for collaborative feedback collection.',
     links: [['Demo','https://arcade.pietsuess.com/dev/bmats-demo.html']]
@@ -810,7 +850,7 @@ const devices = {
   maya:D+M, sscy:D+M, selena:D, unveil:D+M, '424':D,
   'heart-lines':D, clearing:D, intent:D, scatter:D, 'depth-scroll':D, deck:D, chalkboard:D, orbit:D, 'maya-depth':D, 'maya-scatter':D,
   navigator:D, 'return-to-space':D, victory:D, tunnel:M, 'cube-toss':D, gary:D,
-  'schedule-editor':D, bmats:D, 'grid-editor':D, 'content-editor':D, 'sfx-designer':D+M,
+  'schedule-editor':D, bmats:D, 'btmats-platform':D+M, 'grid-editor':D, 'content-editor':D, 'sfx-designer':D+M,
   portfolio:D+M
 };
 document.querySelectorAll('[data-img]').forEach(card => {
