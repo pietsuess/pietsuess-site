@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vibe Coding, Piet Suess</title>
-  <meta name="description" content="26 web builds in 18 days, client sites, experimental UI, games, and tools by Piet Suess. March 2026.">
+  <title>Experimental UI, Piet Suess</title>
+  <meta name="description" content="Six ways to move through a website, gathered on one page: glass discs under a lantern cursor, cards orbiting a 3D room, a stacked deck, full-page cards in depth, a scatter of show cards to throw around, and a descent through the earth for an excavation company.">
   <meta property="og:title" content="Vibe Coding, Piet Suess">
   <meta property="og:description" content="26 web builds in 18 days, client sites, experimental UI, games, and tools.">
   <meta property="og:type" content="website">
@@ -229,7 +229,7 @@
 
 <div class="bg-gradient"></div>
 
-<div class="bg-zone-label" id="bgZoneLabel">Vibe Coding</div>
+<div class="bg-zone-label" id="bgZoneLabel">Experimental UI</div>
 
 <div class="site-content">
 
@@ -298,328 +298,84 @@
 
   <div class="vc-content">
 
-
-  <div class="vc-section-label">Featured</div>
-  <div class="vc-grid">
-
-    <div class="vc-card-full" data-img="btmats-platform">
-      <img class="vc-card-thumb" src="toolkit-screenshots/btmats-platform.jpg" alt="Between the Mountain and the Sky rental platform" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Film Rental Platform</div>
-        <div class="vc-card-client">MPWR Change &middot; Between the Mountain and the Sky</div>
-        <div class="vc-card-goals-label">The Brief</div>
-        <ul class="vc-card-goals">
-          <li>Be our own distributor, no rental platform between the film and its audience</li>
-          <li>Off Vimeo, onto ground we control, signed playback so a watch link works for the renter and nobody else</li>
-          <li>Subtitles and burnt-in translations in our own hands, so the film crosses language barriers the way it was meant to</li>
-          <li>Rent and watch with no account and no password, a link in the inbox is the key</li>
-          <li>Head off tech support before it starts, one answer that fixes it instead of a week of back and forth</li>
-        </ul>
-        <div class="vc-card-desc">A complete film rental business built from scratch: pay-what-you-want Stripe checkout, gift rentals and one-time discount links, signed video playback, a save-ahead option for slow connections, a screening pass that loads the whole film at full quality for a host or group, subtitles in eight languages plus English closed captions, CRM sync, its own mail engine, a live analytics desk, and a support desk where the team answers customers by name, with per-person keys and ticket claiming. The volume is real: 205 TB of film streamed in a year against a 2 TB-a-month Vimeo allowance, and a forced ~$24,000-a-year Enterprise contract if it stayed. Owning delivery made that contract disappear. Cloudflare Workers, D1 and Stream, no servers anywhere. In its first rental window more than 5,000 people rented the film and at least 3,700 watched it to the end.</div>
-        <div class="vc-card-tags"><span class="vc-tag">E-commerce</span><span class="vc-tag">Stripe</span><span class="vc-tag">Cloudflare</span><span class="vc-tag">Support Desk</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://www.betweenthemountainandthesky.com" target="_blank" onclick="event.stopPropagation()">Visit the film site &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card-full" data-img="bullfinch">
-      <video class="vc-card-thumb" src="toolkit-screenshots/bullfinch.mp4" autoplay muted loop playsinline aria-label="Bullfinch Earth wearable tech website"></video>
-      <div class="vc-card-body">
-        <div class="vc-card-title">Wearable Tech Website</div>
-        <div class="vc-card-client">Bullfinch Earth</div>
-        <div class="vc-card-desc">A one-page scroll story for a company whose wearable sensors capture forest data while crews do their regular fieldwork. A live 3D forest canopy network runs behind the page as a scroll-driven animation through four chapters, then the camera tilts down onto a single red dot where the page ends. Map points pop onto a plan view and team bios open in place.</div>
-        <div class="vc-card-tags"><span class="vc-tag">WebGL</span><span class="vc-tag">Scroll Story</span><span class="vc-tag">Motion</span><span class="vc-tag">Client Site</span></div>
-      </div>
-    </div>
-
-    <div class="vc-card-full" data-img="maya">
-      <img class="vc-card-thumb" src="toolkit-screenshots/upvs-site.jpg" alt="UPVS" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Unprofessional Variety Show</div>
-        <div class="vc-card-client">Maya Suess</div>
-        <div class="vc-card-desc">Full site with WYSIWYG admin panel, show detail pages with 60+ embedded videos, donate modal, SEO with JSON-LD event schema, mobile-responsive, blog with search. Client manages everything herself, no code needed.</div>
-        <div class="vc-card-tags"><span class="vc-tag">CMS</span><span class="vc-tag">Admin Panel</span><span class="vc-tag">Video</span><span class="vc-tag">SEO</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://unprofessionalvarietyshow.com" target="_blank" onclick="event.stopPropagation()">View Site &#8599;</a>
-          <a class="vc-card-link" href="https://unprofessionalvarietyshow.com/admin/?demo" target="_blank" onclick="event.stopPropagation()">Admin &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="vc-section-label">Games</div>
-  <div class="vc-grid">
-
-    <div class="vc-card" data-img="navigator">
-      <img class="vc-card-thumb" src="toolkit-screenshots/navigator.jpg" alt="Navigator" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Navigator</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">12,500-line HTML5 canvas space exploration game. 5 portfolio zones, content popups, boss battles, black holes, missions, global leaderboard, analytics.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Canvas</span><span class="vc-tag">Game</span><span class="vc-tag">Portfolio</span><span class="vc-tag">Leaderboard</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/navigator.html?demo" target="_blank" onclick="event.stopPropagation()">Play &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="victory">
-      <img class="vc-card-thumb" src="toolkit-screenshots/victory.jpg" alt="Victory Walk" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Victory Walk</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Pixel art victory room triggered after completing Navigator. Hangar exploration, Delta Wing reveal, and a pilot game cap the sequence.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Pixel Art</span><span class="vc-tag">Canvas</span><span class="vc-tag">Exploration</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/navigator-victory.html" target="_blank" onclick="event.stopPropagation()">Victory &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="tunnel">
-      <img class="vc-card-thumb" src="toolkit-screenshots/tunnel.jpg" alt="TunnelRunner" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">TunnelRunner</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Mobile-first tunnel racing game with 5 sectors, 10 levels, hazard progression, speed runs, portfolio carousels, global leaderboard, and sector-gated content unlocks. Mobile visitors get this instead of Navigator, same portfolio content, different game.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Mobile</span><span class="vc-tag">Canvas</span><span class="vc-tag">Racing</span><span class="vc-tag">Portfolio</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/tunnel.html" target="_blank" onclick="event.stopPropagation()">Play &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="return-to-space">
-      <img class="vc-card-thumb" src="toolkit-screenshots/return-to-space.jpg" alt="Return to Space" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Return to Space</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Navigator sequel. Light speed visuals with multi-layer procedural flame system, Jupiter with moons, asteroid shattering, smooth zoom transitions.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Canvas</span><span class="vc-tag">Procedural</span><span class="vc-tag">Space</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/return-to-space.html?demo" target="_blank" onclick="event.stopPropagation()">Play &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="cube-toss">
-      <img class="vc-card-thumb" src="toolkit-screenshots/cube-toss.jpg" alt="Cube Toss" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Cube Toss</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Physics-based cube throwing game with surface friction, collision impulse, rolling mechanics, external JSON level system, and built-in level editor.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Physics</span><span class="vc-tag">Canvas</span><span class="vc-tag">Levels</span><span class="vc-tag">Level Editor</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/cube-toss.html" target="_blank" onclick="event.stopPropagation()">Play &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="gary">
-      <img class="vc-card-thumb" src="toolkit-screenshots/gary.jpg" alt="Gary Game" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Gary Game</div>
-        <div class="vc-card-client">Prototype</div>
-        <div class="vc-card-desc">Pixel art platformer with sub-grid collision, pushable objects, chain pushing, roll mechanics, tap-step movement. Includes a full level editor with sprite sheet picker.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Platformer</span><span class="vc-tag">Pixel Art</span><span class="vc-tag">Level Editor</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/dev/play.html" target="_blank" onclick="event.stopPropagation()">Play &#8599;</a>
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/dev/gary-editor.html" target="_blank" onclick="event.stopPropagation()">Editor &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="pizza-payday">
-      <img class="vc-card-thumb" src="toolkit-screenshots/pizza-payday.jpg" alt="Pizza Pay Day" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Pizza Pay Day</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">NES-style pixel art shift game. Take the order, make the pie, bake it hot, then ride across town to deliver before the heat fades. Wrong toppings and a cold oven cut into the day's pay.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Pixel Art</span><span class="vc-tag">NES</span><span class="vc-tag">Arcade</span><span class="vc-tag">Mobile</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/pizzapayday.html" target="_blank" onclick="event.stopPropagation()">Play &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="vc-section-label">Tools</div>
-  <div class="vc-grid">
-
-    <div class="vc-card" data-img="patch-bay-visuals">
-      <img class="vc-card-thumb" src="toolkit-screenshots/PatchBay-Visuals_01.png" alt="Patch Bay Visuals" loading="lazy" style="object-position:right">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Patch Bay Visuals</div>
-        <div class="vc-card-client">Client Tool</div>
-        <div class="vc-card-desc">Modular patch bay for a brand's moving mark, a ring and a disc drawn in drifting particles. Weather, Trails, Colour, Spread and rotation cards patch into each shape with cables, and a Splitter gives four groups of particles their own settings. Presets, a crossfading fader and ten steps of undo.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Particles</span><span class="vc-tag">Canvas</span><span class="vc-tag">Modular</span><span class="vc-tag">Drag &amp; Drop</span></div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="drive-inventory">
-      <img class="vc-card-thumb" src="toolkit-screenshots/drive-inventory.jpg" alt="Drive Inventory" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Drive Inventory</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Native macOS app that catalogs which folders live on which external drive, even unplugged ones, rates how well each project is backed up, and finds duplicates across drives. Built to wrangle dozens of film drives. Atomic self-healing catalog, multi-sheet spreadsheet export, and fuzzy folder-name matching.</div>
-        <div class="vc-card-tags"><span class="vc-tag">macOS</span><span class="vc-tag">Swift</span><span class="vc-tag">SwiftUI</span><span class="vc-tag">Native App</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://pietsuess.com/Drive_Inventory_App.zip" download onclick="event.stopPropagation()">Download &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="sfx-designer">
-      <img class="vc-card-thumb" src="toolkit-screenshots/sfx-designer.jpg" alt="SFX Designer" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Sound Effects Designer</div>
-        <div class="vc-card-client">NAVIGATOR Game</div>
-        <div class="vc-card-desc">Modular synth with knob UI, patch bay cables, draggable/collapsible modules, per-output params, bypass/mute, box select, preset save/load with layout, waveform and spectrum analyzers.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Web Audio</span><span class="vc-tag">Synth</span><span class="vc-tag">Drag &amp; Drop</span><span class="vc-tag">Modular</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://pietsuess.com/sfx-designer.html" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="content-editor">
-      <img class="vc-card-thumb" src="toolkit-screenshots/content-editor.jpg" alt="Content Editor" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Navigator Content Editor</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Content editor that populates collectible game objects in both Navigator and TunnelRunner. Portfolio images become in-game pickups players discover while playing.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Editor</span><span class="vc-tag">Content</span><span class="vc-tag">GitHub API</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/dev/content-editor.html?demo" target="_blank" onclick="event.stopPropagation()">Demo &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="grid-editor">
-      <img class="vc-card-thumb" src="toolkit-screenshots/grid-editor.jpg" alt="Grid Editor" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Animation Grid Editor</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Visual drag-and-drop grid editor for the animation portfolio page. Move and resize items on an 18-column grid, copy layout code. Layout visually instead of writing CSS.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Editor</span><span class="vc-tag">Grid</span><span class="vc-tag">Drag &amp; Drop</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://pietsuess.com/animate.html?dev" target="_blank" onclick="event.stopPropagation()">Demo &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="schedule-editor">
-      <img class="vc-card-thumb" src="toolkit-screenshots/schedule-editor.jpg" alt="Schedule Editor" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">ACYR Schedule Editor</div>
-        <div class="vc-card-client">Salt Spring Centre of Yoga</div>
-        <div class="vc-card-desc">Interactive weekly schedule editor with click-to-stamp events, drag to resize/move, venue color coding with hex inputs, 3-level undo, and vector PDF export. Replaces hours in Illustrator, multiple users can update at the same time.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Editor</span><span class="vc-tag">PDF Export</span><span class="vc-tag">Drag &amp; Drop</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://clients.pietsuess.com/sscy/schedule-editor.html?demo" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="bmats">
-      <img class="vc-card-thumb" src="toolkit-screenshots/bmats.jpg" alt="BMATS" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">BMATS Subtitle Review</div>
-        <div class="vc-card-client">Client Tool</div>
-        <div class="vc-card-desc">Video subtitle review tool with embedded Vimeo player, multi-language tabs, correction panel with Google Sheets integration for collaborative feedback. All in one place, replaces multiple documents and spreadsheets, automates the entire backend.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Video</span><span class="vc-tag">Sheets API</span><span class="vc-tag">Review</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://arcade.pietsuess.com/dev/bmats-demo.html" target="_blank" onclick="event.stopPropagation()">Demo &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="rolfing-admin">
-      <img class="vc-card-thumb" src="toolkit-screenshots/selena.jpg" alt="Salt Spring Rolfing Admin" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">Salt Spring Rolfing Admin</div>
-        <div class="vc-card-client">Selena La Brooy</div>
-        <div class="vc-card-desc">JSON-powered admin panel built so the client can edit pages, blog posts, FAQs, and bookings without code. Live preview, autosave, and a publish flow that pushes updates straight to the static site.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Admin Panel</span><span class="vc-tag">CMS</span><span class="vc-tag">Live Preview</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://clients.pietsuess.com/selena/admin/?demo#pages" target="_blank" onclick="event.stopPropagation()">Admin Demo &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="vc-card" data-img="upvs-admin">
-      <img class="vc-card-thumb" src="toolkit-screenshots/maya.jpg" alt="UPVS Admin" loading="lazy">
-      <div class="vc-card-body">
-        <div class="vc-card-title">UPVS Admin</div>
-        <div class="vc-card-client">Maya Suess</div>
-        <div class="vc-card-desc">WYSIWYG admin panel for the Unprofessional Variety Show. Manages shows, performers, blog posts, and 60+ embedded videos. Data-driven JSON architecture; client publishes everything herself.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Admin Panel</span><span class="vc-tag">CMS</span><span class="vc-tag">WYSIWYG</span><span class="vc-tag">Video</span></div>
-        <div class="vc-card-links">
-          <a class="vc-card-link" href="https://unprofessionalvarietyshow.com/admin/?demo" target="_blank" onclick="event.stopPropagation()">Admin Demo &#8599;</a>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
   <div class="vc-section-label">Experimental UI</div>
   <div class="vc-grid">
 
-    <div class="vc-card" data-img="heart-lines">
-      <img class="vc-card-thumb" src="toolkit-screenshots/heart-lines.jpg" alt="Heart Lines" loading="lazy">
+    <div class="vc-card" data-img="clearing">
+      <img class="vc-card-thumb" src="toolkit-screenshots/clearing.jpg" alt="Clearing" loading="lazy">
       <div class="vc-card-body">
-        <div class="vc-card-title">Heart Lines</div>
-        <div class="vc-card-client">Natalie</div>
-        <div class="vc-card-desc">Scroll-driven responsive animation. Heart-shaped line forms build and shift as you move through the page.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Animation</span><span class="vc-tag">Interactive</span></div>
+        <div class="vc-card-title">The Clearing</div>
+        <div class="vc-card-client">SSCY Wireframe</div>
+        <div class="vc-card-desc">Responsive arrangement with scroll interaction. Glassmorphic content discs on dark ground shift and reveal as you scroll, with a lantern cursor adding proximity-based discovery.</div>
+        <div class="vc-card-tags"><span class="vc-tag">Cursor</span><span class="vc-tag">Glassmorphism</span><span class="vc-tag">Proximity</span></div>
         <div class="vc-card-links">
-          <a class="vc-card-link" href="https://natalielisa.com/about" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
+          <a class="vc-card-link" href="https://clients.pietsuess.com/sscy/wireframe-clearing.html" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
         </div>
       </div>
     </div>
 
-    <div class="vc-card" data-img="experimental-ui">
-      <img class="vc-card-thumb" src="toolkit-screenshots/experimental-ui.jpg" alt="UI Experiments" loading="lazy">
+    <div class="vc-card" data-img="intent">
+      <img class="vc-card-thumb" src="toolkit-screenshots/intent.jpg" alt="Intent" loading="lazy">
       <div class="vc-card-body">
-        <div class="vc-card-title">UI Experiments</div>
-        <div class="vc-card-client">SSCY &middot; UPVS &middot; SubTerra</div>
-        <div class="vc-card-desc">Six ways to move through a website, gathered on one page: glass discs under a lantern cursor, cards orbiting a 3D room, a stacked deck, full-page cards in depth, a scatter of show cards to throw around, and a descent through the earth for an excavation company.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Wireframes</span><span class="vc-tag">3D</span><span class="vc-tag">Scroll</span><span class="vc-tag">Interaction</span></div>
+        <div class="vc-card-title">Spatial Intent</div>
+        <div class="vc-card-client">SSCY Wireframe</div>
+        <div class="vc-card-desc">3D room with mouse parallax. Floating cards orbit in elliptical paths, always face front. Warm palette with natural depth.</div>
+        <div class="vc-card-tags"><span class="vc-tag">3D</span><span class="vc-tag">Parallax</span><span class="vc-tag">Orbit</span></div>
         <div class="vc-card-links">
-          <a class="vc-card-link" href="experimental-ui.html" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
+          <a class="vc-card-link" href="https://clients.pietsuess.com/sscy/wireframe-intent.html" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
         </div>
       </div>
     </div>
 
-    <div class="vc-card" data-img="unveil">
-      <img class="vc-card-thumb" src="toolkit-screenshots/unveil.jpg" alt="Unveil" loading="lazy">
+    <div class="vc-card" data-img="deck">
+      <img class="vc-card-thumb" src="toolkit-screenshots/deck.jpg" alt="Deck" loading="lazy">
       <div class="vc-card-body">
-        <div class="vc-card-title">Unveil</div>
-        <div class="vc-card-client">Unveil</div>
-        <div class="vc-card-desc">Product animation showcase with interactive demos, mobile-optimized views, and animated WebP/GIF assets in three colorways and sizes.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Animation</span><span class="vc-tag">Product</span><span class="vc-tag">Interactive</span></div>
+        <div class="vc-card-title">Deck</div>
+        <div class="vc-card-client">SSCY Wireframe</div>
+        <div class="vc-card-desc">Stacked card navigation. Pages layered like a deck, swipe or click to reveal the next card underneath.</div>
+        <div class="vc-card-tags"><span class="vc-tag">Cards</span><span class="vc-tag">Stack</span><span class="vc-tag">Navigation</span></div>
         <div class="vc-card-links">
-          <a class="vc-card-link" href="https://clients.pietsuess.com/unveil/" target="_blank" onclick="event.stopPropagation()">Animations &#8599;</a>
-          <a class="vc-card-link" href="https://clients.pietsuess.com/unveil/interactive.html" target="_blank" onclick="event.stopPropagation()">Interactive &#8599;</a>
+          <a class="vc-card-link" href="https://clients.pietsuess.com/sscy/wireframe-deck.html" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
         </div>
       </div>
     </div>
 
-  </div>
-
-  <div class="vc-section-label">Portfolio Site</div>
-  <div class="vc-grid">
-
-    <div class="vc-card-full" data-img="portfolio">
-      <img class="vc-card-thumb" src="toolkit-screenshots/portfolio.jpg" alt="Portfolio" loading="lazy">
+    <div class="vc-card" data-img="maya-depth">
+      <img class="vc-card-thumb" src="toolkit-screenshots/maya-depth.jpg" alt="Maya Depth" loading="lazy">
       <div class="vc-card-body">
-        <div class="vc-card-title">PietSuess.com Rebuild</div>
-        <div class="vc-card-client">Piet Suess</div>
-        <div class="vc-card-desc">Full portfolio site rebuilt in dark gradient wrapper. Animated gradient background, glassmorphism cards, 6 zone pages, 24+ project pages, walking squares animation, education wheel. Deployed to GitHub Pages. You're looking at it.</div>
-        <div class="vc-card-tags"><span class="vc-tag">Portfolio</span><span class="vc-tag">Animation</span><span class="vc-tag">Glassmorphism</span><span class="vc-tag">Full Site</span></div>
+        <div class="vc-card-title">Depth Scroll</div>
+        <div class="vc-card-client">UPVS Wireframe</div>
+        <div class="vc-card-desc">Full-page cards layered in depth, scroll to navigate through shows. Content layers approach and recede as you scroll through Z-space.</div>
+        <div class="vc-card-tags"><span class="vc-tag">Z-Space</span><span class="vc-tag">Scroll</span><span class="vc-tag">Depth</span></div>
+        <div class="vc-card-links">
+          <a class="vc-card-link" href="https://clients.pietsuess.com/maya/depth.html" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="vc-card" data-img="maya-scatter">
+      <img class="vc-card-thumb" src="toolkit-screenshots/maya-scatter.jpg" alt="Maya Scatter" loading="lazy">
+      <div class="vc-card-body">
+        <div class="vc-card-title">Maya Scatter</div>
+        <div class="vc-card-client">UPVS Wireframe</div>
+        <div class="vc-card-desc">Show cards scattered across the page. Pick up, drag, and throw cards to explore the variety show lineup.</div>
+        <div class="vc-card-tags"><span class="vc-tag">Scatter</span><span class="vc-tag">Drag</span><span class="vc-tag">Physics</span></div>
+        <div class="vc-card-links">
+          <a class="vc-card-link" href="https://clients.pietsuess.com/maya/scatter.html" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="vc-card" data-img="subterra">
+      <img class="vc-card-thumb" src="toolkit-screenshots/subterra.jpg" alt="SubTerra Earthworks" loading="lazy">
+      <div class="vc-card-body">
+        <div class="vc-card-title">SubTerra Earthworks</div>
+        <div class="vc-card-client">Client Site</div>
+        <div class="vc-card-desc">Scroll down through the ground itself. A live 3D cross-section of soil runs from humus and topsoil through marine clay and till to bedrock, with each service on its own layer and the contact form waiting at the bottom.</div>
+        <div class="vc-card-tags"><span class="vc-tag">Three.js</span><span class="vc-tag">Scroll</span><span class="vc-tag">Strata</span></div>
+        <div class="vc-card-links">
+          <a class="vc-card-link" href="https://clients.pietsuess.com/SubTerra/" target="_blank" onclick="event.stopPropagation()">View &#8599;</a>
+        </div>
       </div>
     </div>
 
@@ -729,13 +485,9 @@ const details = {
     video: 'bullfinch.mp4',
     aspect: 1440 / 754
   },
-  maya: {
-    desc: 'Full website build for the Unprofessional Variety Show, a quarterly cabaret night in NYC. Features a WYSIWYG admin panel for managing shows, performers, and content without touching code. Show detail pages with 60+ embedded videos compressed for fast loading. Donate modal, SEO with JSON-LD event schema, mobile-responsive layout, blog with search, and a merch shop. Data-driven architecture where all content lives in JSON files published from the admin.',
-    links: [['View Site','https://unprofessionalvarietyshow.com'],['Admin Demo','https://unprofessionalvarietyshow.com/admin/?demo']],
-    img: 'upvs-site.jpg'
-  },
-  'experimental-ui': {
-    links: [['View','experimental-ui.html']]
+  subterra: {
+    desc: 'Website for an excavation company, built as a descent through the earth. A live 3D cross-section of real soil strata runs the length of the page, and scrolling takes you down through it: humus, topsoil, subsoil, marine clay, till, limestone and bedrock, with a depth readout in metres as you go. Each layer carries part of the story, the services sit on their own layers, and the contact form waits at bedrock. The company\'s own photos fill each layer\'s gallery.',
+    links: [['View','https://clients.pietsuess.com/SubTerra/']]
   },
   bmats: {
     desc: 'Video subtitle review tool with embedded Vimeo player synchronized to subtitle tracks. Multi-language tabs for reviewing translations, correction panel where reviewers can flag and annotate issues, with Google Sheets integration for collaborative feedback collection.',
@@ -860,7 +612,7 @@ const devices = {
   maya:D+M, sscy:D+M, selena:D, unveil:D+M, '424':D,
   'heart-lines':D, clearing:D, intent:D, scatter:D, 'depth-scroll':D, deck:D, chalkboard:D, orbit:D, 'maya-depth':D, 'maya-scatter':D,
   navigator:D, 'return-to-space':D, victory:D, tunnel:M, 'cube-toss':D, gary:D,
-  'schedule-editor':D, bmats:D, 'btmats-platform':D+M, 'grid-editor':D, 'content-editor':D, 'sfx-designer':D+M, 'patch-bay-visuals':D, 'experimental-ui':D,
+  'schedule-editor':D, bmats:D, 'btmats-platform':D+M, 'grid-editor':D, 'content-editor':D, 'sfx-designer':D+M, 'patch-bay-visuals':D, subterra:D+M,
   portfolio:D+M
 };
 document.querySelectorAll('[data-img]').forEach(card => {
