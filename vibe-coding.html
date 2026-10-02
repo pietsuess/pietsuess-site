@@ -751,7 +751,9 @@ const details = {
     desc: 'A one-page scroll story for Bullfinch Earth, a company whose wearable sensors capture forest data while crews do their regular fieldwork. A live 3D network of forest canopy runs behind the whole page as a scroll-driven animation through four chapters: the gap, how it works, the people, and a closing call to go deeper. At the end the camera tilts down onto a single red dot that has sat in the scene the whole time. Along the way map points pop onto a plan view, the applications run from timber companies to wildfire and insurance, and team bios open in place. A numbered nav tracks where you are, with contact and full-screen at its right edge.',
     img: 'Bullfinch_End.jpg',
     video: 'bullfinch.mp4',
-    aspect: 1440 / 754
+    aspect: 1440 / 754,
+    links: [['View Site','https://www.bullfinch.earth']],
+    linksInline: true
   },
   maya: {
     desc: 'Full website build for the Unprofessional Variety Show, a quarterly cabaret night in NYC. Features a WYSIWYG admin panel for managing shows, performers, and content without touching code. Show detail pages with 60+ embedded videos compressed for fast loading. Donate modal, SEO with JSON-LD event schema, mobile-responsive layout, blog with search, and a merch shop. Data-driven architecture where all content lives in JSON files published from the admin.',
@@ -852,11 +854,23 @@ document.querySelectorAll('[data-img]').forEach(card => {
     document.getElementById('detail-title').textContent = card.querySelector('.vc-card-title').textContent;
     document.getElementById('detail-client').textContent = card.querySelector('.vc-card-client').textContent;
     document.getElementById('detail-desc').textContent = d.desc || card.querySelector('.vc-card-desc').textContent;
-    document.getElementById('detail-tags').innerHTML = card.querySelector('.vc-card-tags').innerHTML;
+    const tagsEl = document.getElementById('detail-tags');
+    tagsEl.innerHTML = card.querySelector('.vc-card-tags').innerHTML;
+    tagsEl.style.alignItems = '';
     const linksEl = document.getElementById('detail-links');
     let linksHtml = (d.links || []).map(l => '<a class="vc-card-link" href="' + l[1] + '" target="_blank" onclick="event.stopPropagation()">' + l[0] + ' &#8599;</a>').join('');
     if (d.status) linksHtml += '<span style="font-family:Urbanist,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);opacity:0.6;padding:8px 0;">' + d.status + '</span>';
-    linksEl.innerHTML = linksHtml;
+    // linksInline (Piet 2026-10-02, Bullfinch only): the link rides at the end
+    // of the pill row instead of below the description, which on a long entry
+    // sits past the bottom of the panel.
+    if (d.linksInline) {
+      tagsEl.style.alignItems = 'center';
+      tagsEl.insertAdjacentHTML('beforeend', linksHtml);
+      if (tagsEl.lastElementChild) tagsEl.lastElementChild.style.marginLeft = 'auto';
+      linksEl.innerHTML = '';
+    } else {
+      linksEl.innerHTML = linksHtml;
+    }
     sizePanel();
     document.getElementById('detail').classList.add('open');
     document.body.style.overflow = 'hidden';
