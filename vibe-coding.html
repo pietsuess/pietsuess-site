@@ -333,6 +333,17 @@
       </div>
     </div>
 
+    <div class="vc-card-full" data-img="deardeer">
+      <video class="vc-card-thumb" src="toolkit-screenshots/deardeer.mp4" autoplay muted loop playsinline aria-label="Dear Deer Website"></video>
+      <div class="vc-card-body">
+        <div class="vc-card-title">Dear Deer Website</div>
+        <div class="vc-card-desc">A joyous home for Dear Deer Improv, performing monthly shows since 2022, built to play like one of their shows: it takes a suggestion and runs with it. A cartoon glove stands in for the mouse and has an opinion about everything: a thumbs up after a click, the horns for the cast, a wagging finger at the podcast sign that still says Coming Soon. Click the deer in the menu and it runs off into Shows, knocking the menu words into each other until the Instagram icon bounces off the edge of the window. The buck charges the wall and doubles back through the letters, scattering them as it goes. The music man rolls along a piano keyboard playing jazz, and you can play the keys too. The corporate badge swings on its lanyard when you grab it. One cast bio changes voice every time it opens: mutinous pirate, condescending alien, long lost twin. Even the contact form asks for a suggestion. An irreverent and playful rendition of a standard homepage.</div>
+        <div class="vc-card-links">
+          <a class="vc-card-link" href="https://deardeerimprov.com" target="_blank" onclick="event.stopPropagation()">View Site &#8599;</a>
+        </div>
+      </div>
+    </div>
+
     <div class="vc-card-full" data-img="maya">
       <img class="vc-card-thumb" src="toolkit-screenshots/upvs-site.jpg" alt="UPVS" loading="lazy">
       <div class="vc-card-body">
@@ -755,6 +766,12 @@ const details = {
     links: [['View Site','https://www.bullfinch.earth']],
     linksInline: true
   },
+  deardeer: {
+    desc: 'A joyous home for Dear Deer Improv, performing monthly shows since 2022, built to play like one of their shows: it takes a suggestion and runs with it. A cartoon glove stands in for the mouse and has an opinion about everything: a thumbs up after a click, the horns for the cast, a wagging finger at the podcast sign that still says Coming Soon. Click the deer in the menu and it runs off into Shows, knocking the menu words into each other until the Instagram icon bounces off the edge of the window. The buck charges the wall and doubles back through the letters, scattering them as it goes. The music man rolls along a piano keyboard playing jazz, and you can play the keys too. The corporate badge swings on its lanyard when you grab it. One cast bio changes voice every time it opens: mutinous pirate, condescending alien, long lost twin. Even the contact form asks for a suggestion. An irreverent and playful rendition of a standard homepage.',
+    video: 'deardeer.mp4',
+    aspect: 1440 / 754,
+    links: [['View Site','https://deardeerimprov.com']]
+  },
   maya: {
     desc: 'Full website build for the Unprofessional Variety Show, a quarterly cabaret night in NYC. Features a WYSIWYG admin panel for managing shows, performers, and content without touching code. Show detail pages with 60+ embedded videos compressed for fast loading. Donate modal, SEO with JSON-LD event schema, mobile-responsive layout, blog with search, and a merch shop. Data-driven architecture where all content lives in JSON files published from the admin.',
     links: [['View Site','https://unprofessionalvarietyshow.com'],['Admin Demo','https://unprofessionalvarietyshow.com/admin/?demo']],
@@ -896,7 +913,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeDetail()
 const D = '<svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>';
 const M = '<svg viewBox="0 0 24 24"><path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-2 20h-4v-1h4v1zm3.25-3H6.75V4h10.5v14z"/></svg>';
 const devices = {
-  maya:D+M, sscy:D+M, selena:D, unveil:D+M, '424':D,
+  maya:D+M, deardeer:D+M, sscy:D+M, selena:D, unveil:D+M, '424':D,
   'heart-lines':D, clearing:D, intent:D, scatter:D, 'depth-scroll':D, deck:D, chalkboard:D, orbit:D, 'maya-depth':D, 'maya-scatter':D,
   navigator:D, 'return-to-space':D, victory:D, tunnel:M, 'cube-toss':D, gary:D,
   'schedule-editor':D, bmats:D, 'btmats-platform':D+M, 'grid-editor':D, 'content-editor':D, 'sfx-designer':D+M, 'patch-bay-visuals':D, subterra:D+M,
