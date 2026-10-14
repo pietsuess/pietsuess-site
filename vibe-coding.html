@@ -85,6 +85,9 @@
     width: 100%; height: 100%; object-fit: cover; display: block;
     border-bottom: none; border-right: 1px solid var(--glass-border);
   }
+  /* BTMATS card face: the live film site, drawn 1440 wide and shrunk to fill the picture spot. */
+  .vc-card-live { position: relative; overflow: hidden; background: #000; }
+  .vc-card-live iframe { position: absolute; top: 0; left: 0; width: 1440px; border: 0; transform-origin: 0 0; pointer-events: none; }
   @media (max-width: 800px) {
     .vc-card-full { grid-template-columns: 1fr; }
     .vc-card-full .vc-card-thumb { border-right: none; border-bottom: 1px solid var(--glass-border); aspect-ratio: 16/9; height: auto; }
@@ -304,7 +307,7 @@
   <div class="vc-grid">
 
     <div class="vc-card-full" data-img="btmats-platform">
-      <img class="vc-card-thumb" src="toolkit-screenshots/btmats-platform.jpg" alt="Between the Mountain and the Sky rental platform" loading="lazy">
+      <div class="vc-card-thumb vc-card-live" role="img" aria-label="Between the Mountain and the Sky rental platform"><iframe src="https://www.betweenthemountainandthesky.com" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true" sandbox="allow-scripts allow-same-origin"></iframe></div>
       <div class="vc-card-body">
         <div class="vc-card-title">Film Rental Platform</div>
         <div class="vc-card-client">MPWR Change &middot; Between the Mountain and the Sky</div>
@@ -871,6 +874,17 @@ function sizePanel() {
   detailPanel.style.width = (halfW * 2) + 'px';
   detailPanel.style.height = panelH + 'px';
 }
+
+// Live site on a card face (BTMATS, Piet 2026-10-14): scale the 1440-wide frame to the picture spot.
+document.querySelectorAll('.vc-card-live').forEach(box => {
+  const frame = box.querySelector('iframe');
+  new ResizeObserver(() => {
+    const s = box.clientWidth / 1440;
+    if (!s) return;
+    frame.style.transform = 'scale(' + s + ')';
+    frame.style.height = Math.ceil(box.clientHeight / s) + 'px';
+  }).observe(box);
+});
 
 document.querySelectorAll('[data-img]').forEach(card => {
   card.addEventListener('click', () => {
