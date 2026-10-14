@@ -89,12 +89,6 @@
     .vc-card-full { grid-template-columns: 1fr; }
     .vc-card-full .vc-card-thumb { border-right: none; border-bottom: 1px solid var(--glass-border); aspect-ratio: 16/9; height: auto; }
   }
-  /* BTMATS card: picture in the Bullfinch / Dear Deer shape sets the height,
-     the text side scrolls inside it. Phone layout above stays as is. */
-  @media (min-width: 801px) {
-    .vc-card-full[data-img="btmats-platform"] .vc-card-thumb { height: auto; aspect-ratio: 1440 / 754; }
-    .vc-card-full[data-img="btmats-platform"] .vc-card-body { height: 0; min-height: 100%; box-sizing: border-box; overflow-y: auto; }
-  }
   .vc-card-goals-label {
     font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
     color: var(--gold); margin: 0 0 6px;
@@ -343,7 +337,7 @@
           <li>Two systems running at once. The old CRM kept running alongside the portal, and when its forms fail, the update waits and replays on the hour instead of getting lost.</li>
         </ul>
         </template>
-        <div class="vc-card-desc">A complete film rental business built from scratch: pay-what-you-want Stripe checkout, gift rentals and one-time discount links, signed video playback, a save-ahead option for slow connections, a screening pass that loads the whole film at full quality for a host or group, subtitles in eight languages plus English closed captions, CRM sync, its own mail engine, a live analytics desk, and a support desk where the team answers customers by name, with per-person keys and ticket claiming. The volume is real: 205 TB of film streamed in a year against a 2 TB-a-month Vimeo allowance, and a forced ~$24,000-a-year Enterprise contract if it stayed. Owning delivery made that contract disappear. Cloudflare Workers, D1 and Stream, no servers anywhere. In its first rental window more than 5,000 people rented the film and at least 3,700 watched it to the end.</div>
+        <div class="vc-card-desc">A complete film rental business built from scratch. The volume is real: 205 TB of film streamed in a year against a 2 TB-a-month Vimeo allowance, and a forced ~$24,000-a-year Enterprise contract if it stayed. Owning delivery made that contract disappear. Cloudflare Workers, D1 and Stream, no servers anywhere. In its first rental window more than 5,000 people rented the film and at least 3,700 watched it to the end.</div>
         <div class="vc-card-tags"><span class="vc-tag">E-commerce</span><span class="vc-tag">Stripe</span><span class="vc-tag">Cloudflare</span><span class="vc-tag">Support Desk</span></div>
         <div class="vc-card-links">
           <a class="vc-card-link" href="https://www.betweenthemountainandthesky.com" target="_blank" onclick="event.stopPropagation()">Visit the film site &#8599;</a>
