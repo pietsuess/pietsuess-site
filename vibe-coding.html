@@ -89,6 +89,12 @@
     .vc-card-full { grid-template-columns: 1fr; }
     .vc-card-full .vc-card-thumb { border-right: none; border-bottom: 1px solid var(--glass-border); aspect-ratio: 16/9; height: auto; }
   }
+  /* BTMATS card: picture in the Bullfinch / Dear Deer shape sets the height,
+     the text side scrolls inside it. Phone layout above stays as is. */
+  @media (min-width: 801px) {
+    .vc-card-full[data-img="btmats-platform"] .vc-card-thumb { height: auto; aspect-ratio: 1440 / 754; }
+    .vc-card-full[data-img="btmats-platform"] .vc-card-body { height: 0; min-height: 100%; box-sizing: border-box; overflow-y: auto; }
+  }
   .vc-card-goals-label {
     font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
     color: var(--gold); margin: 0 0 6px;
