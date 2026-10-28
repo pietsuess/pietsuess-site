@@ -1187,6 +1187,8 @@
   }
   /* the name and section titles are headings now; they keep the look the divs had */
   :where(h1.hero-name, h2.section-title) { margin: 0; font-size: inherit; font-weight: inherit; text-wrap: inherit; }
+  /* the summary at the top: in the page for search and AI crawlers, never seen */
+  .page-summary { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 </style>
 <script type="application/ld+json">
 {
@@ -1267,7 +1269,7 @@
     <div class="hero-print-contact">pietsuess.com <span class="sep">&bull;</span> linkedin.com/in/piet-suess</div>
   </div>
 
-  <p class="summary-text">Piet Suess is a creative director and post-production veteran with 30+ years of work in New York, Los Angeles and internationally. This resumé covers his experience, collaborations, disciplines, tools and education.</p>
+  <p class="page-summary">Piet Suess is a creative director and post-production veteran with 30+ years of work in New York, Los Angeles and internationally. This resumé covers his experience, collaborations, disciplines, tools and education.</p>
   <!-- SUMMARY -->
   <section class="summary-section">
     <div class="section-label">About</div>

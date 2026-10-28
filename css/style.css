@@ -3066,17 +3066,21 @@ body.menu-open .mobile-nav-overlay {
   text-wrap: inherit;
 }
 
-/* the two-sentence summary at the top of a page */
-.page-summary {
-  margin: 0 6vw 40px;
-  font-size: 15px;
-  line-height: 1.7;
-  color: rgba(254,249,240,0.75);
-  text-align: justify;
-  text-align-last: left;
+/* the summary at the top of a page and the home page text under the intro: in the page for search and AI
+   crawlers, never seen */
+.page-summary,
+.home-main {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
-.design-page .page-summary { color: rgba(26,14,46,0.75); }
-.vc-content .page-summary { margin: 0 0 30px; }
 
 /* short blocks in a full-width grid: Direct's project notes, Contact's questions */
 .info-heading {
