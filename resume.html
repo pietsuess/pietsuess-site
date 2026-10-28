@@ -3,15 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Piet Suess — Creative Director</title>
-<meta name="description" content="Creative Director & Post-Production Veteran. 30+ years across directing, editing, photography, animation, and brand design.">
-<meta property="og:title" content="Piet Suess — Creative Director">
-<meta property="og:description" content="Creative Director & Post-Production Veteran. 30+ years across directing, editing, photography, animation, and brand design.">
+<title>Piet Suess Resumé: Creative Director &amp; Film Editor</title>
+<meta name="description" content="Resumé of Piet Suess, creative director and post-production veteran: 30+ years of experience, collaborations, disciplines, tools and education.">
+<meta property="og:title" content="Piet Suess Resumé: Creative Director &amp; Film Editor">
+<meta property="og:description" content="Resumé of Piet Suess, creative director and post-production veteran: 30+ years of experience, collaborations, disciplines, tools and education.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://arcade.pietsuess.com/website/resume.html">
+<meta property="og:url" content="https://pietsuess.com/resume.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Piet Suess — Creative Director">
-<meta name="twitter:description" content="Creative Director & Post-Production Veteran. 30+ years across directing, editing, photography, animation, and brand design.">
+<meta name="twitter:title" content="Piet Suess Resumé: Creative Director &amp; Film Editor">
+<meta name="twitter:description" content="Resumé of Piet Suess, creative director and post-production veteran: 30+ years of experience, collaborations, disciplines, tools and education.">
+<meta property="og:image" content="https://pietsuess.com/images/og-home.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://pietsuess.com/images/og-home.jpg">
+<link rel="canonical" href="https://pietsuess.com/resume.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -1180,7 +1185,52 @@
     /* Footer — hide in print */
     .footer { display: none !important; }
   }
+  /* the name and section titles are headings now; they keep the look the divs had */
+  :where(h1.hero-name, h2.section-title) { margin: 0; font-size: inherit; font-weight: inherit; text-wrap: inherit; }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://pietsuess.com/#person",
+      "name": "Piet Suess",
+      "url": "https://pietsuess.com/",
+      "image": "https://pietsuess.com/images/og-home.jpg",
+      "jobTitle": [
+        "Creative Director",
+        "Editor",
+        "Director",
+        "Photographer",
+        "Animator",
+        "Designer"
+      ],
+      "description": "Creative Director & Post-Production Veteran. 30+ years across directing, editing, photography, animation, and brand design.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Salt Spring Island",
+        "addressRegion": "BC",
+        "addressCountry": "CA"
+      },
+      "sameAs": [
+        "https://www.linkedin.com/in/piet-suess/",
+        "https://vimeo.com/pietsuess",
+        "https://www.youtube.com/@psuess",
+        "https://www.instagram.com/piet_suess/"
+      ],
+      "knowsAbout": [
+        "Editing",
+        "Creative direction",
+        "Post-production",
+        "Motion design",
+        "Photography",
+        "Web development"
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -1203,12 +1253,12 @@
   <button class="print-btn" onclick="window.print()">Print / Save PDF</button>
 </div>
 
-<div class="container">
+<main class="container">
 
   <!-- HERO -->
   <div class="hero">
     <div class="hero-name-wrapper" id="heroNameWrapper">
-      <div class="hero-name" id="heroNameSource">Piet Suess</div>
+      <h1 class="hero-name" id="heroNameSource">Piet Suess</h1>
     </div>
     <div class="hero-title-row">
       <div class="hero-title">Creative Director &amp; Post-Production&nbsp;Veteran</div>
@@ -1217,10 +1267,11 @@
     <div class="hero-print-contact">pietsuess.com <span class="sep">&bull;</span> linkedin.com/in/piet-suess</div>
   </div>
 
+  <p class="summary-text">Piet Suess is a creative director and post-production veteran with 30+ years of work in New York, Los Angeles and internationally. This resumé covers his experience, collaborations, disciplines, tools and education.</p>
   <!-- SUMMARY -->
   <section class="summary-section">
     <div class="section-label">About</div>
-    <div class="section-title">I've always been a creative&nbsp;director.</div>
+    <h2 class="section-title">I've always been a creative&nbsp;director.</h2>
     <p class="summary-text">
       I started making films at 14 and have never stopped. New York, Los Angeles, internationally &mdash; 30+ years leading creative teams and setting the vision<br>for work that&nbsp;lasts.
     </p>
@@ -1232,7 +1283,7 @@
   <!-- EXPERIENCE -->
   <section>
     <div class="section-label">Experience</div>
-    <div class="section-title">30+ years of<br>problem&nbsp;solving.</div>
+    <h2 class="section-title">30+ years of<br>problem&nbsp;solving.</h2>
 
     <div class="exp-card">
       <div class="exp-top">
@@ -1373,7 +1424,7 @@
   <!-- NOTABLE COLLABORATIONS -->
   <section>
     <div class="section-label">Collaborations</div>
-    <div class="section-title">The people and the&nbsp;work.</div>
+    <h2 class="section-title">The people and the&nbsp;work.</h2>
 
     <div class="collab-grid">
       <div class="collab-card">
@@ -1406,7 +1457,7 @@
   <!-- MASTERY -->
   <section>
     <div class="section-label">Disciplines</div>
-    <div class="section-title">Every discipline became<br>the next&nbsp;one.</div>
+    <h2 class="section-title">Every discipline became<br>the next&nbsp;one.</h2>
 
     <div class="skills-row">
       <div class="skill-block">
@@ -1442,7 +1493,7 @@
   <!-- TOOLS -->
   <section class="tools-section">
     <div class="section-label">Tools</div>
-    <div class="section-title">Core&nbsp;tools.</div>
+    <h2 class="section-title">Core&nbsp;tools.</h2>
 
     <div class="skills-row">
       <div class="skill-block">
@@ -1463,7 +1514,7 @@
   <!-- EDUCATION — 3D Wheel Dial -->
   <section>
     <div class="section-label">Education</div>
-    <div class="section-title">Where it&nbsp;started.</div>
+    <h2 class="section-title">Where it&nbsp;started.</h2>
 
     <div class="edu-layout">
       <!-- Wheel with housing -->
@@ -1538,7 +1589,7 @@
   <!-- FOOTER -->
   <div class="footer" style="padding:80px 0;"></div>
 
-</div>
+</main>
 
 <script>
 // ========== NAME SLICE SYSTEM ==========

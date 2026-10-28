@@ -1,6 +1,6 @@
 /* ============================================================
-   PIET SUESS — PORTFOLIO SITE
-   pietsuess.com — Dark gradient wrapper
+   PIET SUESS, PORTFOLIO SITE
+   pietsuess.com, Dark gradient wrapper
    Rebuilt with resume-level animation systems
    ============================================================ */
 
@@ -125,8 +125,8 @@ button {
   pointer-events: none;
 }
 
-/* Design page — bright-only gradient */
-/* Photo page — black nav over hero */
+/* Design page, bright-only gradient */
+/* Photo page, black nav over hero */
 .photo-page .main-nav a,
 .photo-page .social-icons a,
 .photo-page .site-header a {
@@ -256,7 +256,7 @@ button {
   animation: gradientShift 20s ease infinite;
 }
 
-/* Direct page — dark moody gradient */
+/* Direct page, dark moody gradient */
 .direct-page .bg-gradient {
   background: linear-gradient(135deg,
     #0d0a1a 0%,
@@ -294,7 +294,7 @@ button {
    GHOST TEXT SYSTEMS (from resume)
    ============================================================ */
 
-/* Ghost #1 — fixed parallax zone name, right side, diamond lens blur */
+/* Ghost #1, fixed parallax zone name, right side, diamond lens blur */
 .ghost-name {
   position: fixed;
   right: 4%;
@@ -317,7 +317,7 @@ button {
   filter: blur(12px);
 }
 
-/* Ghost #2 — cascading horizontal scroll lines */
+/* Ghost #2, cascading horizontal scroll lines */
 .ghost-cascade {
   position: absolute;
   left: 0;
@@ -345,7 +345,7 @@ button {
   opacity: 0;
 }
 
-/* Background zone label — giant faded text */
+/* Background zone label, giant faded text */
 .bg-zone-label {
   position: fixed;
   top: 2%;
@@ -555,7 +555,7 @@ button {
   display: none;
 }
 
-/* Show name directly on splash — no slice system */
+/* Show name directly on splash, no slice system */
 .splash-page .landing-name-source {
   visibility: visible !important;
   white-space: nowrap;
@@ -765,7 +765,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   PAGE HERO — with staggered entry animations
+   PAGE HERO, with staggered entry animations
    ============================================================ */
 
 .page-hero {
@@ -831,7 +831,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   SECTION REVEAL — sections start hidden, animate in on scroll
+   SECTION REVEAL, sections start hidden, animate in on scroll
    ============================================================ */
 
 .reveal-section {
@@ -880,7 +880,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   ZONE PAGE MAIN — top spacing for bg label visibility
+   ZONE PAGE MAIN, top spacing for bg label visibility
    ============================================================ */
 
 .zone-page-main {
@@ -889,7 +889,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   PORTFOLIO GRID — Squarespace-matched 11px gaps
+   PORTFOLIO GRID, Squarespace-matched 11px gaps
    ============================================================ */
 
 .portfolio-grid {
@@ -938,7 +938,7 @@ body.menu-open .mobile-nav-overlay {
   opacity: 0.88;
 }
 
-/* Overlay — title on hover */
+/* Overlay, title on hover */
 .portfolio-item .overlay {
   position: absolute;
   inset: 0;
@@ -995,7 +995,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   ANIMATION GRID — Squarespace 3x3, 11px gaps
+   ANIMATION GRID, Squarespace 3x3, 11px gaps
    ============================================================ */
 
 .animate-grid {
@@ -1085,7 +1085,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   PHOTO PAGE — dark gallery, Squarespace feel
+   PHOTO PAGE, dark gallery, Squarespace feel
    ============================================================ */
 
 .photo-hero-section {
@@ -1208,7 +1208,7 @@ body.menu-open .mobile-nav-overlay {
   opacity: 0.88;
 }
 
-/* Uniform grid aspect ratios — crop outliers to match neighbours */
+/* Uniform grid aspect ratios, crop outliers to match neighbours */
 .photo-grid-3.grid-portrait img {
   aspect-ratio: 2 / 3;
   object-fit: cover;
@@ -1221,7 +1221,7 @@ body.menu-open .mobile-nav-overlay {
   object-position: center top;
 }
 
-/* Photo page bio — at bottom */
+/* Photo page bio, at bottom */
 .photo-page .bio-section {
   max-width: none;
   padding: 60px 6vw 40px;
@@ -1229,7 +1229,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   DESIGN PAGE — case study style, Squarespace feel
+   DESIGN PAGE, case study style, Squarespace feel
    ============================================================ */
 
 .design-hero {
@@ -1308,7 +1308,7 @@ body.menu-open .mobile-nav-overlay {
   margin-top: 0;
 }
 
-/* Accent rule below title — gold */
+/* Accent rule below title, gold */
 .design-rule-narrow {
   width: 200px;
   margin: 0 auto 40px;
@@ -1495,7 +1495,7 @@ body.menu-open .mobile-nav-overlay {
   overflow: hidden;
 }
 
-/* Bottom gradient bar on hover — from resume skill blocks */
+/* Bottom gradient bar on hover, from resume skill blocks */
 .tools-block::after,
 .about-tools::after {
   content: '';
@@ -1532,7 +1532,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   ABOUT GRID (edit page — resume, links, bio layout)
+   ABOUT GRID (edit page, resume, links, bio layout)
    ============================================================ */
 
 .about-grid {
@@ -1614,7 +1614,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   EDIT BIO SECTION — centered bio with tools & resume link
+   EDIT BIO SECTION, centered bio with tools & resume link
    ============================================================ */
 
 .edit-bio {
@@ -1918,7 +1918,7 @@ body.menu-open .mobile-nav-overlay {
   border-bottom-color: var(--coral);
 }
 
-/* Checkbox group — pill style */
+/* Checkbox group, pill style */
 .checkbox-group {
   display: flex;
   flex-wrap: wrap;
@@ -1947,7 +1947,7 @@ body.menu-open .mobile-nav-overlay {
   color: var(--ink);
 }
 
-/* Submit button — gradient pill */
+/* Submit button, gradient pill */
 .contact-form .submit-btn {
   font-family: 'Urbanist', sans-serif;
   font-size: 0.8rem;
@@ -2209,7 +2209,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   LANDING PAGE — FLAT / ARCADE CHOICE
+   LANDING PAGE, FLAT / ARCADE CHOICE
    ============================================================ */
 
 .landing-hero {
@@ -2549,7 +2549,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   RESPONSIVE — TABLET LANDSCAPE (max-width: 1200px)
+   RESPONSIVE, TABLET LANDSCAPE (max-width: 1200px)
    ============================================================ */
 
 @media (max-width: 1200px) {
@@ -2568,7 +2568,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   RESPONSIVE — TABLET PORTRAIT (max-width: 1024px)
+   RESPONSIVE, TABLET PORTRAIT (max-width: 1024px)
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -2618,7 +2618,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   RESPONSIVE — MOBILE (max-width: 768px)
+   RESPONSIVE, MOBILE (max-width: 768px)
    ============================================================ */
 
 @media (max-width: 768px) {
@@ -2796,7 +2796,7 @@ body.menu-open .mobile-nav-overlay {
     height: 160px;
   }
 
-  /* Ghost text — hide on mobile */
+  /* Ghost text, hide on mobile */
   .ghost-name,
   .ghost-cascade {
     display: none;
@@ -2833,7 +2833,7 @@ body.menu-open .mobile-nav-overlay {
 
 
 /* ============================================================
-   RESPONSIVE — SMALL MOBILE (max-width: 480px)
+   RESPONSIVE, SMALL MOBILE (max-width: 480px)
    ============================================================ */
 
 @media (max-width: 480px) {
@@ -3051,4 +3051,64 @@ body.menu-open .mobile-nav-overlay {
   font-size: 15px;
   line-height: 1.7;
   color: rgba(254, 249, 240, 0.8);
+}
+
+
+/* ============================================================
+   HEADINGS, SUMMARIES, NOTES (search pass, 2026-10-28)
+   ============================================================ */
+
+/* headings that took over from divs keep the look the divs had: no specificity, so each class still wins */
+:where(h1.bg-zone-label, h1.edit-bio-heading, h2.vc-section-label, h3.vc-card-title, h2.vc-detail-title, h2.tools-italic) {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  text-wrap: inherit;
+}
+
+/* the two-sentence summary at the top of a page */
+.page-summary {
+  margin: 0 6vw 40px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(254,249,240,0.75);
+  text-align: justify;
+  text-align-last: left;
+}
+.design-page .page-summary { color: rgba(26,14,46,0.75); }
+.vc-content .page-summary { margin: 0 0 30px; }
+
+/* short blocks in a full-width grid: Direct's project notes, Contact's questions */
+.info-heading {
+  margin: 60px 6vw 24px;
+  font-family: 'Urbanist', sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 32px 40px;
+  margin: 0 6vw 80px;
+}
+.info-notes { margin-top: 60px; }
+.info-item h2,
+.info-item h3 {
+  margin: 0 0 10px;
+  font-family: 'Urbanist', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.info-item p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(254,249,240,0.75);
+  text-align: justify;
+  text-align-last: left;
 }
