@@ -6,7 +6,6 @@
   <title>Piet Suess — Creative Director</title>
   <meta name="description" content="Piet Suess — Creative Director & Post-Production Veteran. 30+ years across directing, editing, photography, animation, and brand design.">
   <link rel="icon" href="images/PS_Icon.png" type="image/png">
-  <script>location.replace('vibe-coding.html' + location.search + location.hash);</script>
   <noscript><meta http-equiv="refresh" content="0; url=vibe-coding.html"></noscript>
   <meta property="og:title" content="Piet Suess — Creative Director">
   <meta property="og:description" content="Creative Director & Post-Production Veteran. 30+ years across directing, editing, photography, animation, and brand design.">
@@ -15,7 +14,634 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Piet Suess — Creative Director">
   <meta name="twitter:description" content="Creative Director & Post-Production Veteran. 30+ years across directing, editing, photography, animation, and brand design.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="prefetch" href="vibe-coding.html">
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    body { cursor: pointer; }
+
+    /* Build's first frame, held still, so the cut into Build is invisible */
+    .bg-gradient { animation: none; background-position: 0% 50%; }
+    /* before the flash, a near-black purple (the site's --ink at half brightness); the flash turns it to Build's ground */
+    .bg-gradient.dark { background: #0d0717; }
+
+    #introStage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* the roles, in the splash ticker's type */
+    .intro-roles {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 62%;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5em 1.6em;
+      padding: 0 16px;
+      font-family: 'Urbanist', sans-serif;
+      font-weight: 300;
+      font-size: clamp(1.1rem, 1.6vw, 2.1rem);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      pointer-events: none;
+    }
+
+    .intro-roles span { opacity: 0; }
+
+    /* the flash: the whole screen washes to cream, as in the Chasm logo (f30 to f34) */
+    .intro-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      background: var(--cream);
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
+
+<div class="bg-gradient dark" id="introGround"></div>
+
+<canvas id="introStage"></canvas>
+
+<div class="intro-roles" id="introRoles">
+  <span>Director</span>
+  <span>Editor</span>
+  <span>Photographer</span>
+  <span>Animator</span>
+  <span>Designer</span>
+</div>
+
+<div class="intro-flash" id="introFlash"></div>
+
+<script>
+(function () {
+  /* -------------------------------------------------------
+     INTRO, built the way the Unveil logo is: the
+     name is an even grid of small round dots, each its own
+     size. The dots swell in place from nothing, each in its
+     own time from a scattered start with a light pull from the
+     centre out, until they overlap into solid letters. Behind
+     that face sit 5 more layers of the same dots, smaller the
+     further back, so the name is a block of dots in space, seen
+     from a low camera with the layers under the face. It comes
+     straight in from far back and a little below, on a
+     near-black purple ground, every dot landing in its own time
+     and smeared along its path, on the Chasm logo's timing
+     (design/Harley/Chasm/3D_ChasmLogo_Tall.mov, f07 to f18). As
+     the last dots land the whole screen strobes cream and
+     lightning strikes down behind the name (Chasm, f30 to f34),
+     leaving its crack in the ground (f35 on); under the
+     first strobe the ground turns to Build's own, and each peak
+     throws the dots out and they fly back. The roles come on,
+     the block rolls once on its long axis, the top going away,
+     column by column from left to right and each layer a beat
+     behind the one in front, so it twists and fans out, then
+     each dot of every layer rises, streaks and shoots out the
+     top (Chasm, f56 to f75) as the crack fades, then it cuts
+     to Build on Build's own ground.
+     The grow curve is Unveil's (CLIENTS/Unveil/scripts/
+     unveil.html, variation 6).
+     Click: the way out starts now. Click again: straight to Build.
+     ------------------------------------------------------- */
+  const TARGET = 'vibe-coding.html';
+  const NAME = 'Piet Suess';
+
+  // ?role= framing, same labels as js/main.js
+  const ROLES = {
+    editor:   'Editor / Post-Production',
+    post:     'Post-Production Supervisor',
+    lead:     'Creative Lead',
+    director: 'Director',
+    cd:       'Creative Director',
+  };
+
+  // timeline, seconds. every dot swells in its own time, so the dots pop in scattered, not as one wave
+  const T = {
+    start: 0.15,
+    growDur: 2.0,         // the whole build in
+    dotGrow: [0.4, 0.9],  // one dot, each its own
+    zoomDur: 0.92,        // far back to in place: Chasm f07 to f18 at 12 fps
+    stagger: 0.3,         // the dots land each in its own time, over the zoom's last this long
+    flash: 0,             // the flash's first step, from the arrival: the strobe lands on it
+    roll: [1.75, 3.75],   // once around the long axis, after the flash and before the way out
+    twist: 1.0,           // the roll starts at the left end and reaches the right end this much later, so it twists
+    drag: 0.04,           // each layer behind the face starts its turn this much later, so the block fans out
+    out: 4.0,             // the way out starts
+    outDur: 1.25,         // the whole way out
+    dotOut: 1.2,          // one dot's way out, as a part of its own swell
+    rolesStagger: 0.12,   // the roles come on as the flash clears
+    rolesDur: 0.6,
+    rolesOutStagger: 0.05,
+    rolesOutDur: 0.35,
+  };
+
+  const SPACING = 0.03;        // grid spacing, em of the name
+  const DOT = [0.75, 1.3];     // each dot's own full size, a radius per spacing (Unveil: 0.82 for all); 0.71 closes the grid
+  const BLEED = 0.25;          // a dot reaches at most this far past the letter edge (spacing), so e, P, s stay open
+  const LS = -0.03;            // the name's letter-spacing in style.css, em
+  const SCATTER = 0.7;         // the start order: this much random, the rest centre out
+  const LAYERS = 6;            // the face and 5 layers of dots behind it
+  const GAP = 0.08;            // between layers, em of the name
+  const BACK = 0.45;           // the farthest layer's dots, as a part of the face's: smaller the further back
+  const LOW = 20 * Math.PI / 180;   // the camera sits this far below the name, so the layers show under the face
+  const CAMERA = 2.5;          // the camera's distance, in name widths
+  // the layers behind the face, nearest to farthest, between the Chasm logo's two depth colours (f16 to f24)
+  const DEPTH = ['#f37b5b', '#ec6d58'];
+  const layerFill = Array.from({ length: LAYERS }, (_, j) => {
+    const f = Math.max(0, (j - 1) / (LAYERS - 2));
+    return 'rgb(' + [1, 3, 5].map(i => Math.round(parseInt(DEPTH[0].slice(i, i + 2), 16) * (1 - f) + parseInt(DEPTH[1].slice(i, i + 2), 16) * f)).join(',') + ')';
+  });
+  const STREAK = 1 / 3;        // the longest streak on the way out, as a part of the screen height
+  // the flash over the whole screen, one step per 12 fps frame, read off Chasm f30 to f34: the strobe (the clip's
+  // wash before it, f25 to f29, left out so the dark stays dark)
+  const FLASH = [0.68, 0.77, 0.40, 0.81, 0.81];
+  const PEAK = [1, 3];         // the flash's two peaks, Chasm f31 and f33: each throws the dots
+  // the lightning, traced off Chasm f30 to f35 (x and y as parts of its 2:3 frame): a thin bolt strikes from the top
+  // and thickens on the flash's first three steps, opens up on its peaks, and from f35 on its crack stays. each edge is
+  // one straight line fitted to the full-size frame (1280 x 1920); where the logo hid an edge it runs on straight to
+  // the next. a point on the frame's side (x 0 or 1) runs on to the screen's side
+  const BOLT = [
+    [0.4842, 0, 0.4818, 0.1138, 0.4902, 0.1138, 0.4964, 0.0968, 0.5175, 0],
+    [0.4645, 0, 0.4424, 0.0645, 0.4324, 0.1284, 0.5352, 0.1726, 0.5492, 0.1832, 0.5496, 0.2213, 0.579, 0.1768, 0.4757,
+      0.1226, 0.5154, 0],
+    [0.4016, 0, 0.3863, 0.1399, 0.5206, 0.1911, 0.4924, 0.2948, 0.5333, 0.3161, 0.5332, 0.2831, 0.5866, 0.1774,
+      0.4832, 0.1233, 0.5191, 0],
+    [0.1715, 0, 0.1757, 0.1859, 0.3183, 0.2216, 0.2996, 0.3448, 0.4342, 0.3656, 0.4353, 0.5318, 0.5031, 0.5528,
+      0.4744, 0.4999, 0.6208, 0.3597, 0.6172, 0.3201, 0.7606, 0.243, 0.7586, 0.1576, 0.8451, 0.0748, 0.7996, 0],
+    [0.0668, 0, 0.0645, 0.1884, 0.2379, 0.228, 0.2141, 0.3487, 0.3782, 0.3688, 0.3573, 0.551, 0.5075, 0.6041, 0.495,
+      0.6323, 0.5809, 0.6971, 0.543, 0.6344, 0.6046, 0.5986, 0.5048, 0.4969, 0.6914, 0.3594, 0.6741, 0.32, 0.86,
+      0.2354, 0.844, 0.154, 0.9445, 0.0809, 0.9242, 0],
+    [0, 0, 0, 0.1945, 0.1615, 0.2318, 0.1266, 0.3507, 0.3185, 0.3711, 0.2733, 0.5589, 0.5021, 0.6444, 0.4655, 0.693,
+      0.6778, 0.8555, 0.5813, 0.7014, 0.7085, 0.6325, 0.5504, 0.4935, 0.7773, 0.3646, 0.7362, 0.3205, 0.9577, 0.2319,
+      0.9296, 0.15, 1, 0.103, 1, 0],
+  ];
+  const GLOW = 3;              // the thin bolt glows (f30 to f32)
+  const SLICES = 24;           // while the block turns its layers cross, so the dots go far to near in this many slices of depth
+  const ZOOM = 29;             // how far back the name starts, in camera distances: 1/30 of its size
+  const RISE = 0.25;           // it comes in a little from below: its far start sits this part of the screen height under its place
+  const SMEAR = 1 / 12;        // on the way in each dot smears back to where it was this long ago: one Chasm frame
+  const THROW = 0.1;           // each flash peak throws a dot this far at most, as a part of the screen's short side
+
+  const canvas = document.getElementById('introStage');
+  const ctx = canvas.getContext('2d');
+  const rolesEl = document.getElementById('introRoles');
+  const flashEl = document.getElementById('introFlash');
+  const groundEl = document.getElementById('introGround');
+
+  const roleLabel = ROLES[(new URLSearchParams(location.search).get('role') || '').toLowerCase()];
+  if (roleLabel) {
+    const one = document.createElement('span');
+    one.textContent = roleLabel;
+    rolesEl.replaceChildren(one);
+  }
+  const roleSpans = Array.from(rolesEl.children);
+
+  // the cut to Build, at the end or on a click. replace, so Back does not land on the intro again
+  let gone = false;
+  function go() {
+    if (gone) return;
+    gone = true;
+    location.replace(TARGET + location.search + location.hash);
+  }
+  // reduced motion: straight to Build
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { go(); return; }
+
+  // anything that breaks goes straight to Build
+  function fail(err) {
+    console.error(err);
+    go();
+  }
+
+  const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+  const smooth = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+
+
+  /* ---- the name as dots ---- */
+  let DPR = 1, W = 0, H = 0, nameSize = 0;
+  let inkW = 0, inkH = 0, boxX = 0, boxY = 0, grad = null, boltGrad = null, roleBlur = 14;
+  let dots = [], layers = [], throws = [], rollC = null, rollS = null, rollB = null;
+
+  function build() {
+    W = innerWidth;
+    H = innerHeight;
+
+    // the name spans 80% of the width, and never more than 30% of the height
+    const m = document.createElement('canvas').getContext('2d');
+    m.font = '800 100px Urbanist, sans-serif';
+    const per = (m.measureText(NAME).width + (NAME.length - 1) * LS * 100) / 100;   // width per px of size
+    nameSize = Math.min(0.8 * W / per, 0.3 * H);
+    const s = SPACING * nameSize;
+    const adv = per * nameSize;
+
+    // 1. the name as a mask, one pixel per css px
+    const rw = Math.ceil(adv + 0.4 * nameSize), rh = Math.ceil(1.4 * nameSize);
+    const ras = document.createElement('canvas');
+    ras.width = rw;
+    ras.height = rh;
+    const g = ras.getContext('2d');
+    g.font = '800 ' + nameSize + 'px Urbanist, sans-serif';
+    g.fillStyle = '#000';
+    const x0 = 0.2 * nameSize, base = 1.05 * nameSize;
+    for (let i = 0; i < NAME.length; i++) {
+      // each letter at its kerned place, tightened by the name's letter-spacing
+      const x = x0 + g.measureText(NAME.slice(0, i + 1)).width - g.measureText(NAME[i]).width + i * LS * nameSize;
+      g.fillText(NAME[i], x, base);
+    }
+    const A = g.getImageData(0, 0, rw, rh).data;
+    const inside = (x, y) => x >= 0 && y >= 0 && x < rw && y < rh && A[(y * rw + x) * 4 + 3] >= 128;
+
+    let minX = rw, minY = rh, maxX = -1, maxY = -1;
+    for (let y = 0; y < rh; y++) {
+      for (let x = 0; x < rw; x++) {
+        if (A[(y * rw + x) * 4 + 3] >= 128) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          maxY = y;
+        }
+      }
+    }
+    if (maxX < 0) throw new Error('the name did not draw');
+    inkW = maxX + 1 - minX;
+    inkH = maxY + 1 - minY;
+
+    // 2. an even grid over the ink, a dot of its own size wherever the grid lands inside a letter
+    const nx = Math.floor(inkW / s) + 1, ny = Math.floor(inkH / s) + 1;
+    const gx0 = minX + (inkW - (nx - 1) * s) / 2, gy0 = minY + (inkH - (ny - 1) * s) / 2;
+    const reach = Math.ceil(DOT[1] * s);
+    dots = [];
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        const x = gx0 + i * s, y = gy0 + j * s;
+        const px = Math.round(x), py = Math.round(y);
+        if (!inside(px, py)) continue;
+        // distance to the nearest edge: a dot near an edge stops just past it
+        let d2 = reach * reach;
+        for (let oy = -reach; oy <= reach; oy++) {
+          for (let ox = -reach; ox <= reach; ox++) {
+            const q = ox * ox + oy * oy;
+            if (q < d2 && !inside(px + ox, py + oy)) d2 = q;
+          }
+        }
+        const full = (DOT[0] + Math.random() * (DOT[1] - DOT[0])) * s;
+        const r = Math.min(full, Math.sqrt(d2) + BLEED * s);
+        if (r < 0.35 * s) continue;
+        dots.push({ x, y, r, o: 0, g: 0 });
+      }
+    }
+    // a dot that touches no other dot at full size would sit off its letter as a speck
+    dots = dots.filter(d => dots.some(e => e !== d && (e.x - d.x) ** 2 + (e.y - d.y) ** 2 < (e.r + d.r) ** 2));
+    if (!dots.length) throw new Error('no dots');
+
+    // 3. the order: mostly random, with a light pull from Unveil's centre out (centerOutOffset); each dot its own swell
+    // and its own landing
+    let lx = Infinity, hx = -Infinity, ly = Infinity, hy = -Infinity;
+    for (const d of dots) {
+      if (d.x < lx) lx = d.x;
+      if (d.x > hx) hx = d.x;
+      if (d.y < ly) ly = d.y;
+      if (d.y > hy) hy = d.y;
+    }
+    const cx = (lx + hx) / 2, cy = (ly + hy) / 2;
+    const halfW = (hx - lx) / 2 || 1, halfH = (hy - ly) / 2 || 1;
+    for (const d of dots) {
+      const ux = (d.x - cx) / halfW, uy = (d.y - cy) / halfH;
+      d.c = Math.min(1, Math.sqrt(ux * ux + uy * uy) / Math.SQRT2);
+      d.o = SCATTER * Math.random() + (1 - SCATTER) * d.c;
+      d.g = T.dotGrow[0] + Math.random() * (T.dotGrow[1] - T.dotGrow[0]);
+      d.a = Math.random();   // how early it lands, as a part of T.stagger
+    }
+
+    // 4. pinholes: tiny gaps the full-size dots close in on get a small dot of their own
+    const U = new Uint8Array(rw * rh);
+    for (const d of dots) {
+      const r2 = d.r * d.r;
+      for (let y = Math.max(0, Math.floor(d.y - d.r)); y <= Math.min(rh - 1, Math.ceil(d.y + d.r)); y++) {
+        for (let x = Math.max(0, Math.floor(d.x - d.r)); x <= Math.min(rw - 1, Math.ceil(d.x + d.r)); x++) {
+          if ((x + 0.5 - d.x) ** 2 + (y + 0.5 - d.y) ** 2 <= r2) U[y * rw + x] = 1;
+        }
+      }
+    }
+    const stack = new Int32Array(rw * rh);
+    function flood(p0, mark) {
+      let top = 0, area = 0, x0 = rw, x1 = 0, y0 = rh, y1 = 0;
+      stack[top++] = p0;
+      U[p0] = mark;
+      while (top) {
+        const p = stack[--top], x = p % rw, y = (p - x) / rw;
+        area++;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+        if (x > 0 && U[p - 1] === 0) { U[p - 1] = mark; stack[top++] = p - 1; }
+        if (x < rw - 1 && U[p + 1] === 0) { U[p + 1] = mark; stack[top++] = p + 1; }
+        if (y > 0 && U[p - rw] === 0) { U[p - rw] = mark; stack[top++] = p - rw; }
+        if (y < rh - 1 && U[p + rw] === 0) { U[p + rw] = mark; stack[top++] = p + rw; }
+      }
+      return { area, x: (x0 + x1 + 1) / 2, y: (y0 + y1 + 1) / 2, r: Math.hypot(x1 + 1 - x0, y1 + 1 - y0) / 2 + 0.75 };
+    }
+    // ground reached from the border is open; whatever ground is left is enclosed
+    for (let x = 0; x < rw; x++) {
+      if (U[x] === 0) flood(x, 2);
+      if (U[(rh - 1) * rw + x] === 0) flood((rh - 1) * rw + x, 2);
+    }
+    for (let y = 0; y < rh; y++) {
+      if (U[y * rw] === 0) flood(y * rw, 2);
+      if (U[y * rw + rw - 1] === 0) flood(y * rw + rw - 1, 2);
+    }
+    const fillers = [];
+    for (let p = 0; p < rw * rh; p++) {
+      if (U[p] !== 0) continue;
+      const hole = flood(p, 3);
+      if (hole.area > 0.25 * s * s) continue;   // a counter, it stays open
+      let near = dots[0], best = Infinity;
+      for (const d of dots) {
+        const q = (d.x - hole.x) ** 2 + (d.y - hole.y) ** 2;
+        if (q < best) { best = q; near = d; }
+      }
+      fillers.push({ x: hole.x, y: hole.y, r: hole.r, o: near.o, g: near.g, c: near.c, a: near.a });
+    }
+    dots.push(...fillers);
+    for (const d of dots) {
+      d.x -= minX;
+      d.y -= minY;
+    }
+
+    // 5. the layers behind the face: the same dots, each layer its own scattered order, swell and landing
+    layers = [null];
+    for (let j = 1; j < LAYERS; j++) {
+      const o = new Float32Array(dots.length), g = new Float32Array(dots.length), a = new Float32Array(dots.length);
+      dots.forEach((d, i) => {
+        o[i] = SCATTER * Math.random() + (1 - SCATTER) * d.c;
+        g[i] = T.dotGrow[0] + Math.random() * (T.dotGrow[1] - T.dotGrow[0]);
+        a[i] = Math.random();
+      });
+      layers.push({ o, g, a });
+    }
+
+    // 6. the flash's throw: for each of its peaks, every dot of every layer its own direction and its own reach (0 to 1)
+    throws = PEAK.map(() => Array.from({ length: LAYERS }, () => {
+      const a = new Float32Array(2 * dots.length);
+      for (let i = 0; i < dots.length; i++) {
+        const ang = 2 * Math.PI * Math.random(), len = Math.random();
+        a[2 * i] = len * Math.cos(ang);
+        a[2 * i + 1] = len * Math.sin(ang);
+      }
+      return a;
+    }));
+
+    // 7. the roll, worked out each frame for every dot of every layer: its turn, and its slice of depth
+    rollC = new Float32Array(LAYERS * dots.length);
+    rollS = new Float32Array(LAYERS * dots.length);
+    rollB = new Uint8Array(LAYERS * dots.length);
+
+    roleBlur =14 * parseFloat(getComputedStyle(rolesEl).fontSize) / 30;
+  }
+
+  function layout() {
+    W = innerWidth;
+    H = innerHeight;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const gap = 0.14 * nameSize;
+    boxX = (W - inkW) / 2;
+    boxY = (H - (inkH + gap + rolesEl.offsetHeight)) / 2;
+    rolesEl.style.top = (boxY + inkH + gap) + 'px';
+    // the site's name gradient: 135deg, cream, gold at 60%, coral
+    const gx = boxX + inkW / 2, gy = boxY + inkH / 2, reach = (inkW + inkH) / 4;
+    grad = ctx.createLinearGradient(gx - reach, gy - reach, gx + reach, gy + reach);
+    grad.addColorStop(0, '#fef9f0');
+    grad.addColorStop(0.6, '#f4c542');
+    grad.addColorStop(1, '#e8735a');
+    // the lightning's colour, along the crack from its frame's top left to the tip: the hues of Build's purple, plum
+    // and wine stops (#2d1640, #4a1942, #7a2848) at 70% saturation and 70% lightness, then in OKLCH 0.21 darker and
+    // turned 20 deg toward red (chroma kept)
+    const fw = 2 / 3 * H, fx = gx - fw / 2;
+    boltGrad = ctx.createLinearGradient(fx, 0, fx + 0.65 * fw, 0.821 * H);
+    boltGrad.addColorStop(0, '#8c328a');
+    boltGrad.addColorStop(0.5, '#b03472');
+    boltGrad.addColorStop(1, '#a73d4a');
+  }
+
+
+  /* ---- playback ---- */
+  let t0 = 0, tOut = T.out, started = false, shownDark = true;
+
+  // a dot smeared from where it was (bx, by, br) to where it is (x, y, r): the outline around both circles
+  function smear(x, y, r, bx, by, br) {
+    const dx = x - bx, dy = y - by, d = Math.hypot(dx, dy);
+    if (d <= Math.abs(r - br)) {   // one circle holds the other: the bigger one alone
+      if (br > r) { x = bx; y = by; r = br; }
+      ctx.moveTo(x + r, y);
+      ctx.arc(x, y, r, 0, -2 * Math.PI, true);
+    } else {
+      const a = Math.atan2(dy, dx), w = Math.acos((br - r) / d);
+      ctx.moveTo(x + r * Math.cos(a + w), y + r * Math.sin(a + w));
+      ctx.arc(x, y, r, a + w, a - w, true);
+      ctx.arc(bx, by, br, a - w, a + w, true);
+    }
+    ctx.closePath();
+  }
+
+  function render(now) {
+    const t = (now - t0) / 1000;
+    const tin = Math.min(t, tOut);
+
+    // the block stays 3D, seen from the low camera, from the way in to the way out
+    const lc = Math.cos(LOW), ls = Math.sin(LOW);
+    const cx = boxX + inkW / 2, cy = boxY + inkH / 2, cam = CAMERA * inkW, gap = GAP * nameSize, streak = STREAK * H;
+    // the way in comes up a little from below: the line it travels is tilted so its far start sits RISE of the
+    // screen height under the name's place
+    const lift = RISE * H / cam, rise = Math.atan(lift) + Math.asin(lift / (ZOOM * Math.hypot(1, lift)));
+    const ry = Math.sin(rise), rz = Math.cos(rise);
+    // 1/12 s ago, for the smear; a click freezes the way in, so the smear dies away
+    const tw = Math.min(t - SMEAR, tOut);
+    // the roll: once around the block's long axis, through the middle of its depth, the top going away from you,
+    // smooth at both ends. it starts at the left end and runs to the right, and each layer behind the face starts a
+    // beat after the one in front, so the block twists and fans out as it turns
+    const mid = (LAYERS - 1) * gap / 2, rd = T.roll[1] - T.roll[0] - T.twist;
+    const spin = tin > T.roll[0] && tin < T.roll[1] + (LAYERS - 1) * T.drag;
+    if (spin) {
+      // its layers cross as it turns, so each dot gets its slice of depth along the camera, far to near
+      const reach = Math.hypot(inkH / 2, mid) + 1, near = mid * lc - reach;
+      for (let j = 0; j < LAYERS; j++) {
+        const zm = j * gap - mid;
+        for (let i = 0; i < dots.length; i++) {
+          const k = j * dots.length + i, v = dots[i].y - inkH / 2;
+          const ra = -Math.PI * (1 - Math.cos(Math.PI * clamp01((tin - T.roll[0] - T.twist * clamp01(dots[i].x / inkW) - j * T.drag) / rd)));
+          const c = Math.cos(ra), s = Math.sin(ra);
+          rollC[k] = c;
+          rollS[k] = s;
+          const z2 = (mid + v * s + zm * c) * lc - (v * c - zm * s) * ls;
+          rollB[k] = Math.min(SLICES - 1, Math.max(0, Math.floor((z2 - near) / (2 * reach) * SLICES)));
+        }
+      }
+    }
+
+    // the flash, its strobe on the arrival. its throw: each peak throws every dot out its own way, and it flies back
+    // by the next peak or the flash's end
+    const fl = T.start + T.zoomDur + T.flash;
+    let th = 0, tb = 0;
+    for (let b = 0; b < PEAK.length; b++) {
+      const a = fl + PEAK[b] / 12, e = fl + (b + 1 < PEAK.length ? PEAK[b + 1] : FLASH.length) / 12;
+      if (tin < a || tin >= e) continue;
+      // out on Unveil's cubic ease out in the first third, back on a smooth curve in the rest
+      const k = (tin - a) / (e - a);
+      th = (k < 1 / 3 ? 1 - Math.pow(1 - 3 * k, 3) : (1 + Math.cos(1.5 * Math.PI * (k - 1 / 3))) / 2) * THROW * Math.min(W, H);
+      tb = b;
+    }
+
+    ctx.clearRect(0, 0, W, H);
+
+    // the lightning, behind the name: it strikes on the flash's steps, then its crack stays. a click before the crack
+    // is down ends it with the flash; the crack fades on the way out
+    const bs = Math.floor((t - fl) * 12);
+    let bolt = -1, boltA = 1;
+    if (t < tOut) bolt = bs >= 0 ? Math.min(bs, BOLT.length - 1) : -1;
+    else if (tOut >= fl + FLASH.length / 12) { bolt = BOLT.length - 1; boltA = 1 - clamp01((t - tOut) / T.outDur); }
+    if (bolt >= 0 && boltA > 0) {
+      const pts = BOLT[bolt], fw = 2 / 3 * H, fx = cx - fw / 2;
+      ctx.beginPath();
+      for (let n = 0; n < pts.length; n += 2) {
+        const x = pts[n] === 0 ? Math.min(0, fx) : pts[n] === 1 ? Math.max(W, fx + fw) : fx + pts[n] * fw;
+        if (n) ctx.lineTo(x, pts[n + 1] * H);
+        else ctx.moveTo(x, pts[n + 1] * H);
+      }
+      ctx.closePath();
+      ctx.globalAlpha = boltA;
+      ctx.fillStyle = boltGrad;
+      if (bolt < GLOW) {
+        ctx.shadowColor = '#9f337f';   // the gradient where the bolt strikes
+        ctx.shadowBlur = 0.02 * H * DPR;
+      }
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+
+    // back to front, one path per layer: the face last, in the name's gradient. while it turns, slice by slice of
+    // depth, far to near
+    for (let b = spin ? SLICES - 1 : 0; b >= 0; b--) {
+      for (let j = LAYERS - 1; j >= 0; j--) {
+        const lay = layers[j], z = j * gap, size = 1 - j * (1 - BACK) / (LAYERS - 1), off = throws[tb][j];
+        let any = false;
+        ctx.beginPath();
+        for (let i = 0; i < dots.length; i++) {
+          const k = j * dots.length + i;
+          if (spin && rollB[k] !== b) continue;
+          const d = dots[i], o = j ? lay.o[i] : d.o, g = j ? lay.g[i] : d.g, a = j ? lay.a[i] : d.a;
+          // Unveil's cubic ease out to grow, each dot in its own time
+          const gp = clamp01((tin - T.start - o * (T.growDur - g)) / g);
+          const r = d.r * size * (1 - Math.pow(1 - gp, 3));
+          if (r < 0.3) continue;
+          any = true;
+          // the dot in space: rolled on the long axis with its column and layer, seen from the low camera
+          const u = d.x - inkW / 2, v = d.y - inkH / 2, zm = z - mid, rc = spin ? rollC[k] : 1, rs = spin ? rollS[k] : 0;
+          const v1 = v * rc - zm * rs, z1 = mid + v * rs + zm * rc;
+          const y2 = v1 * lc + z1 * ls, z2 = z1 * lc - v1 * ls;
+          // on the way in it is still this far back along the rising line, fast at first, then easing into place on
+          // Unveil's cubic ease out, landing in its own time; then the flash throws it
+          const back = ZOOM * cam * Math.pow(1 - clamp01((tin - T.start + a * T.stagger) / T.zoomDur), 3);
+          const p = cam / (cam + z2 + back * rz), ox = off[2 * i] * th, oy = off[2 * i + 1] * th;
+          const x = cx + u * p + ox, y = cy + (y2 + back * ry) * p + oy, rr = r * p;
+          // the way out: a streak grows below the dot while it rises slowly, then it shoots out the top (Chasm f56 to f75)
+          const de = g * T.dotOut;
+          const q = clamp01((t - tOut - o * (T.outDur - de)) / de);
+          const was = ZOOM * cam * Math.pow(1 - clamp01((tw - T.start + a * T.stagger) / T.zoomDur), 3);
+          if (was !== back && q === 0) {
+            // on the way in: smeared back to where it was 1/12 s ago
+            const bp = cam / (cam + z2 + was * rz);
+            smear(x, y, rr, cx + u * bp + ox, cy + (y2 + was * ry) * bp + oy, r * bp);
+            continue;
+          }
+          const tail = streak * q;
+          const top = y - (y + rr + streak + 2) * Math.pow(q, 8);
+          ctx.moveTo(x + rr, top);
+          ctx.arc(x, top, rr, 0, Math.PI, true);
+          ctx.lineTo(x - rr, top + tail);
+          ctx.arc(x, top + tail, rr, Math.PI, 0, true);
+          ctx.closePath();
+        }
+        if (any) {
+          ctx.fillStyle = j ? layerFill[j] : grad;
+          ctx.fill();
+        }
+      }
+    }
+
+    for (let i = 0; i < roleSpans.length; i++) {
+      const vin = smooth(0, 1, (tin - fl - FLASH.length / 12 - i * T.rolesStagger) / T.rolesDur);
+      const vout = smooth(0, 1, (t - tOut - (roleSpans.length - 1 - i) * T.rolesOutStagger) / T.rolesOutDur);
+      const v = vin * (1 - vout);
+      const st = roleSpans[i].style;
+      st.opacity = v.toFixed(3);
+      st.filter = v > 0.999 ? 'none' : 'blur(' + ((1 - v) * roleBlur).toFixed(2) + 'px)';
+    }
+
+    // the flash, a step per 12 fps frame; it belongs to the way in, so a click ends it
+    const fs = Math.floor((t - fl) * 12), on = t < tOut && fs >= 0 && fs < FLASH.length;
+    flashEl.style.opacity = on ? FLASH[fs] : 0;
+    // the ground: the dark until the flash, then Build's; a click before then turns it at once
+    const dark = t < Math.min(fl, tOut);
+    if (dark !== shownDark) {
+      groundEl.classList.toggle('dark', dark);
+      shownDark = dark;
+    }
+
+    if (t >= tOut + T.outDur + 0.05) { go(); return false; }
+    return true;
+  }
+
+  function frame(now) {
+    try {
+      if (render(now)) requestAnimationFrame(frame);
+    } catch (err) { fail(err); }
+  }
+
+  // click: the way out starts now. a second click goes straight to Build
+  function skip(e) {
+    if (!started) { go(); return; }
+    const t = (performance.now() - t0) / 1000;
+    if (t < tOut) tOut = t;
+    else if (e.type !== 'wheel' && t > tOut + 0.25) go();
+  }
+  addEventListener('pointerdown', skip);
+  addEventListener('keydown', skip);
+  addEventListener('wheel', skip, { passive: true });
+
+  function start() {
+    try {
+      build();
+      layout();
+    } catch (err) { fail(err); return; }
+    addEventListener('resize', layout);
+    t0 = performance.now();
+    started = true;
+    requestAnimationFrame(frame);
+  }
+
+  const fonts = document.fonts && document.fonts.load
+    ? Promise.all([document.fonts.load('800 100px Urbanist'), document.fonts.load('300 32px Urbanist')])
+    : Promise.resolve();
+  Promise.race([fonts, new Promise(r => setTimeout(r, 2500))]).then(start, start);
+})();
+</script>
 </body>
 </html>
