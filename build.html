@@ -163,39 +163,56 @@
   .vc-detail-overlay {
     display: none; position: fixed; inset: 0; z-index: 9000;
     background: rgba(0,0,0,0.92); justify-content: center; align-items: center;
-    padding: 20px;
+    padding: 0;
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
   .vc-detail-overlay.open { display: flex; }
+  /* full-page pop-up (Piet 2026-10-28): heading on top, the live site in a frame with the intro beside it, the
+     lists below; the whole panel scrolls */
   .vc-detail-panel {
-    display: flex;
+    width: 100%; height: 100%; overflow-y: auto;
     background: linear-gradient(135deg, rgba(42,26,62,0.95), rgba(26,14,46,0.98));
-    border: 1px solid var(--glass-border); border-radius: 16px;
-    overflow: hidden; position: relative;
+    position: relative;
   }
   .vc-detail-preview {
-    background: #000; border-right: 1px solid var(--glass-border);
-    overflow: hidden; position: relative; flex-shrink: 0;
+    background: #000; overflow: hidden; position: relative; aspect-ratio: 16 / 10;
   }
   .vc-detail-iframe {
-    border: none; display: block;
-    transform-origin: 0 0;
+    position: absolute; top: 0; left: 0; width: 1440px; border: none; transform-origin: 0 0;
   }
   .vc-detail-img {
     width: 100%; height: 100%; object-fit: cover; display: block;
     position: absolute; inset: 0; transition: opacity 0.4s;
   }
   .vc-detail-body {
-    padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+    padding: 48px 40px 80px; display: flex; flex-direction: column; gap: 12px;
   }
+  .vc-detail-head { padding: 84px 40px 24px; display: flex; flex-direction: column; gap: 12px; }
+  .vc-detail-hero { display: grid; grid-template-columns: 3fr 2fr; gap: 40px; align-items: start; padding: 0 40px; }
+  .vc-detail-intro { display: flex; flex-direction: column; gap: 12px; }
+  /* the frame: a dark browser bar with three dots and the site's address */
+  .vc-detail-frame { border: 1px solid var(--glass-border); border-radius: 10px; overflow: hidden; }
+  .vc-detail-bar {
+    display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+    background: rgba(0,0,0,0.6); border-bottom: 1px solid var(--glass-border);
+  }
+  .vc-detail-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(254,249,240,0.25); flex-shrink: 0; }
+  .vc-detail-address {
+    margin-left: 10px; font-size: 12px; color: rgba(254,249,240,0.5);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* the way out (Piet 2026-10-29): the View Site button's look, bigger, held top-left */
   .vc-detail-close {
-    position: absolute; top: 12px; right: 16px; background: none; border: none;
-    color: rgba(254,249,240,0.5); font-size: 28px; cursor: pointer; z-index: 1;
-    transition: color 0.2s;
+    position: fixed; top: 16px; left: 16px; z-index: 1;
+    font-family: 'Urbanist', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase; color: #000;
+    background: var(--coral); border: none; border-radius: 6px; padding: 12px 20px;
+    cursor: pointer; transition: background 0.2s, transform 0.15s;
   }
-  .vc-detail-close:hover { color: var(--cream); }
+  .vc-detail-close:hover { background: var(--gold); transform: translateY(-1px); }
+  .vc-detail-next { left: auto; right: 16px; }   /* NEXT, opposite BACK (Piet 2026-10-29) */
   .vc-detail-title {
-    font-family: 'Urbanist', sans-serif; font-size: 24px; font-weight: 700;
+    font-family: 'Urbanist', sans-serif; font-size: clamp(40px, 5vw, 72px); font-weight: 700;
     color: var(--cream); margin: 0;
   }
   .vc-detail-client {
@@ -203,18 +220,49 @@
     color: var(--gold); opacity: 0.8;
   }
   .vc-detail-desc {
-    font-size: 14px; color: rgba(254,249,240,0.7); line-height: 1.8;
+    font-size: 16px; color: rgba(254,249,240,0.7); line-height: 1.8;
     text-align: justify; text-align-last: left;
   }
+  /* a card's case study: full-width sections, words and pictures, the sides swap each section */
   .vc-detail-goals:empty { display: none; }
+  .vc-case {
+    display: grid; grid-template-columns: 3fr 2fr; gap: 40px; align-items: start;
+    padding: 48px 0; border-top: 1px solid var(--glass-border);
+  }
+  .vc-case:nth-child(even) { grid-template-columns: 2fr 3fr; }
+  .vc-case:nth-child(even) .vc-case-pic { order: -1; }
+  .vc-case:not(:has(.vc-case-pic)) { grid-template-columns: 1fr; }
+  .vc-case-heading {
+    font-family: 'Urbanist', sans-serif; font-size: clamp(32px, 3.4vw, 48px); font-weight: 800;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--cream); margin: 0 0 20px;
+  }
+  .vc-case-text p {
+    font-size: 16px; color: rgba(254,249,240,0.7); line-height: 1.8; margin: 0 0 1em;
+    text-align: justify; text-align-last: left;
+  }
+  .vc-case-pic { margin: 0; }
+  .vc-case-pic img, .vc-case-pic video {
+    display: block; width: 100%; border-radius: 10px; border: 1px solid var(--glass-border);
+  }
+  .vc-case-pic img { cursor: pointer; transition: opacity 0.2s ease; }   /* a click opens it full (js/main.js lightbox, Piet 2026-10-29) */
+  .vc-case-pic img:hover { opacity: 0.88; }
+  .lightbox-overlay { z-index: 9500; }   /* the full picture sits above the open card (9000) */
+  /* more than one picture (Piet 2026-10-29): the words run full width, the pictures sit side by side under them,
+     one height, nothing cropped (each picture's share of the row = its width / height, set when the card opens) */
+  .vc-case:has(.vc-case-pic img + img) { grid-template-columns: 1fr; }
+  .vc-case:has(.vc-case-pic img + img) .vc-case-pic { order: 0; display: flex; gap: 16px; align-items: flex-start; }
+  .vc-case-pic:has(img + img) img { flex: 1 1 0; min-width: 0; }
+  .vc-detail-goals .vc-card-goals li { font-size: 16px; }
   .vc-detail-tags { display: flex; flex-wrap: wrap; gap: 5px; }
   .vc-detail-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 12px; }
   @media (max-width: 700px) {
-    .vc-detail-overlay { padding: 8px; }
-    .vc-detail-panel { flex-direction: column; max-height: 95vh; width: 100vw; }
-    .vc-detail-preview { border-right: none; border-bottom: 1px solid var(--glass-border); width: 100% !important; height: 40vh !important; }
-    .vc-detail-body { padding: 20px; overflow-y: auto; flex: 1; }
-    .vc-detail-title { font-size: 20px; }
+    .vc-detail-body { padding: 20px 20px 60px; }
+    .vc-detail-head { padding: 72px 20px 16px; }
+    .vc-detail-hero { grid-template-columns: 1fr; padding: 0 20px; }
+    .vc-case, .vc-case:nth-child(even) { grid-template-columns: 1fr; }
+    .vc-case:nth-child(even) .vc-case-pic { order: 0; }
+    .vc-case:has(.vc-case-pic img + img) .vc-case-pic { display: block; }   /* phones keep the stack */
+    .vc-case-pic img + img { margin-top: 16px; }
   }
 
   .vc-stat-bar {
@@ -338,7 +386,7 @@
               "@id": "https://pietsuess.com/#person"
             },
             "name": "Unprofessional Variety Show",
-            "description": "Full site with WYSIWYG admin panel, show detail pages with 60+ embedded videos, donate modal, SEO with JSON-LD event schema, mobile-responsive, blog with search. Client manages everything herself, no code needed.",
+            "description": "Full site with WYSIWYG admin panel, show detail pages with 60+ embedded videos, SEO with JSON-LD event schema, mobile-responsive. Client manages everything herself, no code needed.",
             "url": "https://unprofessionalvarietyshow.com"
           }
         },
@@ -533,7 +581,7 @@
               "@id": "https://pietsuess.com/#person"
             },
             "name": "UPVS Admin",
-            "description": "WYSIWYG admin panel for the Unprofessional Variety Show. Manages shows, performers, blog posts, and 60+ embedded videos. Data-driven JSON architecture; client publishes everything herself.",
+            "description": "WYSIWYG admin panel for the Unprofessional Variety Show. Manages shows, performers, and 60+ embedded videos. Data-driven JSON architecture; client publishes everything herself.",
             "url": "https://unprofessionalvarietyshow.com/admin/?demo"
           }
         },
@@ -718,33 +766,57 @@
         <h3 class="vc-card-title">Film Rental Platform</h3>
         <div class="vc-card-client">MPWR Change &middot; Between the Mountain and the Sky</div>
         <template class="vc-card-more">
-        <div class="vc-card-goals-label">The Brief</div>
-        <ul class="vc-card-goals">
-          <li>Be our own distributor, no rental platform between the film and its audience</li>
-          <li>Off Vimeo, onto ground we control, signed playback so a watch link works for the renter and nobody else</li>
-          <li>Subtitles and burnt-in translations in our own hands, so the film crosses language barriers the way it was meant to</li>
-          <li>Rent and watch with no account and no password, a link in the inbox is the key</li>
-          <li>Head off tech support before it starts, one answer that fixes it instead of a week of back and forth</li>
-        </ul>
-        <div class="vc-card-goals-label">Big wins</div>
-        <ul class="vc-card-goals">
-          <li>Owning delivery got rid of a contract. 205 TB of film streamed in a year, against a 2 TB-a-month Vimeo allowance, meant a forced ~$24,000-a-year Enterprise deal if it stayed on Vimeo. It didn't.</li>
-          <li>More than 5,000 people rented it in the first window, and at least 3,700 watched to the very end.</li>
-          <li>The same system reopened for a second window: 1,353 earlier rentals were extended in one step, with a file kept to undo it.</li>
-          <li>Support answers before anyone has to write in. A help chat walks people through the common problems and files a ticket when it can't help. More than 300 tickets have gone through it, and each customer's whole history sits on one card, including 36,133 payments from the old system.</li>
-          <li>Its own mail system: more than 22,000 letters sent in paced batches, with bounces, complaints and unsubscribes tracked.</li>
-          <li>Reminder letters that only reach people whose rental is still running, never past renters.</li>
-        </ul>
-        <div class="vc-card-goals-label">The hard parts</div>
-        <ul class="vc-card-goals">
-          <li>A watch link with no password that strangers can't abuse. Codes lock after 10 wrong tries in an hour, no address can hold more than 6 open links, and the sign-in page gives the same answer whether or not an email bought the film, so nobody can fish for who rented.</li>
-          <li>Playback that lasts the whole evening. The video address expires every 6 hours, so when it lapses mid-film the player quietly fetches a fresh one and picks up at the same second.</li>
-          <li>Money that never counts twice. Every rental is tied to its Stripe payment, so a payment notice that arrives twice can't make two rentals, and charges that didn't come through the portal are ignored.</li>
-          <li>Gifts that can't go missing. A gift's clock only starts when the recipient first signs in, and an unopened gift survives even if they rent the film for themselves.</li>
-          <li>Selling everywhere except Canada during the film's theatre run there, without locking out anyone who already rented. The block stops buying, never signing in or watching.</li>
-          <li>Phone networks that put many people behind one address. The limits on each address had to sit at 30 or more so real viewers weren't turned away.</li>
-          <li>Two systems running at once. The old CRM kept running alongside the portal, and when its forms fail, the update waits and replays on the hour instead of getting lost.</li>
-        </ul>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The Brief</h3>
+            <ul class="vc-card-goals">
+              <li>Be our own distributor, no rental platform between the film and its audience</li>
+              <li>Off Vimeo, onto ground we control, signed playback so a watch link works for the renter and nobody else</li>
+              <li>Subtitles and burnt-in translations in our own hands, so the film crosses language barriers the way it was meant to</li>
+              <li>Rent and watch with no account and no password, a link in the inbox is the key</li>
+              <li>Head off tech support before it starts, one answer that fixes it instead of a week of back and forth</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/btmats-team-desk.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The build</h3>
+            <p>Pay-what-you-want Stripe checkout, gift rentals and one-time discount links, signed video playback, a save-ahead option for slow connections, and a screening pass that loads the whole film at full quality for a host or group.</p>
+            <p>The player carries subtitles in eight languages, English closed captions, and the burnt-in translation lines as a track of their own, and the subtitles went out with the film master for educational sales.</p>
+            <p>Behind it sit CRM sync, its own mail engine with unsubscribe and bounce handling, a live analytics desk, a team desk that can grant a free rental, look up any payment and show sales by day, and a support desk where the team answers customers by name, with per-person keys and ticket claiming. A refund stops playback.</p>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/btmats-platform.jpg" alt="Between the Mountain and the Sky rental platform" loading="lazy" decoding="async"><img src="toolkit-screenshots/btmats-tickets.jpg" alt="" loading="lazy" decoding="async"><img src="toolkit-screenshots/btmats-comms.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">Big wins</h3>
+            <ul class="vc-card-goals">
+              <li>Owning delivery got rid of a contract. 205 TB of film streamed in a year, against a 2 TB-a-month Vimeo allowance, meant a forced ~$24,000-a-year Enterprise deal if it stayed on Vimeo. It didn't.</li>
+              <li>More than 5,000 people rented it in the first window, and at least 3,700 watched to the very end.</li>
+              <li>The same system reopened for a second window: 1,353 earlier rentals were extended in one step, with a file kept to undo it.</li>
+              <li>Support answers before anyone has to write in. A help chat walks people through the common problems and files a ticket when it can't help. More than 300 tickets have gone through it, and each customer's whole history sits on one card, including 36,133 payments from the old system.</li>
+              <li>Its own mail system: more than 22,000 letters sent in paced batches, with bounces, complaints and unsubscribes tracked.</li>
+              <li>Reminder letters that only reach people whose rental is still running, never past renters.</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/btmats-mail-ladder.jpg" alt="" loading="lazy" decoding="async"><img src="toolkit-screenshots/btmats-sales.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The hard parts</h3>
+            <ul class="vc-card-goals">
+              <li>A watch link with no password that strangers can't abuse. Codes lock after 10 wrong tries in an hour, no address can hold more than 6 open links, and the sign-in page gives the same answer whether or not an email bought the film, so nobody can fish for who rented.</li>
+              <li>Playback that lasts the whole evening. The video address expires every 6 hours, so when it lapses mid-film the player quietly fetches a fresh one and picks up at the same second.</li>
+              <li>Money that never counts twice. Every rental is tied to its Stripe payment, so a payment notice that arrives twice can't make two rentals, and charges that didn't come through the portal are ignored.</li>
+              <li>Gifts that can't go missing. A gift's clock only starts when the recipient first signs in, and an unopened gift survives even if they rent the film for themselves.</li>
+              <li>Selling everywhere except Canada during the film's theatre run there, without locking out anyone who already rented. The block stops buying, never signing in or watching.</li>
+              <li>Phone networks that put many people behind one address. The limits on each address had to sit at 30 or more so real viewers weren't turned away.</li>
+              <li>Two systems running at once. The old CRM kept running alongside the portal, and when its forms fail, the update waits and replays on the hour instead of getting lost.</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/btmats-watch-resume.jpg" alt="" loading="lazy" decoding="async"><img src="toolkit-screenshots/btmats-admin-desk.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
         </template>
         <div class="vc-card-desc">A complete film rental business built from scratch. The volume is real: 205 TB of film streamed in a year against a 2 TB-a-month Vimeo allowance, and a forced ~$24,000-a-year Enterprise contract if it stayed. Owning delivery made that contract disappear. Cloudflare Workers, D1 and Stream, no servers anywhere. In its first rental window more than 5,000 people rented the film and at least 3,700 watched it to the end.</div>
         <div class="vc-card-tags"><span class="vc-tag">E-commerce</span><span class="vc-tag">Stripe</span><span class="vc-tag">Cloudflare</span><span class="vc-tag">Support Desk</span></div>
@@ -759,6 +831,53 @@
       <div class="vc-card-body">
         <h3 class="vc-card-title">Wearable Tech Website</h3>
         <div class="vc-card-client">Bullfinch Earth</div>
+        <template class="vc-card-more">
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The Brief</h3>
+            <ul class="vc-card-goals">
+              <li>Replace a one-page brochure that showed no product, no partners and no demo, with a single contact form as the only way in.</li>
+              <li>A simple public teaser in three or four sections, quick to grasp what the device is.</li>
+              <li>Show the device worn in the field, and a recording of it at work.</li>
+              <li>Map the data as dots on a plan of the plot, not as 3D trees, because the device doesn't capture the shape of trees.</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/bullfinch-field.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The build</h3>
+            <p>A one-page scroll story. It opens on BULLFINCH IS / GROUND TRUTH FOR, with seven uses rotating in a fixed slot so the line never re-wraps, while the forest photo shows through a 45° wedge that closes as you scroll. A 22-frame render turns the logo into a ball and lands it in the hero mark.</p>
+            <p>In 01 a red walking path crosses the plot and measures 9 trees, then redraws as Bullfinch while the readout counts from 001 to 100 over white terrain contours. In 02, Wear, Walk, Data, the client's app demo plays once as it settles and holds on the phone view, and phones get their own cut that ends on the survey summary. Then the team, with LinkedIn badges in the bios, five audiences and six partner logos.</p>
+            <p>One colour journey runs under the whole page, from day beige through olive and green to night green. At the close the red point holds still in 3D space as the camera arrives, then turns into the two-stroke Bullfinch mark. Text writes on and wipes off in place instead of sliding. Three.js, GSAP ScrollTrigger and Lenis smooth scroll, on a static page.</p>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/Bullfinch_End.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">Big wins</h3>
+            <ul class="vc-card-goals">
+              <li>The teaser became the site: the old main site was retired, and the teaser is what runs at bullfinch.earth.</li>
+              <li>Everything the old site lacked is on the page now: the device worn in the field, the real app demo and six partner logos.</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/bullfinch-team.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The hard parts</h3>
+            <ul class="vc-card-goals">
+              <li>The phone's address bar. Hiding it left a gap at the bottom and shifted layers, because the page measured the screen four different ways at once. Everything that mustn't move now sizes from one measure, and the 3D canvas sizes from its own box.</li>
+              <li>Android grew and shrank fixed layers with the address bar, so the cover photos re-scaled every time it slid. Every fixed layer now has an explicit height.</li>
+              <li>Ghost photos. A nav click, a resize or a late image made the page re-measure, and earlier photos reopened over later sections. Each of the 9 scroll triggers now restores its own state after a re-measure.</li>
+              <li>Pinned sections dragged the fixed photos and the map along with the scroll. Those layers now live at the top level of the page.</li>
+              <li>The partner logos came in three forms, dark ink, white ink and solid white, and one colour filter turned some into black boxes. All six were redrawn as white ink on transparency.</li>
+              <li>The readout jumped from about 46 to 100, because one diagonal path only covers about 41% of the field. It now counts from 001 to 100 as the Bullfinch path draws.</li>
+              <li>On phones the team and the applications overlapped on one short screen. They became two stops, team then applications, with the faces held through both.</li>
+            </ul>
+          </div>
+        </section>
+        </template>
         <div class="vc-card-desc">A one-page scroll story for a company whose wearable sensors capture forest data while crews do their regular fieldwork. A live 3D forest canopy network runs behind the page as a scroll-driven animation through four chapters, then the camera tilts down onto a single red dot where the page ends. Map points pop onto a plan view and team bios open in place.</div>
         <div class="vc-card-tags"><span class="vc-tag">WebGL</span><span class="vc-tag">Scroll Story</span><span class="vc-tag">Motion</span><span class="vc-tag">Client Site</span></div>
         <div class="vc-card-links">
@@ -771,6 +890,58 @@
       <video class="vc-card-thumb" src="toolkit-screenshots/deardeer.mp4" autoplay muted loop playsinline aria-label="Dear Deer Website"></video>
       <div class="vc-card-body">
         <h3 class="vc-card-title">Dear Deer Website</h3>
+        <template class="vc-card-more">
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The Brief</h3>
+            <ul class="vc-card-goals">
+              <li>A home for Dear Deer Improv, an improv troupe on Salt Spring Island, that plays like one of their shows: it takes a suggestion and runs with it.</li>
+              <li>A real homepage underneath the jokes: shows, classes, corporate events, the podcast and contact, each one click from the menu.</li>
+              <li>The next show up front, and the past shows' posters kept.</li>
+              <li>Fill the workshops and grow the list, with sign-ups for classes and for updates.</li>
+              <li>The troupe's own look: the colours and fonts of their show posters.</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/deardeer-home.jpg" alt="" loading="lazy" decoding="async"><img src="toolkit-screenshots/deardeer-classes.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The build</h3>
+            <p>One page in the colours of the show posters and the logo, using the fonts from the show posters. The logo is cut into a base, the title and 15 floating bits, each moved by scroll on its own path, and the page opens on that exit played backwards. Then the upcoming show's poster slides in from the right, knocks the logo left and stops beside it, and every part of the logo lags behind, flies out of line, tumbles a little and wobbles back into place. In the write-up, every letter is thrown out in its own direction and flies home at its own speed as the paragraph scrolls up.</p>
+            <p>Once those letters have landed, "grow" falls out of its line, rides down the screen with you and opens the Shows photo through a star spinning out of the word, with confetti and burst lines. A key leaves the music man's keyboard and falls ahead of you into Classes, and FULL UP drops onto its spot on the October poster, turning to 45 degrees as it falls. Past Shows holds 36 posters back to June 16 2022, each popping up in its own spot and turning into its tilt in random order, and the viewer's arrows step through every one, round and round. The cast photos roll in 0.7 s apart like heavy bowling balls, crash into the edge of the screen and knock into each other, losing a bit on every bounce, and a click opens each person whole, with their write-up beside them.</p>
+            <p>The glove is the page's own pointer, drawn from 8 sprite sheets of 25 hand poses: a fist away from anything clickable, the finger out near it, a wag when a form is sent with a field missing, and turned to point down at the footer menu. The music man plays a jazz chord cycle, D minor 9, G7 flat 9, C major 9, A7 flat 9, and a key under him plays only when its note fits, so he always skips keys, rising as he rolls right and falling as he rolls left. Every note is made in the browser from seven overtones, each a little sharper than a whole multiple as a real string's are, so the site carries no sound files. The corporate badge is a two-part pendulum, a light clip and a heavy card, and once grabbed it knocks the lines beside it sideways. Both deer run from 54-frame sheets, paced so their legs don't skid. The signup band turns into a toy: every letter falls off the bottom, the two boxes round into balls you can throw, and the button, now Reset, slides from wall to wall as a paddle they bounce off. Plain JavaScript on one page, with no outside script libraries.</p>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/deardeer-keyboard.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">Big wins</h3>
+            <ul class="vc-card-goals">
+              <li>36 shows since June 2022 in one place, each poster opening in a viewer that steps through them all.</li>
+              <li>A shared headshot gallery for the cast: 36 photos with hearts, stars and a trash can that everyone sees, and the cast photos on the site come from it.</li>
+              <li>Light on phones: the glove and the running deer never load there, and phones get a layout of their own.</li>
+              <li>Ready to be found and shared: marked up for search engines as a performing group, with share cards and a sitemap.</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/deardeer-posters.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The hard parts</h3>
+            <ul class="vc-card-goals">
+              <li>A glove bigger than browsers allow. Browsers refuse pointer pictures over 128 px and the glove is drawn at 192, so the page draws its own pointer and hides the real one wherever the glove shows.</li>
+              <li>A glove that never blinks and never loads on phones. Its sheets load only once a real mouse moves, so phones never fetch them, and each is decoded first so a swap of sheets never blinks. Until every sheet has loaded, the real pointer stays.</li>
+              <li>Hundreds of letters in flight. They're drawn from ready-made blurred pictures of each letter onto one see-through layer, so the browser never re-blurs hundreds of letters a frame, and the real text takes over as each letter lands.</li>
+              <li>The same physics on every screen. Six moving systems step in 480ths of a second, the same every time, whatever the screen's frame rate.</li>
+              <li>Sound the browser will play. Browsers block sound until the page has had a click, tap or key press, so the music man stays silent until then. On iPhones he plays through the silent switch, as a video does; the notes stop at once when a pop-up opens or the page is left; and at most ten notes ring, the oldest letting go.</li>
+              <li>A badge on a touch screen. Up and down still scroll the page while sideways swings the badge, and on a phone its tilt turns which way is down, so the badge hangs toward the real floor. Not on iPhones: they share their tilt only after asking, and the page never asks.</li>
+              <li>Holding the scroll speed. A browser lets a page slow a wheel or trackpad swipe only when the page holds the swipe's very first step, and the first build let the down swipes rip and held the up ones. Now every step is held and the page moved by it. On phones the finger drag is never touched; only a glide after the finger lifts that would start too fast is replaced.</li>
+              <li>A computer that lags. New balls stop once they would pack the yellow band full, plus 2%, or sooner once ten frames in a row take nearly twice their shortest time.</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/deardeer-glove.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        </template>
         <div class="vc-card-desc">A joyous home for Dear Deer Improv, performing monthly shows since 2022, built to play like one of their shows: it takes a suggestion and runs with it. A cartoon glove stands in for the mouse and has an opinion about everything: a thumbs up after a click, the horns for the cast, a wagging finger at the podcast sign that still says Coming Soon. Click the deer in the menu and it runs off into Shows, knocking the menu words into each other until the Instagram icon bounces off the edge of the window. The buck charges the wall and doubles back through the letters, scattering them as it goes. The music man rolls along a piano keyboard playing jazz, and you can play the keys too. The corporate badge swings on its lanyard when you grab it. One cast bio changes voice every time it opens: mutinous pirate, condescending alien, long lost twin. Even the contact form asks for a suggestion. An irreverent and playful rendition of a standard homepage.</div>
         <div class="vc-card-links">
           <a class="vc-card-link" href="https://deardeerimprov.com" target="_blank" onclick="event.stopPropagation()">View Site &#8599;</a>
@@ -783,6 +954,56 @@
       <div class="vc-card-body">
         <h3 class="vc-card-title">Documentary Film Website</h3>
         <div class="vc-card-client">Thoughtful Robot Productions &middot; INTUITION</div>
+        <template class="vc-card-more">
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The Brief</h3>
+            <ul class="vc-card-goals">
+              <li>Replace the film's Squarespace site, which had no headline, an empty description, a default icon, a dead button, a title promising a podcast that didn't exist, and screenshots for four of its five images.</li>
+              <li>Build it fresh from what the film already had: its footage, its words and its team.</li>
+              <li>Make it move like a film: every transition driven by the scroll, and the title coming in like smoke on a black screen.</li>
+              <li>Give the film its own mailing list, with a private page to run it.</li>
+            </ul>
+          </div>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The build</h3>
+            <p>The page plays as a film, not a page: one pinned scroll sequence in six parts, from the opening to the Join card. Every frame, the script works out how far each piece is in or out and the styles turn that into motion, so everything runs backwards on the way up. A leaving shot grows 30% and dissolves into the one beneath it, pictures never sit still, and text drifts up as it fades in.</p>
+            <p>The opening is drawn in code, not video. INTUITION assembles at the centre from soft-edged pieces of its own letters, fading up from black through a cloud of 600 soft puffs, with about 60 small eddies turning clockwise around the word. Nine pointers nobody holds drift over it and push the pieces as a mouse would, and once the word settles, the visitor's mouse pushes them too, with a spring that brings them home in about a second. The first screen of scroll plays the rest: the word leaves the way it came in, reassembles in its corner, and the black lifts. The title is the INTUITION wordmark as nine SVG paths, its letters spreading apart as it goes.</p>
+            <p>Six muted loops run behind the parts, each loading and playing only while its shot is on. Three quotes drift in over them, from Steven Spielberg, David Lynch and Gurudev, with the logline and the journey from New York City to Bangalore to Sydney. The team slides in one after another, each opening in its own window, and the page ends on the Join card: Support the Film, the sign-up form, the wordmark and the logos. Sign-ups from the page and from a one-screen QR page go straight into the film's own mailing list. A private Communications page shows where anyone on it came from and every campaign they've been sent, lets them be edited, suppressed or deleted, and holds a newsletter side built to send in batches of 500 with one-click unsubscribe. The site itself uses no frameworks: plain JavaScript and one font, Urbanist.</p>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/intuition-opening.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">Big wins</h3>
+            <ul class="vc-card-goals">
+              <li>Live on the film's own domain on October 22, replacing the Squarespace site.</li>
+              <li>The old site's faults fixed: a real headline, a description, the film's own icon, a title without the podcast, and the dead button gone.</li>
+              <li>Footage behind every part, where four of the old site's five images were screenshots.</li>
+              <li>Sign-ups now land in the film's own list instead of a Squarespace form, from the site and from a QR page that went up the same day.</li>
+              <li>The same code renders the opening frame by frame, at HD and 4K.</li>
+            </ul>
+          </div>
+          <figure class="vc-case-pic"><img src="toolkit-screenshots/intuition-qr.jpg" alt="" loading="lazy" decoding="async"></figure>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The hard parts</h3>
+            <ul class="vc-card-goals">
+              <li>Pieces that add up to the exact word. In place, the opening's soft-edged pieces rebuild the wordmark to within 3 in 255 at the worst pixel.</li>
+              <li>A simulation that only runs forward, scrubbed both ways. The pieces' positions only exist by stepping from the start, so every position is stored at each 60th of a second, and a frame not worked out yet waits for the next.</li>
+              <li>Playing the entrance backwards would unwind the swirl, so the way out is mirrored left to right and keeps turning clockwise.</li>
+              <li>A desktop-only font. The title's typeface was licensed for desktops only, so the word became SVG shapes, with no font to wait for.</li>
+              <li>A third of a wide frame on a phone. The view follows the girl across the hill loop, and the boy loop is reframed so he sits mid-screen.</li>
+              <li>Failsafes. If the opening hasn't finished after 16 seconds it clears itself, if anything fails the letters' own smoke still plays, and on the QR page the form shows anyway.</li>
+              <li>Quotes checked at the source. A line often credited to Einstein was left out once it traced back to someone else, and every quote was set with curly quotes and en dash attributions.</li>
+              <li>Mailing-list rules. An opt-out wins forever, an empty note never wipes an earlier one, and nothing on the list side can fail a sign-up.</li>
+            </ul>
+          </div>
+        </section>
+        </template>
         <div class="vc-card-desc">A home for INTUITION, a feature documentary exploring the miraculous world of children's intuition, on a journey from New York City to Bangalore to Sydney. The title fades up through a soft cloud, its letters stirred by invisible hands, and once it settles your mouse stirs them too. From there the whole page is one scroll-driven sequence: quotes come in over loops from the film, and on a phone the frame follows a girl as she walks across a hillside. Dots down the side jump to each part. The team opens in its own window, one bio after the next. Sign-ups from the site and its QR page for screenings land in the film's own mailing list on Cloudflare, with a private page where the team looks up and edits every contact.</div>
         <div class="vc-card-tags"><span class="vc-tag">Scroll Story</span><span class="vc-tag">Motion</span><span class="vc-tag">Video</span><span class="vc-tag">Cloudflare</span><span class="vc-tag">Client Site</span></div>
         <div class="vc-card-links">
@@ -796,7 +1017,56 @@
       <div class="vc-card-body">
         <h3 class="vc-card-title">Unprofessional Variety Show</h3>
         <div class="vc-card-client">Maya Suess</div>
-        <div class="vc-card-desc">Full site with WYSIWYG admin panel, show detail pages with 60+ embedded videos, donate modal, SEO with JSON-LD event schema, mobile-responsive, blog with search. Client manages everything herself, no code needed.</div>
+        <template class="vc-card-more">
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The Brief</h3>
+            <ul class="vc-card-goals">
+              <li>The next show up front, its date right under the banner, and the past shows grouped by year.</li>
+              <li>A full view for every show: the poster on the left, full screen with a click, the performers below, a back button and an X.</li>
+              <li>The show's own look: the purple UPVS logo in the menu, a colour for each section (plum, blue, red, green and gold) and a scrolling banner.</li>
+              <li>Space Grotesk rather than a handwriting font, no italics anywhere, and hard square corners.</li>
+              <li>"There will be antics." on one line, justified text and no orphaned words.</li>
+              <li>Arrows that never move: the same size and the same place on every show and in the lightbox.</li>
+            </ul>
+          </div>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The build</h3>
+            <p>One page: the next show, about, the past shows, media and contact. Everything on it loads from content files and is drawn by plain JavaScript, with no libraries, and the first shows were pulled from the show's own Instagram posts. The title and tagline size themselves to the screen, and a strip of show videos, posters and recap photos runs across the opening, reshuffled on every visit with the posters kept apart. Any tile opens full screen.</p>
+            <p>Each show opens over the page with its poster, date, venue and doors, the emcee and the accompaniment, a ticket button, the performers with bios and Instagram links, then the recap photos and videos, and arrows to the shows on either side. The lightbox plays photos, the show's own videos and Vimeo, and steps with the arrow keys. The media archive filters photos, videos, reels and full performances, twelve at a time, and search engines get the show as an event series, a six-question FAQ and its five newest shows as events, with performers, doors, poster and tickets.</p>
+            <p>Behind it sits an admin that draws the site itself: click any text to change it. The show editor covers every field, marks the upcoming show, and takes posters and recap photos by drag and drop and videos by upload or from Vimeo; performers, credits, videos and photos reorder by dragging. Pictures are resized in the browser to 1600 px before upload, and videos are shrunk there too, with a thumbnail taken about a second in. Drafts save themselves a second and a half after each edit, the preview redraws as you type, and Publish sends the content and any new media to the live site in one step.</p>
+          </div>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">Big wins</h3>
+            <ul class="vc-card-goals">
+              <li>Live on the show's own domain since March 2026.</li>
+              <li>Run by the client. Every show added or changed since launch went through the admin, none through code: 2 new shows, 6 videos, 125 recap photos and 10 performer credits.</li>
+              <li>Every show since February 2022 in one place: 19 shows, 80 performer credits, 234 recap photos and 66 show videos, plus a media archive of 415 photos, videos and reels.</li>
+              <li>Lighter video before launch: 73 videos re-encoded, from 317 MB down to 234 MB.</li>
+            </ul>
+          </div>
+        </section>
+        <section class="vc-case">
+          <div class="vc-case-text">
+            <h3 class="vc-case-heading">The hard parts</h3>
+            <ul class="vc-card-goals">
+              <li>A banner that went stale. The next show was typed into the page by hand; now the banner and the next-show block read it from the show data, and the content files skip the browser's old copy.</li>
+              <li>Text fitted to the pixel. Titles are measured at a 100 px test size and scaled to fit, and only after the fonts load, so the tagline never fits itself to the wrong font.</li>
+              <li>Deleted media that came back. Items removed in the editor reappeared the next time a show was opened; now they stay gone.</li>
+              <li>Publishing over a newer version. If the site changed while an edit was publishing, the admin retries on top of the newer version by itself.</li>
+              <li>Video in the browser. Shrinking video before upload took several fixes, and the output moved from WebM, which iPhones didn't play, to MP4; browsers that can't do it are asked to use Chrome or Edge.</li>
+              <li>Browser storage limits. The admin warns when its storage is full and asks to publish, and videos are kept in memory, never in storage.</li>
+              <li>Arrows that wouldn't shrink on phones. The order of the styles kept the big size, so the phone size is now forced.</li>
+              <li>About text that doubled when edited in place. It moved to its own field in Settings.</li>
+            </ul>
+          </div>
+        </section>
+        </template>
+        <div class="vc-card-desc">Full site with WYSIWYG admin panel, show detail pages with 60+ embedded videos, SEO with JSON-LD event schema, mobile-responsive. Client manages everything herself, no code needed.</div>
         <div class="vc-card-tags"><span class="vc-tag">CMS</span><span class="vc-tag">Admin Panel</span><span class="vc-tag">Video</span><span class="vc-tag">SEO</span></div>
         <div class="vc-card-links">
           <a class="vc-card-link" href="https://unprofessionalvarietyshow.com" target="_blank" onclick="event.stopPropagation()">View Site &#8599;</a>
@@ -1003,7 +1273,7 @@
       <div class="vc-card-body">
         <h3 class="vc-card-title">UPVS Admin</h3>
         <div class="vc-card-client">Maya Suess</div>
-        <div class="vc-card-desc">WYSIWYG admin panel for the Unprofessional Variety Show. Manages shows, performers, blog posts, and 60+ embedded videos. Data-driven JSON architecture; client publishes everything herself.</div>
+        <div class="vc-card-desc">WYSIWYG admin panel for the Unprofessional Variety Show. Manages shows, performers, and 60+ embedded videos. Data-driven JSON architecture; client publishes everything herself.</div>
         <div class="vc-card-tags"><span class="vc-tag">Admin Panel</span><span class="vc-tag">CMS</span><span class="vc-tag">WYSIWYG</span><span class="vc-tag">Video</span></div>
         <div class="vc-card-links">
           <a class="vc-card-link" href="https://unprofessionalvarietyshow.com/admin/?demo" target="_blank" onclick="event.stopPropagation()">Admin Demo &#8599;</a>
@@ -1118,19 +1388,29 @@
 <!-- Detail overlay -->
 <div class="vc-detail-overlay" id="detail">
   <div class="vc-detail-panel">
-    <div class="vc-detail-preview" id="detail-preview">
-      <img class="vc-detail-img" id="detail-img" src="" alt="">
-      <iframe class="vc-detail-iframe" id="detail-iframe" src="about:blank" loading="lazy"></iframe>
-      <video class="vc-detail-img" id="detail-video" muted loop playsinline style="display:none; object-fit:contain"></video>
-    </div>
-    <div class="vc-detail-body">
-      <button class="vc-detail-close" onclick="closeDetail()">&times;</button>
+    <button class="vc-detail-close" onclick="closeDetail()">&larr; Back</button>
+    <button class="vc-detail-close vc-detail-next" onclick="nextDetail()">Next &rarr;</button>
+    <div class="vc-detail-head">
       <h2 class="vc-detail-title" id="detail-title"></h2>
       <div class="vc-detail-client" id="detail-client"></div>
+    </div>
+    <div class="vc-detail-hero">
+      <div class="vc-detail-frame">
+        <div class="vc-detail-bar"><span class="vc-detail-dot"></span><span class="vc-detail-dot"></span><span class="vc-detail-dot"></span><span class="vc-detail-address" id="detail-address"></span></div>
+        <div class="vc-detail-preview" id="detail-preview">
+          <img class="vc-detail-img" id="detail-img" src="" alt="">
+          <iframe class="vc-detail-iframe" id="detail-iframe" src="about:blank" loading="lazy"></iframe>
+          <video class="vc-detail-img" id="detail-video" muted loop playsinline style="display:none; object-fit:contain"></video>
+        </div>
+      </div>
+      <div class="vc-detail-intro">
+        <div class="vc-detail-desc" id="detail-desc"></div>
+        <div class="vc-detail-tags" id="detail-tags"></div>
+        <div class="vc-detail-links" id="detail-links"></div>
+      </div>
+    </div>
+    <div class="vc-detail-body">
       <div class="vc-detail-goals" id="detail-goals"></div>
-      <div class="vc-detail-desc" id="detail-desc"></div>
-      <div class="vc-detail-tags" id="detail-tags"></div>
-      <div class="vc-detail-links" id="detail-links"></div>
     </div>
   </div>
 </div>
@@ -1228,7 +1508,7 @@ const details = {
     links: [['View Site','https://intuitionfilm.com']]
   },
   maya: {
-    desc: 'Full website build for the Unprofessional Variety Show, a quarterly cabaret night in NYC. Features a WYSIWYG admin panel for managing shows, performers, and content without touching code. Show detail pages with 60+ embedded videos compressed for fast loading. Donate modal, SEO with JSON-LD event schema, mobile-responsive layout, blog with search, and a merch shop. Data-driven architecture where all content lives in JSON files published from the admin.',
+    desc: 'Full website build for the Unprofessional Variety Show, a quarterly cabaret night in NYC. Features a WYSIWYG admin panel for managing shows, performers, and content without touching code. Show detail pages with 60+ embedded videos compressed for fast loading. SEO with JSON-LD event schema, mobile-responsive layout, and a merch shop. Data-driven architecture where all content lives in JSON files published from the admin.',
     links: [['View Site','https://unprofessionalvarietyshow.com'],['Admin Demo','https://unprofessionalvarietyshow.com/admin/?demo']],
     img: 'upvs-site.jpg'
   },
@@ -1253,7 +1533,7 @@ const details = {
     links: [['Admin Demo','https://clients.pietsuess.com/selena/admin/?demo#pages']]
   },
   'upvs-admin': {
-    desc: 'WYSIWYG admin panel powering the Unprofessional Variety Show. Manages shows, performers, blog posts, and 60+ embedded videos with JSON-LD event schema. Data-driven JSON architecture; client publishes everything herself, no code, no me.',
+    desc: 'WYSIWYG admin panel powering the Unprofessional Variety Show. Manages shows, performers, and 60+ embedded videos with JSON-LD event schema. Data-driven JSON architecture; client publishes everything herself, no code, no me.',
     links: [['Admin Demo','https://unprofessionalvarietyshow.com/admin/?demo']]
   },
   portfolio: {
@@ -1263,40 +1543,16 @@ const details = {
 };
 
 const detailImg = document.getElementById('detail-img');
-const detailIframe = document.getElementById('detail-iframe');
+let detailIframe = document.getElementById('detail-iframe');
 const detailPreview = document.getElementById('detail-preview');
 const detailVideo = document.getElementById('detail-video');
-let previewAspect = 0;
-const detailPanel = document.querySelector('.vc-detail-panel');
-function sizePanel() {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  if (vw <= 700) return;
-  const pad = 40;
-  const maxW = vw - pad;
-  const maxH = vh - pad;
-  const fullW = screen.width;
-  const fullH = screen.height;
-  const screenRatio = fullW / fullH;
-  // Each half gets 50% of total width
-  let halfW = Math.floor(maxW / 2);
-  let panelH = Math.round(halfW / screenRatio);
-  if (panelH > maxH) {
-    panelH = maxH;
-    halfW = Math.round(panelH * screenRatio);
-  }
-  // Scale iframe: render at full screen size, shrink to fit
-  const scaleX = halfW / fullW;
-  const scaleY = panelH / fullH;
-  const s = Math.min(scaleX, scaleY);
-  detailIframe.style.width = fullW + 'px';
-  detailIframe.style.height = fullH + 'px';
+// the live site at desktop size (1440 wide), shrunk to its frame like the card faces (Piet 2026-10-28)
+new ResizeObserver(() => {
+  const s = detailPreview.clientWidth / 1440;
+  if (!s) return;
   detailIframe.style.transform = 'scale(' + s + ')';
-  detailPreview.style.width = (previewAspect ? Math.round(panelH * previewAspect) : halfW) + 'px';
-  detailPreview.style.height = panelH + 'px';
-  detailPanel.style.width = (halfW * 2) + 'px';
-  detailPanel.style.height = panelH + 'px';
-}
+  detailIframe.style.height = Math.ceil(detailPreview.clientHeight / s) + 'px';
+}).observe(detailPreview);
 
 // Live site on a card face (BTMATS, Piet 2026-10-14): scale the 1440-wide frame to the picture spot.
 document.querySelectorAll('.vc-card-live').forEach(box => {
@@ -1311,21 +1567,24 @@ document.querySelectorAll('.vc-card-live').forEach(box => {
 
 document.querySelectorAll('[data-img]').forEach(card => {
   card.addEventListener('click', () => {
+    openCard = card;
     const key = card.dataset.img;
     const d = details[key] || {};
     detailImg.src = 'toolkit-screenshots/' + (d.img || key + '.jpg');
     detailImg.style.objectPosition = d.imgPos || '';
     detailVideo.style.display = d.video ? '' : 'none';
     if (d.video) { detailVideo.src = 'toolkit-screenshots/' + d.video; detailVideo.play().catch(() => {}); detailImg.style.opacity = '0'; }
-    previewAspect = d.aspect || 0;
     detailImg.style.opacity = '1';
     const liveUrl = d.iframeUrl || ((d.links && d.links.length) ? d.links[0][1] : '');
+    document.getElementById('detail-address').textContent = liveUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
     detailPreview.style.overflow = d.noScroll ? 'hidden' : '';
     if (liveUrl) {
       detailIframe.src = liveUrl;
       detailIframe.onload = () => {
         detailImg.style.opacity = '0';
         detailImg.style.pointerEvents = 'none';
+        // the live site takes over from a card's recording too (Bullfinch, Dear Deer)
+        detailVideo.pause(); detailVideo.style.display = 'none';
         if (d.noScroll) {
           try { detailIframe.contentDocument.documentElement.style.overflow = 'hidden'; } catch(e) {}
         }
@@ -1335,13 +1594,29 @@ document.querySelectorAll('[data-img]').forEach(card => {
       detailIframe.src = 'about:blank';
     }
     document.getElementById('detail-title').textContent = card.querySelector('.vc-card-title').textContent;
-    document.getElementById('detail-client').textContent = card.querySelector('.vc-card-client').textContent;
+    // a card with no client line or no tags (Dear Deer, 2026-10-29) still opens
+    const client = card.querySelector('.vc-card-client');
+    document.getElementById('detail-client').textContent = client ? client.textContent : '';
     // Lists kept in a card's template (BTMATS, Piet 2026-10-14) show in the open card only.
     const more = card.querySelector('.vc-card-more');
     document.getElementById('detail-goals').innerHTML = more ? more.innerHTML : '';
-    document.getElementById('detail-desc').textContent = d.desc || card.querySelector('.vc-card-desc').textContent;
+    // case pictures (Piet 2026-10-29): a click opens one full in js/main.js's lightbox, < > through this card's pictures;
+    // two or more in a section share one row at one height, each as wide as its shape needs
+    document.querySelectorAll('#detail-goals .vc-case-pic').forEach(fig => {
+      const pics = fig.querySelectorAll('img');
+      pics.forEach(img => {
+        img.classList.add('lightbox-trigger');
+        img.dataset.gallery = 'case';
+        if (pics.length < 2) return;
+        const fit = () => { img.style.flexGrow = img.naturalWidth / img.naturalHeight; };
+        if (img.complete && img.naturalWidth) fit(); else img.addEventListener('load', fit, { once: true });
+      });
+    });
+    // a card with a case study tells the long story in its sections; beside the box goes its card text
+    document.getElementById('detail-desc').textContent = (more ? '' : d.desc) || card.querySelector('.vc-card-desc').textContent;
     const tagsEl = document.getElementById('detail-tags');
-    tagsEl.innerHTML = card.querySelector('.vc-card-tags').innerHTML;
+    const tags = card.querySelector('.vc-card-tags');
+    tagsEl.innerHTML = tags ? tags.innerHTML : '';
     tagsEl.style.alignItems = '';
     const linksEl = document.getElementById('detail-links');
     let linksHtml = (d.links || []).map(l => '<a class="vc-card-link" href="' + l[1] + '" target="_blank" onclick="event.stopPropagation()">' + l[0] + ' &#8599;</a>').join('');
@@ -1357,26 +1632,69 @@ document.querySelectorAll('[data-img]').forEach(card => {
     } else {
       linksEl.innerHTML = linksHtml;
     }
-    sizePanel();
     document.getElementById('detail').classList.add('open');
     document.body.style.overflow = 'hidden';
+    // the browser's Back closes the open card (Piet 2026-10-29): one step in its history per open card
+    if (!(history.state && history.state.detail)) history.pushState({ detail: true }, '');
   });
 });
-function closeDetail(){
-  document.getElementById('detail').classList.remove('open');
-  document.body.style.overflow = '';
-  detailIframe.src = 'about:blank';
+let skipPop = false, openCard = null;
+function resetDetailMedia(){
+  // a fresh frame instead of sending the old one to about:blank, which left a step of its own in the browser's history
+  const freshIframe = detailIframe.cloneNode(false);
+  freshIframe.setAttribute('src', 'about:blank');
+  detailIframe.replaceWith(freshIframe);
+  detailIframe = freshIframe;
   detailVideo.pause(); detailVideo.removeAttribute('src'); detailVideo.style.display = 'none';
   detailImg.style.opacity = '1';
   detailImg.style.pointerEvents = '';
 }
-window.addEventListener('resize', () => {
-  if (document.getElementById('detail').classList.contains('open')) sizePanel();
+function closeDetail(fromBack){
+  document.getElementById('detail').classList.remove('open');
+  document.body.style.overflow = '';
+  resetDetailMedia();
+  // closed by the button, Esc or a click outside: take back the step the open card added
+  if (fromBack !== true && history.state && history.state.detail) { skipPop = true; history.back(); }
+}
+// NEXT (Piet 2026-10-29): the next build in page order, from its top; after the last, the first. Back still closes.
+function nextDetail(){
+  const cards = [...document.querySelectorAll('[data-img]')];
+  const next = cards[(cards.indexOf(openCard) + 1) % cards.length];
+  resetDetailMedia();
+  next.click();
+  document.querySelector('.vc-detail-panel').scrollTop = 0;
+}
+window.addEventListener('popstate', () => {
+  if (skipPop) { skipPop = false; return; }
+  // a picture open full closes first, then the card (Piet 2026-10-29)
+  const pic = document.querySelector('.lightbox-overlay.active');
+  if (pic) { pic.querySelector('.lightbox-close').click(); return; }
+  if (document.getElementById('detail').classList.contains('open')) closeDetail(true);
 });
 document.getElementById('detail').addEventListener('click', e => {
   if (e.target === document.getElementById('detail')) closeDetail();
 });
-document.addEventListener('keydown', e => { if(e.key === 'Escape') closeDetail(); });
+// Esc with a picture open full closes only the picture (js/main.js does that); capture phase, so this looks before main.js acts
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !document.querySelector('.lightbox-overlay.active')) closeDetail(); }, true);
+// a picture opening full adds one step to the browser's history, so Back closes it; closing it any other way takes that step back
+let picOpen = false;
+function picChanged(){
+  const open = !!document.querySelector('.lightbox-overlay.active');
+  if (open === picOpen) return;
+  picOpen = open;
+  if (open) { history.pushState({ detail: true, pic: true }, ''); return; }
+  // main.js hands the page its scroll back on close, but the card is still open
+  if (document.getElementById('detail').classList.contains('open')) document.body.style.overflow = 'hidden';
+  if (history.state && history.state.pic) { skipPop = true; history.back(); }
+}
+const watchLightbox = new MutationObserver(() => {   // main.js builds its lightbox on the first open
+  const lb = document.querySelector('.lightbox-overlay');
+  if (!lb) return;
+  watchLightbox.disconnect();
+  new MutationObserver(picChanged).observe(lb, { attributes: true, attributeFilter: ['class'] });
+  picChanged();
+});
+watchLightbox.observe(document.body, { childList: true });
 
 // Device icons
 const D = '<svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>';
